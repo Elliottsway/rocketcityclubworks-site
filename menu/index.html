@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Service &amp; Price Menu · Rocket City ClubWorks</title>
-<meta name="description" content="Regripping, loft and lie, reshafting, repairs and refinishing prices, plus grips, shafts and adapters at catalog retail. Huntsville and Madison, AL.">
+<meta name="description" content="Instant prices for regripping, loft and lie, reshafting, repairs and refinishing, plus grip and shaft prices. Huntsville and Madison, AL.">
 <link rel="canonical" href="https://rocketcityclubworks.com/menu/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Rocket City ClubWorks · Service & Price Menu">
-<meta property="og:description" content="Every service and price, plus launch offers. Text (205) 588-9164 to book.">
+<meta property="og:description" content="Every service and price, plus an instant quote. Text (205) 588-9164 to book.">
 <meta property="og:url" content="https://rocketcityclubworks.com/menu/">
 <meta property="og:image" content="https://rocketcityclubworks.com/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -17,240 +17,327 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Big+Shoulders+Display:wght@800;900&family=Public+Sans:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Big+Shoulders+Display:wght@800;900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
 <style>
-/* Layout: one phone-width column read top to bottom like a pro-shop menu board,
-   with a sticky bar so "Text Jackson" is always one tap away. */
-:root{
-  --green:#0E4D2C; --green2:#1F7A44; --soft:#BFE3C7; --tint:#F1F6F2;
-  --bg:#FFFFFF; --page:#E9EFEA; --ink:#10241A; --muted:#56665B; --line:#A7B8AC;
-  --script:"Yellowtail","Brush Script MT",cursive;
-  --display:"Big Shoulders Display","Arial Narrow",Arial,sans-serif;
-  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root{--bg:#0F1F16;--page:#08130D;--ink:#E8F0EA;--muted:#9DB3A4;--line:#3A5244;--tint:#163024;--green2:#7CC795;color-scheme:dark}
-}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--page);color:var(--ink);font-family:var(--body);line-height:1.4}
-.page{max-width:560px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-a{color:inherit}
-:focus-visible{outline:3px solid var(--green2);outline-offset:2px}
+/* Menu page: read top to bottom like a pro-shop menu board. The quote builder sits first. */
+.top{position:static}
+.title{background:var(--green);color:var(--on-green);padding:6px 0 26px;border-top:1px solid rgba(255,255,255,.15)}
+.title h1{font-size:clamp(2.4rem,9vw,3.6rem);margin-top:12px}
+.title p{margin:8px 0 0;opacity:.92;max-width:52ch}
+.jump{position:sticky;top:0;z-index:15;background:var(--surface);border-bottom:1px solid var(--line)}
+.jump .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+.jump .wrap::-webkit-scrollbar{display:none}
+.jump a{flex:none;text-decoration:none;font-size:.86rem;font-weight:600;padding:8px 14px;border-radius:999px;background:var(--tint);color:var(--ink)}
+.jump a.q{background:var(--green);color:var(--on-green)}
+.menu{display:grid;gap:16px;padding-top:20px}
+@media (min-width:900px){.menu{grid-template-columns:1fr 1fr;align-items:start}.menu .wide{grid-column:1/-1}}
+.menu section{scroll-margin-top:64px}
+.blk{padding:16px 18px 8px}
+.blk h2{font-size:1.7rem;color:var(--green-2);margin-bottom:6px}
+.note{font-size:.84rem;color:var(--muted);margin:6px 0 10px;line-height:1.45}
+.how{padding:14px 16px;font-size:.92rem;border-color:var(--green-2)}
+.how b{color:var(--green-2)}
+.tat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 12px}
+.tat div{background:var(--tint);border-radius:8px;padding:10px 6px;text-align:center}
+.tat b{display:block;font-family:var(--display);font-weight:900;font-size:1.2rem;text-transform:uppercase;color:var(--green-2);line-height:1.1}
+.tat span{font-size:.74rem;color:var(--muted);line-height:1.3;display:block;margin-top:4px}
+details.parts>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px}
+details.parts>summary::-webkit-details-marker{display:none}
+details.parts>summary h2{font-size:1.7rem;color:var(--green-2)}
+details.parts>summary::after{content:"+";font:600 1.5rem/1 var(--mono);color:var(--green-2)}
+details.parts[open]>summary::after{content:"–"}
+details.parts .in{padding:0 18px 10px}
+details.parts h3{font-size:1.05rem;color:var(--muted);margin:14px 0 2px}
 
-header{background:var(--green);color:#fff;text-align:center;padding:calc(22px + env(safe-area-inset-top,0px)) 20px 20px;display:flex;flex-direction:column;align-items:center;gap:4px}
-header .top{font-family:var(--mono);font-weight:600;font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;opacity:.85}
-header .home{color:#fff;text-decoration:none;display:flex;flex-direction:column;align-items:center}
-.script{font-family:var(--script);line-height:1;transform:rotate(-6deg)}
-header .script{font-size:3.6rem;margin-top:6px}
-.caps{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.28em;text-transform:uppercase}
-.caps::before,.caps::after{content:"";width:28px;height:2px;background:currentColor}
-header h1{margin:14px 0 0;font-family:var(--display);font-weight:900;font-size:1.5rem;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:var(--green);padding:3px 14px;border-radius:4px}
-
-nav.jump{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:10px 16px;scrollbar-width:none}
-nav.jump::-webkit-scrollbar{display:none}
-nav.jump a{flex:none;text-decoration:none;font-size:.82rem;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--tint);color:var(--ink)}
-
-.how{margin:16px 16px 0;border:1.5px solid var(--green2);border-radius:8px;padding:12px 14px;font-size:.86rem;line-height:1.45}
-.how b{color:var(--green2)}
-main{padding:0 16px 8px}
-section{margin-top:22px;scroll-margin-top:60px}
-h2{font-family:var(--display);font-weight:900;font-size:1.55rem;text-transform:uppercase;color:var(--green2);border-bottom:2px solid var(--green2);padding-bottom:3px;margin:0 0 4px;line-height:1}
-.row{display:flex;align-items:baseline;gap:8px;padding:8px 0}
-.nm{font-size:1rem;font-weight:600;line-height:1.25;min-width:0;max-width:72%}
-.nt{font-size:.78rem;font-weight:500;color:var(--muted);margin-top:2px}
-.lead{flex:1;border-bottom:1.5px dotted var(--line);transform:translateY(-4px);min-width:14px}
-.pr{font-family:var(--mono);font-weight:600;font-size:1rem;white-space:nowrap;font-variant-numeric:tabular-nums}
-.note{font-size:.8rem;color:var(--muted);margin-top:6px;line-height:1.45}
-.tat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
-.tat div{background:var(--tint);border-radius:6px;padding:10px 6px;text-align:center}
-.tat b{display:block;font-family:var(--display);font-weight:900;font-size:1.2rem;text-transform:uppercase;color:var(--green2)}
-.tat span{font-size:.72rem;color:var(--muted);line-height:1.3;display:block;margin-top:2px}
-
-.offers{margin-top:26px;background:var(--green);color:#fff;padding:18px 16px 20px}
-.offers .t{font-family:var(--script);font-size:2rem;color:var(--soft);transform:rotate(-3deg);transform-origin:left;margin-bottom:6px}
-.of{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.25)}
-.of:last-of-type{border-bottom:0}
-.of div{font-size:.92rem;font-weight:600;min-width:0}
-.of small{display:block;font-size:.74rem;font-weight:500;opacity:.85;margin-top:1px}
-.of code{font-family:var(--mono);font-weight:600;font-size:.85rem;background:#fff;color:var(--green);padding:3px 8px;border-radius:3px;white-space:nowrap}
-.offers .d{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8;margin-top:8px}
-
-.contact{text-align:center;padding:22px 16px 10px;display:flex;flex-direction:column;gap:4px}
-.contact .ph{font-family:var(--display);font-weight:900;font-size:2rem;color:var(--green2);text-decoration:none}
-.contact .em{font-size:.9rem;font-weight:600;overflow-wrap:anywhere}
-.contact .asof{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px}
-.contact .home{font-size:.85rem;color:var(--green2);font-weight:600;margin-top:6px}
-
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
-.bar .in{max-width:528px;width:100%;display:flex;gap:10px}
-.bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:10px;font-weight:700;font-size:1.02rem;text-decoration:none}
-.bar .text{background:var(--green);color:#fff;flex:2}
-.bar .call{border:2px solid var(--green);color:var(--green);background:#fff}
-.bar svg{width:20px;height:20px;flex:none}
+/* quote builder */
+.quote{border:2px solid var(--green-2);padding:18px}
+.quote h2{font-size:2rem;color:var(--green-2)}
+.qgrid{display:grid;gap:18px;margin-top:14px}
+@media (min-width:900px){.qgrid{grid-template-columns:1.2fr 1fr;gap:28px}}
+.qf{display:grid;gap:16px}
+.grp{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:12px}
+.grp:first-child{border-top:0;padding-top:0}
+.grp>b{font-family:var(--display);font-weight:800;font-size:1.15rem;text-transform:uppercase}
+.line{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.line>span{font-weight:600;font-size:.95rem}
+.line>span small{display:block;font-weight:500;color:var(--muted);font-size:.78rem}
+.step{display:flex;align-items:center;border:1.5px solid var(--dots);border-radius:10px;overflow:hidden;flex:none}
+.step button{width:44px;height:44px;border:0;background:var(--tint);color:var(--ink);font:700 1.3rem/1 var(--body);cursor:pointer}
+.step output{width:40px;text-align:center;font:600 1.05rem var(--mono)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-weight:600;font-size:.95rem;margin:0;cursor:pointer}
+.chk input{width:22px;height:22px;min-height:0;margin:1px 0 0;accent-color:var(--green);flex:none}
+.chk small{display:block;font-weight:500;color:var(--muted);font-size:.8rem}
+.res{background:var(--tint);border-radius:var(--r);padding:16px;align-self:start}
+@media (min-width:900px){.res{position:sticky;top:76px}}
+.res .ln{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:.92rem}
+.res .ln span:last-child{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.res .ln.off span:last-child{color:var(--green-2)}
+.res .tot{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--ink);margin-top:8px;padding-top:10px}
+.res .tot b{font-family:var(--display);font-weight:900;font-size:1.3rem;text-transform:uppercase}
+.res .tot span{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--green-2);line-height:1}
+.res .empty{color:var(--muted);font-size:.92rem;margin:0}
+.res .fine{font-size:.78rem;color:var(--muted);margin:10px 0 0}
+.res .btn{width:100%;margin-top:14px}
+.res .copy{display:block;margin:10px auto 0;background:none;border:0;color:var(--green-2);font:600 .9rem var(--body);text-decoration:underline;cursor:pointer;min-height:36px}
 </style>
 </head>
 <body>
-<div class="page">
-<header>
-  <div class="top">Huntsville &amp; Madison, AL · Est. 2026</div>
-  <a class="home" href="/" aria-label="Rocket City ClubWorks home"><span class="script">Rocket City</span><span class="caps">ClubWorks</span></a>
-  <h1>Service menu</h1>
+
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
+    <nav aria-label="Main"><a href="/">Home</a><a href="#quote">Instant price</a><a href="#regrip">Services</a><a href="#grips">Grips</a><a href="#shaftprices">Shafts</a></nav>
+    <div class="cta"><a class="solid js-text" href="sms:+12055889164"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Text us</a></div>
+  </div>
 </header>
+<div class="title">
+  <div class="wrap">
+    <div class="eyebrow" style="color:var(--mint)">Huntsville &amp; Madison, AL</div>
+    <h1>Service &amp; price menu</h1>
+    <p>Pick what you need below for an instant price, then text it to book.</p>
+  </div>
+</div>
 
 <nav class="jump" aria-label="Menu sections">
-  <a href="#regrip">Regrips</a><a href="#loft">Loft &amp; lie</a><a href="#shafts">Shafts</a><a href="#repairs">Repairs</a><a href="#refinish">Refinish</a><a href="#grips">Grip prices</a><a href="#shaftprices">Shaft prices</a><a href="#offers">Offers</a>
+  <div class="wrap">
+    <a class="q" href="#quote">Instant price</a><a href="#regrip">Regrips</a><a href="#loft">Loft &amp; lie</a><a href="#shafts">Shafts</a><a href="#repairs">Repairs</a><a href="#refinish">Refinish</a><a href="#grips">Grip prices</a><a href="#shaftprices">Shaft prices</a><a href="#offers">Offers</a>
+  </div>
 </nav>
 
-<div class="how"><b>How pricing works:</b> prices are labor. Any new part that goes on your club (grip, shaft, adapter, ferrule, extension) is added at catalog retail. Tape, solvent and epoxy are always included.</div>
+<main class="wrap" style="padding-bottom:32px">
+  <div class="menu">
+    <div class="card how wide"><b>How pricing works:</b> you pay labor plus any new part that goes on your club (grip, shaft, adapter, ferrule) at regular retail. Tape, solvent and epoxy are always included. The instant price does the math for you.</div>
 
-<main>
-<section id="regrip"><h2>Regripping</h2>
-<div class="row"><div class="nm">Regrip, per club<div class="nt">+ grip</div></div><div class="lead"></div><div class="pr">$3</div></div>
-<div class="row"><div class="nm">Full bag, up to 13 clubs<div class="nt">+ grips</div></div><div class="lead"></div><div class="pr">$35</div></div>
-<div class="row"><div class="nm">Regrip your own grips, per club</div><div class="lead"></div><div class="pr">$5</div></div>
-<div class="row"><div class="nm">Full bag, your own grips<div class="nt">Up to 13 clubs</div></div><div class="lead"></div><div class="pr">$40</div></div>
-<div class="row"><div class="nm">Putter grip install<div class="nt">+ grip</div></div><div class="lead"></div><div class="pr">$5</div></div>
-<div class="row"><div class="nm">Build-up wraps &amp; logo alignment</div><div class="lead"></div><div class="pr">Free</div></div>
-</section>
+    <section class="card quote wide" id="quote" aria-labelledby="q-h">
+      <h2 id="q-h">Instant price</h2>
+      <div class="qgrid">
+        <div class="qf">
+          <div class="grp">
+            <b>Regrip</b>
+            <div class="line"><span>Clubs to regrip<small>Full bag covers up to 13</small></span>
+              <div class="step" data-k="rg" data-max="14"><button type="button" aria-label="Fewer clubs to regrip">−</button><output>0</output><button type="button" aria-label="More clubs to regrip">+</button></div></div>
+            <div><label for="q-grip">Grip</label><select id="q-grip"></select></div>
+            <label class="chk" id="q-rush-wrap" hidden><input type="checkbox" id="q-rush"><span>Rush the special order (+$10)<small>Ships same day, ready in 2–3 days instead of 3–5</small></span></label>
+          </div>
+          <div class="grp">
+            <b>Loft &amp; lie</b>
+            <div><label for="q-loft">Irons and wedges</label>
+              <select id="q-loft"><option value="">No thanks</option><option value="check">Check only</option><option value="adjust">Check &amp; adjust</option></select></div>
+            <div class="line" id="q-loft-n" hidden><span>Clubs to check &amp; adjust<small>Full set covers up to 10</small></span>
+              <div class="step" data-k="ll" data-max="14" data-start="8"><button type="button" aria-label="Fewer clubs to adjust">−</button><output>8</output><button type="button" aria-label="More clubs to adjust">+</button></div></div>
+          </div>
+          <div class="grp">
+            <b>Reshaft</b>
+            <div class="line"><span>Irons or wedges, steel</span><div class="step" data-k="rs" data-max="14"><button type="button" aria-label="Fewer steel reshafts">−</button><output>0</output><button type="button" aria-label="More steel reshafts">+</button></div></div>
+            <div class="line"><span>Irons or wedges, graphite</span><div class="step" data-k="rgph" data-max="14"><button type="button" aria-label="Fewer graphite reshafts">−</button><output>0</output><button type="button" aria-label="More graphite reshafts">+</button></div></div>
+            <div class="line"><span>Driver, wood or hybrid</span><div class="step" data-k="rw" data-max="6"><button type="button" aria-label="Fewer wood reshafts">−</button><output>0</output><button type="button" aria-label="More wood reshafts">+</button></div></div>
+          </div>
+          <div class="grp">
+            <b>Clean</b>
+            <div class="line"><span>Deep clean<small>Full set $30</small></span><div class="step" data-k="cl" data-max="14"><button type="button" aria-label="Fewer clubs to clean">−</button><output>0</output><button type="button" aria-label="More clubs to clean">+</button></div></div>
+          </div>
+          <div class="grp" id="q-offers">
+            <b>Launch offers</b>
+            <label class="chk"><input type="checkbox" id="q-first"><span>This is my first order<small>15% off labor with ROCKET15</small></span></label>
+            <div><label for="q-ref">Referred by a friend? Their name</label><input id="q-ref" autocomplete="off" placeholder="Optional · $5 off with CLUBWORKS5"></div>
+          </div>
+        </div>
 
-<section id="turnaround"><h2>Turnaround</h2>
-<div class="tat"><div><b>Next day</b><span>Your own grips or grips we stock</span></div><div><b>3–5 days</b><span>Special-order grips, ordered Mon &amp; Thu</span></div><div><b>Rush +$10</b><span>Special order shipped same day, 2–3 days</span></div></div>
-</section>
+        <div class="res" aria-live="polite">
+          <div id="q-lines"><p class="empty">Add clubs on the left to see your price.</p></div>
+          <div class="tot"><b>Estimated total</b><span id="q-total">$0</span></div>
+          <p class="fine" id="q-fine">Estimate before sales tax on parts. Final price confirmed by text before any work starts.</p>
+          <a class="btn" id="q-send" href="sms:+12055889164">Text this quote to book</a>
+          <button class="copy" type="button" id="q-copy">Copy quote</button>
+        </div>
+      </div>
+    </section>
 
-<section id="loft"><h2>Loft &amp; lie</h2>
-<div class="row"><div class="nm">Check only<div class="nt">Irons &amp; wedges, up to 10 clubs</div></div><div class="lead"></div><div class="pr">$15</div></div>
-<div class="row"><div class="nm">Check &amp; adjust, per club</div><div class="lead"></div><div class="pr">$5</div></div>
-<div class="row"><div class="nm">Check &amp; adjust a full set<div class="nt">Up to 10 clubs</div></div><div class="lead"></div><div class="pr">$45</div></div>
-</section>
+    <div id="services" style="display:contents"></div>
 
-<section id="shafts"><h2>Shafts &amp; builds</h2>
-<div class="row"><div class="nm">Reshaft iron or wedge, steel<div class="nt">+ shaft, ferrule &amp; grip</div></div><div class="lead"></div><div class="pr">$20</div></div>
-<div class="row"><div class="nm">Reshaft iron or wedge, graphite<div class="nt">+ shaft, ferrule &amp; grip</div></div><div class="lead"></div><div class="pr">$25</div></div>
-<div class="row"><div class="nm">Reshaft driver, wood or hybrid<div class="nt">+ shaft &amp; grip · + adapter if new</div></div><div class="lead"></div><div class="pr">$25</div></div>
-<div class="row"><div class="nm">Install or move an adapter<div class="nt">Your shaft · + adapter if new</div></div><div class="lead"></div><div class="pr">$20</div></div>
-<div class="row"><div class="nm">Custom club build<div class="nt">+ heads, shafts, grips &amp; ferrules</div></div><div class="lead"></div><div class="pr">Quote</div></div>
-</section>
+    <section class="card blk" id="turnaround"><h2>Turnaround</h2><div class="tat" id="tat"></div></section>
 
-<section id="repairs"><h2>Repairs</h2>
-<div class="row"><div class="nm">Shorten a club<div class="nt">+ grip if it can’t be saved</div></div><div class="lead"></div><div class="pr">$5</div></div>
-<div class="row"><div class="nm">Extend a club<div class="nt">+ extension &amp; grip</div></div><div class="lead"></div><div class="pr">$10</div></div>
-<div class="row"><div class="nm">Loose head or rattle<div class="nt">+ ferrule if replaced</div></div><div class="lead"></div><div class="pr">$12</div></div>
-<div class="row"><div class="nm">Custom ferrules, per club<div class="nt">+ ferrule · $5 with a reshaft or build</div></div><div class="lead"></div><div class="pr">$15</div></div>
-</section>
+    <details class="card parts wide" id="grips" open>
+      <summary><h2>Grip prices</h2></summary>
+      <div class="in">
+        <p class="note">Price per grip, with the installed price (grip + labor). Grips marked <span class="tag">in stock</span> are ready next day; everything else is special order.</p>
+        <div id="grip-list"></div>
+        <h3>Golf balls</h3>
+        <div id="ball-list"></div>
+        <p class="note">Don't see your grip? Ask. Most Golf Pride, Winn, SuperStroke, Ping and Grip Master grips can be ordered.</p>
+      </div>
+    </details>
 
-<section id="refinish"><h2>Refinishing</h2>
-<div class="row"><div class="nm">Deep clean, per club<div class="nt">Full set $30</div></div><div class="lead"></div><div class="pr">$3</div></div>
-<div class="row"><div class="nm">Refurbish<div class="nt">Groove clean, polish &amp; buff</div></div><div class="lead"></div><div class="pr">$15</div></div>
-<div class="row"><div class="nm">Paint fill, per club<div class="nt">Iron set $50 · paint included</div></div><div class="lead"></div><div class="pr">$8</div></div>
-<div class="row"><div class="nm">Custom stamping<div class="nt">Initials, numbers or short text</div></div><div class="lead"></div><div class="pr">from $15</div></div>
-</section>
+    <details class="card parts wide" id="shaftprices">
+      <summary><h2>Shaft &amp; adapter prices</h2></summary>
+      <div class="in">
+        <p class="note">Price per part. Add reshaft labor and a grip for your installed price. We confirm tip size and adapter fit before ordering.</p>
+        <div id="shaft-list"></div>
+        <p class="note">Nearly any shaft from True Temper, Fujikura, Mitsubishi, KBS, Nippon, Aldila and UST can be ordered. Special-order parts ship for $10 on orders under $75. Alabama sales tax applies to parts.</p>
+      </div>
+    </details>
 
-<section id="tradein"><h2>Trade-in</h2>
-<div class="row"><div class="nm">Trade in shafts, adapters &amp; heads<div class="nt">Credit toward any service</div></div><div class="lead"></div><div class="pr">Quote</div></div>
-<div class="row"><div class="nm">Pre-owned shafts &amp; adapters<div class="nt">Lower-cost repair option, when in stock</div></div><div class="lead"></div><div class="pr">Quote</div></div>
-</section>
+    <section class="offers wide" id="offers">
+      <div class="t">Launch offers</div>
+      <div id="offer-list"></div>
+      <div class="d">One code per order · through <span id="offer-end"></span></div>
+    </section>
 
-<section id="grips"><h2>Grip prices</h2>
-<p class="note" style="margin:0 0 4px">Per grip. Tour Velvet and MCC in standard and midsize are in stock for next-day work. Everything else is special order.</p>
-<div class="row"><div class="nm">SuperStroke Crossline 2.0</div><div class="lead"></div><div class="pr">$6.19</div></div>
-<div class="row"><div class="nm">Golf Pride Tour Velvet<div class="nt">Standard or midsize · in stock</div></div><div class="lead"></div><div class="pr">$7.19</div></div>
-<div class="row"><div class="nm">Golf Pride Tour Velvet Plus4</div><div class="lead"></div><div class="pr">$7.19</div></div>
-<div class="row"><div class="nm">Ping ID8</div><div class="lead"></div><div class="pr">$7.99</div></div>
-<div class="row"><div class="nm">Winn Dri-Tac Wrap</div><div class="lead"></div><div class="pr">$8.99</div></div>
-<div class="row"><div class="nm">Winn Dri-Tac<div class="nt">Standard</div></div><div class="lead"></div><div class="pr">$9.79</div></div>
-<div class="row"><div class="nm">Golf Pride CP2 Wrap / CP2 Pro</div><div class="lead"></div><div class="pr">$11.19</div></div>
-<div class="row"><div class="nm">Golf Pride Tour Wrap 2G</div><div class="lead"></div><div class="pr">$11.19</div></div>
-<div class="row"><div class="nm">Golf Pride MCC / MCC Plus4<div class="nt">In stock</div></div><div class="lead"></div><div class="pr">$13.19</div></div>
-<div class="row"><div class="nm">Golf Pride Z-Grip Cord</div><div class="lead"></div><div class="pr">$13.19</div></div>
-<div class="row"><div class="nm">Golf Pride MCC Align</div><div class="lead"></div><div class="pr">$15.19</div></div>
-<p class="note">Don’t see your grip? Ask. Most Golf Pride, Winn, SuperStroke, Ping and Grip Master grips can be ordered.</p>
-</section>
-
-<section id="balls"><h2>Golf balls</h2>
-<div class="row"><div class="nm">Maxfli SoftFli / StraightFli<div class="nt">Per dozen</div></div><div class="lead"></div><div class="pr">$19.99</div></div>
-<div class="row"><div class="nm">Maxfli Tour, Tour X, Tour S<div class="nt">Per dozen</div></div><div class="lead"></div><div class="pr">$39.99</div></div>
-</section>
-
-<section id="shaftprices"><h2>Driver &amp; wood shafts</h2>
-<p class="note" style="margin:0 0 4px">Per shaft. Add reshaft labor and a grip. We confirm tip size and adapter fit before ordering.</p>
-<div class="row"><div class="nm">Project X Cypher 2.0</div><div class="lead"></div><div class="pr">$41.99</div></div>
-<div class="row"><div class="nm">Project X HZRDUS Black G4 / Red G4</div><div class="lead"></div><div class="pr">$79.99</div></div>
-<div class="row"><div class="nm">Aldila NV 55 / 65 / 75</div><div class="lead"></div><div class="pr">$88.00</div></div>
-<div class="row"><div class="nm">Mitsubishi Kai’li White / Blue</div><div class="lead"></div><div class="pr">$89.99</div></div>
-<div class="row"><div class="nm">Mitsubishi Tensei AV<div class="nt">White, Blue, Orange, Red</div></div><div class="lead"></div><div class="pr">$129.99</div></div>
-<div class="row"><div class="nm">Project X HZRDUS Black G5</div><div class="lead"></div><div class="pr">$225.00</div></div>
-<div class="row"><div class="nm">Project X Denali Frost<div class="nt">Red, Blue, Black</div></div><div class="lead"></div><div class="pr">$225.00</div></div>
-<div class="row"><div class="nm">Fujikura Ventus TR / Velocore+<div class="nt">Red, Blue, Black, White</div></div><div class="lead"></div><div class="pr">$350.00</div></div>
-<div class="row"><div class="nm">Mitsubishi Tensei 1K Pro</div><div class="lead"></div><div class="pr">$360.00</div></div>
-<div class="row"><div class="nm">Graphite Design Tour AD<div class="nt">VF, DI, CQ, FI, GC</div></div><div class="lead"></div><div class="pr">$379.00</div></div>
-</section>
-
-<section><h2>Iron shafts</h2>
-<div class="row"><div class="nm">N.S. Pro 950GH</div><div class="lead"></div><div class="pr">$28.50</div></div>
-<div class="row"><div class="nm">True Temper Elevate 85</div><div class="lead"></div><div class="pr">$29.99</div></div>
-<div class="row"><div class="nm">Dynamic Gold S300 / X100</div><div class="lead"></div><div class="pr">$32.99</div></div>
-<div class="row"><div class="nm">KBS Tour</div><div class="lead"></div><div class="pr">$39.95</div></div>
-<div class="row"><div class="nm">Dynamic Gold 95 / 105 / 120</div><div class="lead"></div><div class="pr">$40.99</div></div>
-<div class="row"><div class="nm">N.S. Pro Modus3 Tour 105–130</div><div class="lead"></div><div class="pr">$42.50</div></div>
-<div class="row"><div class="nm">Mitsubishi Tensei AV Silver<div class="nt">Graphite</div></div><div class="lead"></div><div class="pr">$44.99</div></div>
-<div class="row"><div class="nm">Dynamic Gold Tour Issue</div><div class="lead"></div><div class="pr">$46.99</div></div>
-<div class="row"><div class="nm">Project X LZ</div><div class="lead"></div><div class="pr">$53.99</div></div>
-<div class="row"><div class="nm">KBS C-Taper</div><div class="lead"></div><div class="pr">$56.95</div></div>
-</section>
-
-<section><h2>Wedge &amp; hybrid shafts</h2>
-<div class="row"><div class="nm">N.S. Pro Modus3 Wedge</div><div class="lead"></div><div class="pr">$43.50</div></div>
-<div class="row"><div class="nm">Mitsubishi Tensei AV Silver Hybrid</div><div class="lead"></div><div class="pr">$44.99</div></div>
-<div class="row"><div class="nm">KBS Hi-Rev 2.0 / Tour Wedge</div><div class="lead"></div><div class="pr">$45.95</div></div>
-<div class="row"><div class="nm">Dynamic Gold Tour Issue Spinner</div><div class="lead"></div><div class="pr">$46.99</div></div>
-<div class="row"><div class="nm">UST Recoil Dart Hybrid</div><div class="lead"></div><div class="pr">$75.00</div></div>
-<div class="row"><div class="nm">KBS Max HL Graphite Hybrid</div><div class="lead"></div><div class="pr">$84.95</div></div>
-<div class="row"><div class="nm">Fujikura Ventus Velocore+ Hybrid</div><div class="lead"></div><div class="pr">$200.00</div></div>
-</section>
-
-<section><h2>Adapters</h2>
-<div class="row"><div class="nm">Callaway<div class="nt">Driver, fairway, hybrid</div></div><div class="lead"></div><div class="pr">$26.99</div></div>
-<div class="row"><div class="nm">Ping<div class="nt">G410, G425, G430, G440</div></div><div class="lead"></div><div class="pr">$26.99</div></div>
-<div class="row"><div class="nm">Srixon ZXi</div><div class="lead"></div><div class="pr">$26.99</div></div>
-<div class="row"><div class="nm">Cobra<div class="nt">.335 and .370</div></div><div class="lead"></div><div class="pr">$28.99</div></div>
-<div class="row"><div class="nm">PXG</div><div class="lead"></div><div class="pr">$30.00</div></div>
-<div class="row"><div class="nm">TaylorMade, Titleist &amp; others</div><div class="lead"></div><div class="pr">Quote</div></div>
-<p class="note">Don’t see your shaft? Nearly any shaft from True Temper, Fujikura, Mitsubishi, KBS, Nippon, Aldila and UST can be ordered. Special-order parts ship for $10 on orders under $75. Alabama sales tax applies to parts.</p>
-</section>
+    <div class="wide" style="text-align:center;padding:18px 0 4px">
+      <a class="js-text" href="sms:+12055889164" style="font-family:var(--display);font-weight:900;font-size:2rem;color:var(--green-2);text-decoration:none">Text (205) 588-9164</a>
+      <div style="font-weight:600;margin-top:4px;overflow-wrap:anywhere">RocketCityClubWorks@gmail.com</div>
+      <div class="eyebrow" style="color:var(--muted);margin-top:10px">Prices as of <span data-asof></span> · subject to change</div>
+    </div>
+  </div>
 </main>
-
-<div class="offers" id="offers">
-  <div class="t">Launch offers</div>
-  <div class="of"><div>15% off labor, first order<small>Any service · parts at catalog retail</small></div><code>ROCKET15</code></div>
-  <div class="of"><div>Full bag regrip for $30<small>Grips bought here · free loft &amp; lie check</small></div><code>FULLBAG</code></div>
-  <div class="of"><div>$5 off for you and a friend<small>They book with the code and your name</small></div><code>CLUBWORKS5</code></div>
-  <div class="d">One code per order · through March 1, 2027</div>
-</div>
-
-<div class="contact">
-  <a class="ph js-text" href="sms:+12055889164">Text (205) 588-9164</a>
-  <div class="em">RocketCityClubWorks@gmail.com</div>
-  <a class="home" href="/">rocketcityclubworks.com</a>
-  <div class="asof">Prices as of October 2026 · subject to change</div>
-</div>
-</div>
 
 <div class="bar">
   <div class="in">
     <a class="text js-text" href="sms:+12055889164"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Text Jackson</a>
-    <a class="call" href="tel:+12055889164"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call</a>
+    <a class="alt" href="tel:+12055889164"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call</a>
   </div>
 </div>
 
+<script src="/assets/prices.js"></script>
+<script src="/assets/site.js"></script>
 <script>
 (function(){
-  // ?ref=card / course / pro tags the text so you know which piece brought them in
-  var ref = (new URLSearchParams(location.search).get('ref') || 'web').replace(/[^a-z0-9-]/gi,'').toUpperCase().slice(0,12);
-  var body = "Hi Jackson! I'd like info on ClubWorks services. (" + ref + ")";
-  var href = 'sms:+12055889164?&body=' + encodeURIComponent(body);
-  document.querySelectorAll('.js-text').forEach(function(a){ a.href = href; });
+  var D = window.RCCW, R = D.rules, S = window.RCCWsite, $ = S.money;
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  // One menu-board row: name ......... price
+  function row(it, sub){
+    var r = el("div", "row"), nm = el("div", "nm", it.name);
+    if (it.stock) nm.appendChild(el("span", "tag", "in stock"));
+    if (it.note) nm.appendChild(el("span", "nt", it.note));
+    var pr = el("div", "pr", $(it.price));
+    if (sub) pr.appendChild(el("small", null, sub));
+    r.appendChild(nm); r.appendChild(el("div", "lead")); r.appendChild(pr);
+    return r;
+  }
+
+  // ---------- price lists ----------
+  var svc = document.getElementById("services");
+  D.services.forEach(function(s){
+    var sec = el("section", "card blk"); sec.id = s.id;
+    sec.appendChild(el("h2", null, s.title));
+    s.items.forEach(function(it){ sec.appendChild(row(it)); });
+    svc.appendChild(sec);
+  });
+  var tat = document.getElementById("tat");
+  D.turnaround.forEach(function(t){ var d = el("div"); d.appendChild(el("b", null, t.big)); d.appendChild(el("span", null, t.small)); tat.appendChild(d); });
+
+  var gl = document.getElementById("grip-list");
+  D.grips.forEach(function(g){ gl.appendChild(row(g, $(Math.round((g.price + R.regripOurs) * 100) / 100) + " installed")); });
+  var bl = document.getElementById("ball-list");
+  D.balls.forEach(function(b){ bl.appendChild(row(b)); });
+  var sl = document.getElementById("shaft-list");
+  D.shafts.forEach(function(g){ sl.appendChild(el("h3", null, g.title)); g.items.forEach(function(it){ sl.appendChild(row(it)); }); });
+
+  // ---------- offers (hide after the end date) ----------
+  var offersLive = new Date() < new Date(D.offers.endsISO + "T00:00:00");
+  if (offersLive) {
+    var ol = document.getElementById("offer-list");
+    D.offers.list.forEach(function(o){
+      var r = el("div", "of"), t = el("div");
+      t.appendChild(el("b", null, o.title)); t.appendChild(el("small", null, o.note));
+      r.appendChild(t); r.appendChild(el("code", null, o.code)); ol.appendChild(r);
+    });
+    document.getElementById("offer-end").textContent = D.offers.ends;
+  } else {
+    document.getElementById("offers").hidden = true;
+    document.getElementById("q-offers").hidden = true;
+    document.querySelectorAll('a[href="#offers"]').forEach(function(a){ a.hidden = true; });
+  }
+
+  // ---------- quote builder ----------
+  var q = { rg: 0, ll: 8, rs: 0, rgph: 0, rw: 0, cl: 0 };
+  var gripSel = document.getElementById("q-grip");
+  gripSel.appendChild(new Option("My own grips (" + $(R.regripOwn) + "/club labor)", "own"));
+  D.grips.forEach(function(g, i){ gripSel.appendChild(new Option(g.name + " · " + $(g.price) + (g.stock ? " · in stock" : ""), String(i))); });
+  gripSel.value = String(D.grips.findIndex(function(g){ return g.stock; }));
+
+  document.querySelectorAll(".step").forEach(function(st){
+    var k = st.getAttribute("data-k"), max = +st.getAttribute("data-max"), out = st.querySelector("output"), b = st.querySelectorAll("button");
+    function set(n){ q[k] = Math.max(0, Math.min(max, n)); out.textContent = q[k]; calc(); }
+    b[0].addEventListener("click", function(){ set(q[k] - 1); });
+    b[1].addEventListener("click", function(){ set(q[k] + 1); });
+  });
+  ["q-grip", "q-rush", "q-loft", "q-first", "q-ref"].forEach(function(id){
+    var e = document.getElementById(id); e.addEventListener("change", calc); e.addEventListener("input", calc);
+  });
+
+  // Per-club price, capped at the bundle price for up to `max` clubs; extra clubs past `max` at the per-club rate.
+  function bundle(n, per, cap, max){ return n <= max ? Math.min(n * per, cap) : cap + (n - max) * per; }
+  function r2(n){ return Math.round(n * 100) / 100; }
+
+  var lastText = "";
+  function calc(){
+    var lines = [], labor = 0, parts = 0, fees = 0, msg = [];
+    var g = gripSel.value === "own" ? null : D.grips[+gripSel.value];
+    var loft = document.getElementById("q-loft").value;
+    document.getElementById("q-loft-n").hidden = loft !== "adjust";
+    var rushWrap = document.getElementById("q-rush-wrap");
+    rushWrap.hidden = !(q.rg > 0 && g && !g.stock);
+    var rush = !rushWrap.hidden && document.getElementById("q-rush").checked;
+
+    var fullBagOurs = false;
+    if (q.rg > 0) {
+      var bagLabor = g ? bundle(q.rg, R.regripOurs, R.regripOursBag, R.bagMax) : bundle(q.rg, R.regripOwn, R.regripOwnBag, R.bagMax);
+      fullBagOurs = !!g && q.rg >= R.regripOursBag / R.regripOurs;
+      lines.push(["Regrip labor, " + q.rg + " club" + (q.rg > 1 ? "s" : ""), bagLabor]); labor += bagLabor;
+      if (g) { var gp = r2(q.rg * g.price); lines.push([q.rg + " × " + g.name, gp]); parts += gp; }
+      if (rush) { lines.push(["Rush special order", R.rush]); fees += R.rush; }
+      msg.push("Regrip " + q.rg + " club" + (q.rg > 1 ? "s" : "") + ", " + (g ? g.name : "my own grips") + (rush ? " (rush)" : ""));
+    }
+    var loftCost = 0;
+    if (loft === "check") { loftCost = R.loftCheck; lines.push(["Loft & lie check", loftCost]); msg.push("Loft & lie check"); }
+    if (loft === "adjust" && q.ll > 0) { loftCost = bundle(q.ll, R.loftPer, R.loftSet, R.loftSetMax); lines.push(["Loft & lie adjust, " + q.ll + " clubs", loftCost]); msg.push("Loft & lie check & adjust, " + q.ll + " clubs"); }
+    labor += loftCost;
+    var shafts = 0;
+    [["rs", "Reshaft steel iron/wedge", R.reshaftSteel], ["rgph", "Reshaft graphite iron/wedge", R.reshaftGraphite], ["rw", "Reshaft driver/wood/hybrid", R.reshaftWood]].forEach(function(x){
+      if (q[x[0]] > 0) { var c = q[x[0]] * x[2]; lines.push([x[1] + " × " + q[x[0]], c]); labor += c; shafts += q[x[0]]; msg.push(x[1] + " × " + q[x[0]]); }
+    });
+    if (q.cl > 0) { var cc = Math.min(q.cl * R.cleanPer, R.cleanSet); lines.push(["Deep clean, " + q.cl + " clubs", cc]); labor += cc; msg.push("Deep clean " + q.cl + " clubs"); }
+
+    // Best single launch offer
+    var best = null;
+    if (offersLive && labor > 0) {
+      var opts = [];
+      if (document.getElementById("q-first").checked) opts.push({ code: "ROCKET15", off: r2(labor * 0.15) });
+      if (fullBagOurs) opts.push({ code: "FULLBAG", off: (R.regripOursBag - 30) + (loft === "check" ? R.loftCheck : 0) });
+      var refName = document.getElementById("q-ref").value.trim();
+      if (refName) opts.push({ code: "CLUBWORKS5", off: Math.min(5, labor), who: refName });
+      opts.forEach(function(o){ if (!best || o.off > best.off) best = o; });
+      if (best && best.off > 0) lines.push([best.code + (best.code === "FULLBAG" && loft === "check" ? " (incl. free loft check)" : ""), -best.off, true]);
+      else best = null;
+    }
+
+    var total = r2(labor + parts + fees - (best ? best.off : 0));
+    var box = document.getElementById("q-lines"); box.textContent = "";
+    if (!lines.length) box.appendChild(el("p", "empty", "Add clubs on the left to see your price."));
+    lines.forEach(function(l){
+      var d = el("div", "ln" + (l[2] ? " off" : ""));
+      d.appendChild(el("span", null, l[0]));
+      d.appendChild(el("span", null, (l[1] < 0 ? "−" : "") + $(Math.abs(l[1]))));
+      box.appendChild(d);
+    });
+    if (shafts) box.appendChild((function(){ var d = el("div", "ln"); d.appendChild(el("span", null, "Shafts (" + shafts + "), grips & ferrules")); d.appendChild(el("span", null, "+ parts")); return d; })());
+    document.getElementById("q-total").textContent = $(total);
+    document.getElementById("q-fine").textContent = (shafts ? "Shaft prices depend on the model you pick; see shaft prices below. " : "") +
+      "Estimate before sales tax on parts. Final price confirmed by text before any work starts.";
+
+    var text = ["Hi Jackson! Quote from the website:"].concat(msg.map(function(m){ return "• " + m; }));
+    if (best) text.push("Offer: " + best.code + (best.who ? " (referred by " + best.who + ")" : ""));
+    text.push("Estimate: " + $(total) + (shafts ? " + shafts" : ""), "(" + S.ref + ")");
+    lastText = msg.length ? text.join("\n") : "Hi Jackson! I'd like a quote. (" + S.ref + ")";
+    document.getElementById("q-send").href = S.smsHref(lastText);
+  }
+  document.getElementById("q-copy").addEventListener("click", function(){
+    var b = this; try { navigator.clipboard.writeText(lastText).then(function(){ b.textContent = "Copied. Paste it into a text or email."; }); } catch (e) {}
+  });
+  calc();
 })();
 </script>
 </body>
