@@ -21,9 +21,25 @@
   });
   document.querySelectorAll("[data-asof]").forEach(function(el){ el.textContent = D.asOf; });
 
+  // Launch bundle: shown until its end date, then those elements remove themselves.
+  var launchLive = new Date() < new Date(D.bundles.launchBag.endsISO + "T00:00:00");
+  document.querySelectorAll("[data-launch]").forEach(function(el){ if (!launchLive) el.remove(); });
+  document.querySelectorAll("[data-launch-price]").forEach(function(el){ el.textContent = money(D.bundles.launchBag.price); });
+  document.querySelectorAll("[data-launch-ends]").forEach(function(el){ el.textContent = D.bundles.launchBag.ends; });
+  document.querySelectorAll("[data-tuneup]").forEach(function(el){ el.textContent = money(D.bundles.tuneUpOff); });
+
+  // Fade sections in as they scroll into view
+  var rv = document.querySelectorAll(".rv");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -8% 0px" });
+    rv.forEach(function(el){ io.observe(el); });
+  } else rv.forEach(function(el){ el.classList.add("in"); });
+
   document.querySelectorAll(".js-text").forEach(function(a){
     a.href = smsHref("Hi Jackson! I'd like info on ClubWorks services. (" + ref + ")");
   });
 
-  window.RCCWsite = { money: money, smsHref: smsHref, ref: ref, grip: grip };
+  window.RCCWsite = { money: money, smsHref: smsHref, ref: ref, grip: grip, launchLive: launchLive };
 })();

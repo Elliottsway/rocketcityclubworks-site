@@ -12,7 +12,9 @@
 <meta property="og:url" content="https://rocketcityclubworks.com/">
 <meta property="og:image" content="https://rocketcityclubworks.com/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0E4D2C">
+<meta name="theme-color" content="#091E13">
+<meta name="color-scheme" content="dark">
+<script>document.documentElement.classList.add("js")</script>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,65 +28,72 @@
  "image":"https://rocketcityclubworks.com/og-image.png","priceRange":"$",
  "address":{"@type":"PostalAddress","addressLocality":"Huntsville","addressRegion":"AL","postalCode":"35806","addressCountry":"US"},
  "areaServed":["Huntsville, AL","Madison, AL"],
+ "openingHours":"Mo-Su 08:00-17:00",
  "paymentAccepted":"Cash, Venmo, Cash App, Apple Cash"}
 </script>
 <style>
 /* Home page only */
-.hero{background:var(--green);color:var(--on-green);padding:36px 0 44px}
+.hero{background:var(--brand);background-image:radial-gradient(ellipse 80% 70% at 85% 30%,rgba(124,199,149,.18),transparent 60%),var(--dimples);
+  color:#fff;padding:34px 0 44px;border-bottom:1px solid rgba(255,255,255,.08)}
 .hero .wrap{display:grid;gap:32px;align-items:center}
-.hero .pill{display:inline-block;font-family:var(--mono);font-weight:600;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;background:var(--mint);color:var(--green);padding:6px 12px;border-radius:999px}
-.hero .script{font-family:var(--script);font-size:2rem;color:var(--mint);transform:rotate(-4deg);transform-origin:left;margin:16px 0 4px;line-height:1}
-.hero h1{font-size:clamp(2.8rem,11vw,5.2rem);line-height:.9}
-.hero h1 em{font-style:normal;color:var(--mint)}
-.hero p{font-size:1.08rem;max-width:44ch;margin:16px 0 0;opacity:.95}
-.hero .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
-.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:26px;max-width:520px}
-.facts div{border:1px solid rgba(255,255,255,.28);border-radius:8px;padding:10px 8px;text-align:center}
+.hero .pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:600;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;background:rgba(0,0,0,.25);color:var(--mint);padding:7px 12px;border-radius:999px;border:1px solid rgba(191,227,199,.3)}
+.hero .pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(124,199,149,.25)}
+.hero .script{font-family:var(--script);font-size:2.1rem;color:var(--mint);transform:rotate(-4deg);transform-origin:left;margin:18px 0 4px;line-height:1}
+.hero h1{font-size:clamp(3rem,12vw,5.4rem);line-height:.88}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{font-size:1.08rem;max-width:44ch;margin:16px 0 0;color:#DCEBE0}
+.hero .ctas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;max-width:440px}
+.hero .ctas .btn{padding:0 12px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:22px;max-width:440px}
+.facts div{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 6px;text-align:center}
 .facts b{display:block;font-family:var(--display);font-weight:900;font-size:1.35rem;text-transform:uppercase;line-height:1}
-.facts div>span{display:block;font-size:.74rem;opacity:.85;margin-top:4px;line-height:1.25}
+.facts div>span{display:block;font-size:.74rem;opacity:.8;margin-top:4px;line-height:1.25}
 
-.ticket{display:none;background:#fff;color:#10241A;border-radius:var(--r);font-family:var(--mono);font-size:.86rem;
-  box-shadow:0 22px 44px -26px rgba(0,0,0,.6);transform:rotate(1.5deg);max-width:420px;justify-self:end;width:100%}
+.ticket{display:none;background:var(--paper);color:var(--paper-ink);border-radius:var(--r);font-family:var(--mono);font-size:.86rem;
+  box-shadow:0 30px 60px -28px rgba(0,0,0,.8);transform:rotate(1.5deg);max-width:420px;justify-self:end;width:100%}
 .ticket header{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px;border-bottom:2px dashed #C8D4CB}
 .ticket header b{font-family:var(--display);font-size:1.35rem;font-weight:900;text-transform:uppercase}
-.ticket header span{color:#4F5F55;font-size:.75rem}
+.ticket header span{color:var(--paper-muted);font-size:.75rem}
 .ticket dl{margin:0;padding:14px 18px;display:grid;grid-template-columns:auto 1fr;gap:8px 16px}
-.ticket dt{color:#4F5F55}
+.ticket dt{color:var(--paper-muted)}
 .ticket dd{margin:0;text-align:right;font-weight:600}
 .ticket footer{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-top:2px dashed #C8D4CB}
-.ticket footer .ok{background:#0E4D2C;color:#fff;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
-@media (min-width:900px){.hero{padding:64px 0 72px}.hero .wrap{grid-template-columns:1.25fr 1fr}.ticket{display:block}}
+.ticket footer .ok{background:var(--brand);color:#fff;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
+@media (min-width:900px){.hero{padding:64px 0 76px}.hero .wrap{grid-template-columns:1.25fr 1fr}.ticket{display:block}.hero .ctas{display:flex}.hero .ctas .btn{padding:0 22px}}
 
 .jobs{display:grid;gap:12px}
 @media (min-width:640px){.jobs{grid-template-columns:repeat(2,1fr)}}
 @media (min-width:980px){.jobs{grid-template-columns:repeat(3,1fr)}}
-.job{padding:18px;display:flex;flex-direction:column;gap:6px}
+.job{padding:18px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+.job::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--dimples);opacity:.7}
 .job p{margin:0;color:var(--muted);font-size:.94rem}
-.job .price{margin-top:auto;padding-top:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.job .price b{font-family:var(--display);font-weight:900;font-size:2rem;color:var(--green-2);line-height:1}
+.job .price{margin-top:auto;padding-top:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.job .price b{font-family:var(--display);font-weight:900;font-size:2.1rem;color:var(--accent);line-height:1}
 .job .price>span{font-size:.86rem;color:var(--muted)}
-.more{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.more{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+@media (min-width:640px){.more{display:flex}}
 
 .steps{display:grid;gap:12px;counter-reset:s}
 @media (min-width:760px){.steps{grid-template-columns:repeat(3,1fr)}}
 .step{padding:18px}
-.step::before{counter-increment:s;content:"0" counter(s);display:block;font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--green-2);line-height:1;margin-bottom:6px}
+.step::before{counter-increment:s;content:"0" counter(s);display:block;font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--accent);line-height:1;margin-bottom:6px}
 .step h3{margin-bottom:6px}
 .step p{margin:0;color:var(--muted);font-size:.95rem}
-.pay{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.pay span{font-size:.78rem;font-weight:600;background:var(--tint);color:var(--green-2);padding:4px 9px;border-radius:999px}
+.pay{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.pay span{font-size:.78rem;font-weight:600;background:var(--tint);color:var(--accent);padding:4px 9px;border-radius:999px}
 
 .split{display:grid;gap:28px}
 @media (min-width:900px){.split{grid-template-columns:1fr 1.1fr;gap:48px}}
 .about p{color:var(--muted);margin:12px 0 0;max-width:56ch}
 
-.contact .info{display:grid;gap:12px;margin-top:18px}
+.contact .info{display:grid;gap:14px;margin-top:20px}
 .contact .info div{display:flex;flex-direction:column;gap:2px}
 .contact .info span{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .contact .info a,.contact .info b{font-weight:700;font-size:1.05rem;text-decoration:none;overflow-wrap:anywhere}
+.contact .info a{color:var(--accent)}
 form.req{padding:18px;display:grid;gap:14px}
 @media (min-width:560px){form.req{grid-template-columns:1fr 1fr}form.req .full{grid-column:1/-1}}
-.req .err{color:#B3261E;font-weight:600;font-size:.9rem}
+.req .err{color:#FF9B8F;font-weight:600;font-size:.9rem;margin:0}
 .req .msg{white-space:pre-wrap;font-family:var(--mono);font-size:.85rem;background:var(--tint);padding:12px;border-radius:8px}
 .req .acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .req .note{font-size:.84rem;color:var(--muted)}
@@ -96,7 +105,7 @@ form.req{padding:18px;display:grid;gap:14px}
   <div class="wrap">
     <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
     <nav aria-label="Main">
-      <a href="#prices">Prices</a><a href="#how">How it works</a><a href="#offers">Offers</a><a href="#faq">FAQ</a><a href="#contact">Contact</a>
+      <a href="#prices">Prices</a><a href="#how">How it works</a><a href="#deals">Deals</a><a href="#faq">FAQ</a><a href="#contact">Contact</a>
     </nav>
     <div class="cta">
       <a class="ghost" href="/menu/">Full menu</a>
@@ -114,12 +123,12 @@ form.req{padding:18px;display:grid;gap:14px}
       <h1>Your clubs, <em>rebuilt</em> in Huntsville.</h1>
       <p>Regrips, reshafts, loft and lie, and repairs, done by hand by a local club builder. Bring your own grips and they're back in your bag tomorrow.</p>
       <div class="ctas">
-        <a class="btn light" href="/menu/#quote">Get an instant price</a>
+        <a class="btn light" href="/menu/#quote">Instant price</a>
         <a class="btn line js-text" href="sms:+12055889164">Text Jackson</a>
       </div>
       <div class="facts">
         <div><b>Next day</b><span>Most regrips</span></div>
-        <div><b>From <span data-p="regripOurs">$3</span></b><span>Per club labor</span></div>
+        <div><b>From <span data-p="regripOurs">$4</span></b><span>Per club labor</span></div>
         <div><b>Local</b><span>Drop off or meet up</span></div>
       </div>
     </div>
@@ -132,7 +141,7 @@ form.req{padding:18px;display:grid;gap:14px}
         <dt>Size</dt><dd>Standard +2 wraps</dd>
         <dt>Logo</dt><dd>Down</dd>
         <dt>Loft &amp; lie</dt><dd>Checked, 2 bent</dd>
-        <dt>Labor</dt><dd><span data-p="regripOursBag">$35</span> · full bag</dd>
+        <dt>Labor</dt><dd><span data-p="regripOursBag">$40</span> · full bag</dd>
       </dl>
       <footer><span>Dropped Tue · Back Wed</span><span class="ok">Ready</span></footer>
     </article>
@@ -147,32 +156,32 @@ form.req{padding:18px;display:grid;gap:14px}
       <p class="lede">Prices for the most common jobs. For anything else, get an instant price on the menu or text a photo of your club.</p>
     </div>
     <div class="jobs">
-      <article class="card job">
+      <article class="card job rv">
         <h3>Regrip, your own grips</h3>
         <p>Bring the grips, we install them. Ready next day.</p>
-        <div class="price"><b data-p="regripOwn">$5</b><span>per club · full bag <span data-p="regripOwnBag">$40</span></span></div>
+        <div class="price"><b data-p="regripOwn">$5</b><span>per club · full bag <span data-p="regripOwnBag">$50</span></span></div>
       </article>
-      <article class="card job">
+      <article class="card job rv">
         <h3>Regrip, Golf Pride Tour Velvet</h3>
         <p>The most popular grip, in stock in standard and midsize. Grip and install included.</p>
-        <div class="price"><b data-p="installed:Golf Pride Tour Velvet">$10.19</b><span>per club, installed</span></div>
+        <div class="price"><b data-p="installed:Golf Pride Tour Velvet">$11.19</b><span>per club, installed</span></div>
       </article>
-      <article class="card job">
+      <article class="card job rv">
         <h3>Loft &amp; lie</h3>
         <p>Measure your irons and wedges against spec, then bend them back where they belong.</p>
         <div class="price"><b data-p="loftCheck">$15</b><span>check · adjust a set <span data-p="loftSet">$45</span></span></div>
       </article>
-      <article class="card job">
+      <article class="card job rv">
         <h3>Reshafting</h3>
         <p>Steel and graphite, irons to driver. We help you pick the shaft and order it.</p>
-        <div class="price"><b>from <span data-p="reshaftSteel">$20</span></b><span>per club + shaft</span></div>
+        <div class="price"><b>from <span data-p="reshaftSteel">$20</span></b><span>per club + shaft · <span data-p="ironSetSteel">$15</span> in a set of 6+</span></div>
       </article>
-      <article class="card job">
+      <article class="card job rv">
         <h3>Clean, refinish &amp; paint fill</h3>
         <p>Deep clean, groove clean and buff, plus fresh paint in the numbers and logos.</p>
-        <div class="price"><b>from <span data-p="cleanPer">$3</span></b><span>per club</span></div>
+        <div class="price"><b>from <span data-p="cleanPer">$3</span></b><span>per club · full bag clean <span data-p="cleanSet">$25</span></span></div>
       </article>
-      <article class="card job">
+      <article class="card job rv">
         <h3>Custom builds &amp; repairs</h3>
         <p>Builds to your length and spec, plus loose heads, cut-downs, extensions and adapters.</p>
         <div class="price"><b>Quote</b><span>text a photo for a price</span></div>
@@ -192,35 +201,42 @@ form.req{padding:18px;display:grid;gap:14px}
       <h2>Three steps, no hassle</h2>
     </div>
     <div class="steps">
-      <article class="card step"><h3>Get a price</h3><p>Build a quote on the menu or text what you need. Text or email any time; we reply 8am–5pm.</p></article>
-      <article class="card step"><h3>Drop off</h3><p>Porch drop-off in northwest Huntsville by appointment, or we meet up around Huntsville and Madison. We send the spot when you book.</p></article>
-      <article class="card step"><h3>Pick up &amp; play</h3><p>Most regrips are ready the next day. Special-order parts take 3–5 days. We text you when they're done.</p>
+      <article class="card step rv"><h3>Get a price</h3><p>Build a quote on the menu or text what you need. Send it any time; we reply every day, 8am–5pm.</p></article>
+      <article class="card step rv"><h3>Drop off</h3><p>Porch drop-off in northwest Huntsville by appointment, or we meet up around Huntsville and Madison. We send the spot when you book.</p></article>
+      <article class="card step rv"><h3>Pick up &amp; play</h3><p>Most regrips are ready the next day. Special-order parts take 3–5 days. We text you when they're done.</p>
         <div class="pay" aria-label="Payment methods"><span>Cash</span><span>Venmo</span><span>Cash App</span><span>Apple Cash</span></div></article>
     </div>
   </div>
 </section>
 
-<section class="sec" id="offers" style="padding-top:0">
+<section class="sec" id="deals" style="padding-top:0">
   <div class="wrap">
-    <div class="offers">
-      <div class="t">Launch offers</div>
-      <div id="offer-list"></div>
-      <div class="d">One code per order · mention it when you book · through <span id="offer-end">March 1, 2027</span></div>
+    <div class="deals rv">
+      <div class="t">Bundle deals</div>
+      <div class="deal" data-launch><div><b>Launch price: full-bag regrip</b><small>Grips bought here, up to 14 clubs, plus a free loft &amp; lie check. Through <span data-launch-ends>March 1, 2027</span>.</small></div>
+        <div class="px"><s><span data-p="regripOursBag">$40</span></s><span data-launch-price>$35</span></div></div>
+      <div class="deal"><div><b>Season tune-up</b><small>Regrip 10+ clubs, adjust loft &amp; lie on 6+ irons and deep clean 10+ clubs in one visit.</small></div>
+        <div class="px"><span data-tuneup>$20</span> off</div></div>
+      <div class="deal"><div><b>Iron set reshaft</b><small>Reshaft 6 or more irons and wedges. Steel <span data-p="ironSetSteel">$15</span>, graphite <span data-p="ironSetGraphite">$20</span> per club.</small></div>
+        <div class="px"><s>$20/club</s>$15</div></div>
+      <div class="deal"><div><b>Full bag, your own grips</b><small>Up to 14 clubs for the price of 10.</small></div>
+        <div class="px"><s>$70</s><span data-p="regripOwnBag">$50</span></div></div>
+      <div class="d">No codes needed · the instant price applies them for you</div>
     </div>
   </div>
 </section>
 
 <section class="sec" id="faq" style="padding-top:0">
   <div class="wrap split">
-    <div class="about">
+    <div class="about rv">
       <div class="eyebrow">About the shop</div>
       <h2>Local, hands-on, fairly priced</h2>
       <p>Rocket City ClubWorks is a home club shop in Huntsville run by Jackson Stewart, a local golfer who got tired of waiting a week for a simple regrip.</p>
       <p>Clear labor prices, parts at regular retail, and clubs back in your bag fast. Not sure what grip or shaft fits your game? Ask. Advice is free.</p>
     </div>
-    <div class="faq">
-      <details><summary>How fast will my clubs be ready?</summary><p>Next day with your own grips or grips we keep in stock (Tour Velvet and MCC). Special-order grips are ordered every Monday and Thursday and take 3–5 days. A rush order ships the same day for $10 and takes 2–3 days.</p></details>
-      <details><summary>Can I bring my own grips?</summary><p>Yes. Install is <span data-p="regripOwn">$5</span> per club or <span data-p="regripOwnBag">$40</span> for a full bag. Buy grips from us and labor drops to <span data-p="regripOurs">$3</span> per club or <span data-p="regripOursBag">$35</span> for a full bag.</p></details>
+    <div class="faq rv">
+      <details><summary>How fast will my clubs be ready?</summary><p>Next day with your own grips or grips we keep in stock (Tour Velvet and MCC). Special-order grips are ordered every Monday and Thursday and take 3–5 days. A rush order ships the same day for <span data-p="rush">$15</span> and takes 2–3 days.</p></details>
+      <details><summary>Can I bring my own grips?</summary><p>Yes. Install is <span data-p="regripOwn">$5</span> per club or <span data-p="regripOwnBag">$50</span> for a full bag of up to 14. Buy grips from us and labor drops to <span data-p="regripOurs">$4</span> per club or <span data-p="regripOursBag">$40</span> for a full bag.</p></details>
       <details><summary>Where do I drop off my clubs?</summary><p>Drop-off and pickup are by appointment at our shop in northwest Huntsville, or we can meet up around Huntsville and Madison. We send the address when you book.</p></details>
       <details><summary>How do I pay?</summary><p>Cash, Venmo, Cash App or Apple Cash at pickup.</p></details>
       <details><summary>Do my irons need a loft and lie check?</summary><p>Lofts and lies drift with play, especially on forged irons, and a club a couple of degrees off can push shots offline. A check takes about 20 minutes, and we show you the numbers before bending anything.</p></details>
@@ -238,11 +254,11 @@ form.req{padding:18px;display:grid;gap:14px}
       <div class="info">
         <div><span>Text or call</span><a class="js-text" href="sms:+12055889164">(205) 588-9164</a></div>
         <div><span>Email</span><a href="mailto:RocketCityClubWorks@gmail.com">RocketCityClubWorks@gmail.com</a></div>
-        <div><span>Replies</span><b>8am–5pm · send requests any time</b></div>
+        <div><span>Replies</span><b>Every day, 8am–5pm · send requests any time</b></div>
         <div><span>Where</span><b>Northwest Huntsville · by appointment</b></div>
       </div>
     </div>
-    <form class="card req" id="req" novalidate>
+    <form class="card req rv" id="req" novalidate>
       <div><label for="r-name">Name</label><input id="r-name" autocomplete="name" placeholder="Your name"></div>
       <div><label for="r-reach">Phone or email</label><input id="r-reach" autocomplete="tel" placeholder="(256) 555-0123"></div>
       <div><label for="r-svc">Service</label>
@@ -251,7 +267,7 @@ form.req{padding:18px;display:grid;gap:14px}
           <option>Repair (loose head, length, adapter)</option><option>Clean, refinish or paint fill</option><option>Buy grips or parts</option><option>Something else</option>
         </select></div>
       <div><label for="r-n">Number of clubs</label><input id="r-n" type="number" min="1" max="20" inputmode="numeric" placeholder="e.g. 13"></div>
-      <div class="full"><label for="r-notes">Details</label><textarea id="r-notes" placeholder="Grip or shaft you want, size, offer code, anything else"></textarea></div>
+      <div class="full"><label for="r-notes">Details</label><textarea id="r-notes" placeholder="Grip or shaft you want, size, anything else"></textarea></div>
       <div class="full acts"><button class="btn" type="submit">Send by text</button>
         <a class="btn out" id="r-mail" href="mailto:RocketCityClubWorks@gmail.com">Email instead</a></div>
       <p class="full err" id="r-err" hidden></p>
@@ -280,7 +296,7 @@ form.req{padding:18px;display:grid;gap:14px}
 <div class="bar">
   <div class="in">
     <a class="text js-text" href="sms:+12055889164"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Text Jackson</a>
-    <a class="alt" href="/menu/#quote">Get a price</a>
+    <a class="alt" href="/menu/#quote">Instant price</a>
   </div>
 </div>
 
@@ -289,18 +305,6 @@ form.req{padding:18px;display:grid;gap:14px}
 <script>
 (function(){
   var D = window.RCCW, S = window.RCCWsite;
-
-  // Offers come from prices.js
-  var list = document.getElementById("offer-list");
-  D.offers.list.forEach(function(o){
-    var row = document.createElement("div"); row.className = "of";
-    var t = document.createElement("div");
-    var b = document.createElement("b"); b.textContent = o.title;
-    var s = document.createElement("small"); s.textContent = o.note;
-    var c = document.createElement("code"); c.textContent = o.code;
-    t.appendChild(b); t.appendChild(s); row.appendChild(t); row.appendChild(c); list.appendChild(row);
-  });
-  document.getElementById("offer-end").textContent = D.offers.ends;
 
   // Request form: builds a text message and opens Messages
   var f = document.getElementById("req"), out = document.getElementById("r-out"), acts = document.getElementById("r-acts"),
