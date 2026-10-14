@@ -53,6 +53,31 @@ details.parts[open]>summary::after{transform:rotate(45deg)}
 details.parts .in{padding:0 18px 10px}
 details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
 
+/* search pickers */
+.pk{display:grid;gap:6px;position:relative}
+.pk-list{position:absolute;left:0;right:0;top:100%;z-index:20;max-height:320px;overflow:auto;background:var(--surface);border:1.5px solid var(--accent);border-radius:10px;box-shadow:0 18px 40px -18px rgba(0,0,0,.9)}
+.pk-item{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);padding:10px 12px;font:600 .95rem var(--body);cursor:pointer}
+.pk-item small{display:block;font-weight:500;color:var(--muted);font-size:.8rem}
+.pk-item:hover,.pk-item:focus{background:var(--tint);outline:none}
+.pk-extra{color:var(--accent)}
+.pk-none{margin:0;padding:10px 12px;color:var(--muted);font-size:.85rem}
+.pk-chosen{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pk-chosen b{flex:1;font-size:.95rem}
+.pk-chosen span{font-family:var(--mono);font-weight:600}
+.pk-change{background:none;border:0;color:var(--accent);font:600 .85rem var(--body);text-decoration:underline;cursor:pointer;min-height:36px}
+.pk-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.pk-opt label{font-size:.8rem;margin-bottom:4px}
+.srow{padding:12px;display:grid;gap:10px;background:var(--surface-2)}
+.srow-top{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+.seg2{display:grid;gap:8px}
+.pcols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:420px){.pcols{grid-template-columns:1fr}}
+.qform{display:grid;gap:10px;margin-top:14px;text-align:left}
+.qform label{color:var(--paper-ink)}
+.qform input,.qform textarea{background:#fff;color:var(--paper-ink);border-color:#C8D4CB}
+.hp{position:absolute;left:-9999px}
+.res .err{color:#B3261E;font-weight:600}
+.res .copy{text-align:center}
 /* instant price */
 .quote{border:1.5px solid var(--accent);padding:18px;background:linear-gradient(180deg,var(--surface-2),var(--surface) 40%)}
 .quote>h2{font-size:2.1rem;color:var(--accent);margin:0}
@@ -120,35 +145,49 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
   <div class="menu">
     <section class="card quote wide" id="quote" aria-labelledby="q-h">
       <h2 id="q-h">Instant price</h2>
-      <p>Labor plus any new parts at regular retail. Tape, solvent and epoxy are always included. Bundle deals apply automatically.</p>
-      <div class="qgrid">
+      <p>Pick your grips, shafts and options for a price now. Submit it as a work ticket and Jackson confirms the parts and final price before you pay.</p>
+      <p id="q-loading" class="fine" style="color:var(--muted)">Loading the parts catalog…</p>
+      <div class="qgrid" id="q-body" hidden>
         <div class="qf">
           <div class="grp">
             <b>Regrip</b>
-            <div class="line"><span>Clubs to regrip<small>Full-bag price from 10 clubs, up to 14</small></span>
+            <div class="line"><span>Clubs to regrip<small>Full-bag price from 10 clubs, up to 14 · putter below</small></span>
               <div class="step" data-k="rg" data-max="14"><button type="button" aria-label="Fewer clubs to regrip">−</button><output>0</output><button type="button" aria-label="More clubs to regrip">+</button></div></div>
-            <div><label for="q-grip">Grip</label><select id="q-grip"></select></div>
+            <div class="seg2" role="radiogroup" aria-label="Grips">
+              <label class="chk"><input type="radio" name="gmode" value="order" checked><span>Order grips for me<small>Grip at retail + parts fee · 3–4 business days</small></span></label>
+              <label class="chk"><input type="radio" name="gmode" value="own"><span>I'll bring my own grips<small>Same labor · ready next day</small></span></label>
+            </div>
+            <div id="q-grippick" hidden></div>
             <p class="nudge" id="n-rg" hidden></p>
+            <label class="chk"><input type="checkbox" id="q-putter"><span>Regrip my putter too<small>Putter grips are their own list · $5 install</small></span></label>
+            <div id="q-putterpick" hidden></div>
           </div>
           <div class="grp">
             <b>Loft &amp; lie</b>
             <div><label for="q-loft">Irons and wedges</label>
               <select id="q-loft"><option value="">No thanks</option><option value="check">Check only</option><option value="adjust">Check &amp; adjust</option></select></div>
-            <div class="line" id="q-loft-n" hidden><span>Clubs to check &amp; adjust<small>Set price from 9 clubs, up to 12</small></span>
-              <div class="step" data-k="ll" data-max="14" data-start="8"><button type="button" aria-label="Fewer clubs to adjust">−</button><output>8</output><button type="button" aria-label="More clubs to adjust">+</button></div></div>
-            <p class="nudge" id="n-ll" hidden></p>
+            <div class="line" id="q-loft-n" hidden><span>Clubs to check &amp; adjust<small>Set price from 10 clubs, up to 12</small></span>
+              <div class="step" data-k="ll" data-max="14"><button type="button" aria-label="Fewer clubs to adjust">−</button><output>8</output><button type="button" aria-label="More clubs to adjust">+</button></div></div>
           </div>
           <div class="grp">
             <b>Reshaft</b>
-            <div class="line"><span>Irons or wedges, steel</span><div class="step" data-k="rs" data-max="14"><button type="button" aria-label="Fewer steel reshafts">−</button><output>0</output><button type="button" aria-label="More steel reshafts">+</button></div></div>
-            <div class="line"><span>Irons or wedges, graphite</span><div class="step" data-k="rgph" data-max="14"><button type="button" aria-label="Fewer graphite reshafts">−</button><output>0</output><button type="button" aria-label="More graphite reshafts">+</button></div></div>
-            <div class="line"><span>Driver, wood or hybrid</span><div class="step" data-k="rw" data-max="6"><button type="button" aria-label="Fewer wood reshafts">−</button><output>0</output><button type="button" aria-label="More wood reshafts">+</button></div></div>
+            <p class="fine" style="margin:0;color:var(--muted)">Add a row for each kind of club. Grips for reshafted clubs go in the regrip count above.</p>
+            <div id="q-shafts" style="display:grid;gap:10px"></div>
+            <button type="button" class="btn out" id="q-addshaft" style="min-height:44px">+ Add shafts</button>
             <p class="nudge" id="n-rs" hidden></p>
           </div>
           <div class="grp">
             <b>Paint fill</b>
-            <div class="line"><span>Clubs to paint fill<small>Set price from 8 clubs, up to 10</small></span><div class="step" data-k="pf" data-max="14"><button type="button" aria-label="Fewer clubs to paint fill">−</button><output>0</output><button type="button" aria-label="More clubs to paint fill">+</button></div></div>
-            <p class="nudge" id="n-cl" hidden></p>
+            <label class="chk"><input type="checkbox" id="q-paint"><span>Add paint fill<small>$8 a club, set of up to 10 $60 · any colors</small></span></label>
+            <div id="q-paintbox" hidden style="display:grid;gap:10px">
+              <div class="line"><span>Clubs to paint fill</span>
+                <div class="step" data-k="pf" data-max="14"><button type="button" aria-label="Fewer clubs to paint fill">−</button><output>0</output><button type="button" aria-label="More clubs to paint fill">+</button></div></div>
+              <div class="pcols">
+                <div><label for="pf-num">Numbers</label><select id="pf-num"></select></div>
+                <div><label for="pf-logo">Logo</label><select id="pf-logo"></select></div>
+                <div><label for="pf-stamp">Stamping / text</label><select id="pf-stamp"></select></div>
+              </div>
+            </div>
           </div>
           <div class="grp" id="q-parts" hidden>
             <b>Parts &amp; timing</b>
@@ -162,8 +201,18 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
           <div id="q-lines"><p class="empty">Add clubs to see your price.</p></div>
           <div class="tot"><b>Total</b><span id="q-total">$0</span></div>
           <div class="ln" style="padding-top:8px"><span>Ready in</span><span id="q-ready">—</span></div>
-          <p class="fine" id="q-fine">Before sales tax on parts. Final price confirmed by text before any work starts.</p>
-          <a class="btn" id="q-send" href="sms:+12055889164">Text this quote to book</a>
+          <p class="fine">Before sales tax on parts. Jackson confirms parts, fit and the final price before you pay.</p>
+          <button class="btn" id="q-submit" type="button" disabled>Submit for review</button>
+          <form id="q-form" class="qform" hidden novalidate>
+            <div><label for="f-name">Name</label><input id="f-name" autocomplete="name" required></div>
+            <div><label for="f-phone">Mobile number</label><input id="f-phone" type="tel" autocomplete="tel" placeholder="(256) 555-0123"></div>
+            <div><label for="f-email">Email</label><input id="f-email" type="email" autocomplete="email"></div>
+            <div><label for="f-note">Anything else?</label><textarea id="f-note" placeholder="Your height, current grip size, club models, timing…"></textarea></div>
+            <div class="hp" aria-hidden="true"><label for="f-website">Website</label><input id="f-website" tabindex="-1" autocomplete="off"></div>
+            <button class="btn" type="submit">Send work ticket</button>
+            <p id="q-fout" class="fine" aria-live="polite"></p>
+          </form>
+          <a class="copy" id="q-send" href="sms:+12055889164">Or text this quote</a>
           <button class="copy" type="button" id="q-copy">Copy quote</button>
         </div>
       </div>
@@ -254,6 +303,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
 })();
 </script>
 <script src="/assets/site.js"></script>
+<script src="/assets/quote.js"></script>
 <script>
 (function(){
   var D = window.RCCW, R = D.rules, B = D.bundles, S = window.RCCWsite, $ = S.money;
@@ -275,114 +325,6 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
   // A chip pointing at a closed <details> opens it
   chips.forEach(function(a){ a.addEventListener("click", function(){ var t = document.querySelector(a.getAttribute("href")); if (t && t.tagName === "DETAILS") t.open = true; }); });
 
-  // ---------- quote builder ----------
-  var q = { rg: 0, ll: 8, rs: 0, rgph: 0, rw: 0, pf: 0 };
-  var gripSel = document.getElementById("q-grip");
-  gripSel.appendChild(new Option("My own grips (" + $(R.regripOwn) + "/club labor)", "own"));
-  D.grips.forEach(function(g, i){ gripSel.appendChild(new Option(g.name + " · " + $(g.price), String(i))); });
-  gripSel.value = String(D.grips.findIndex(function(g){ return /Tour Velvet$/.test(g.name); }));
-
-  document.querySelectorAll(".step").forEach(function(st){
-    var k = st.getAttribute("data-k"), max = +st.getAttribute("data-max"), out = st.querySelector("output"), b = st.querySelectorAll("button");
-    function set(n){ q[k] = Math.max(0, Math.min(max, n)); out.textContent = q[k]; calc(); }
-    b[0].addEventListener("click", function(){ set(q[k] - 1); });
-    b[1].addEventListener("click", function(){ set(q[k] + 1); });
-  });
-  ["q-grip", "q-rush", "q-loft"].forEach(function(id){ document.getElementById(id).addEventListener("change", calc); });
-
-  // Per-club price capped at a bundle price for up to `max` clubs; clubs past `max` at the per-club rate.
-  function bundle(n, per, cap, max){ return n <= max ? Math.min(n * per, cap) : cap + (n - max) * per; }
-  function atCap(per, cap){ return Math.ceil(cap / per); }   // clubs where the bundle price kicks in
-  function r2(n){ return Math.round(n * 100) / 100; }
-  function nudge(id, text){ var e = document.getElementById(id); e.hidden = !text; e.textContent = text || ""; }
-
-  var lastText = "";
-  function calc(){
-    var lines = [], total = 0, msg = [], saves = [];
-    function add(label, amt, off){ lines.push([label, amt, off]); total += amt; }
-    var g = gripSel.value === "own" ? null : D.grips[+gripSel.value];
-    var loft = document.getElementById("q-loft").value;
-    document.getElementById("q-loft-n").hidden = loft !== "adjust";
-    var partsOrdered = (q.rg > 0 && g) || q.rs + q.rgph + q.rw > 0;
-    document.getElementById("q-parts").hidden = !partsOrdered;
-    var rush = partsOrdered && document.getElementById("q-rush").checked, gripParts = 0;
-
-    // Regrip
-    var per = g ? R.regripOurs : R.regripOwn, cap = g ? R.regripOursBag : R.regripOwnBag, need = atCap(per, cap);
-    var fullBag = q.rg >= need, launchBag = false;
-    if (q.rg > 0) {
-      add("Regrip labor, " + q.rg + " club" + (q.rg > 1 ? "s" : "") + (fullBag ? " (full bag)" : ""), bundle(q.rg, per, cap, R.bagMax));
-      if (g) { gripParts = r2(q.rg * g.price); add(q.rg + " × " + g.name, gripParts); }
-      if (g && fullBag && S.launchLive) { launchBag = true; add("Launch full-bag price", -(R.regripOursBag - B.launchBag.price), true); }
-      msg.push("Regrip " + q.rg + " club" + (q.rg > 1 ? "s" : "") + ", " + (g ? g.name : "my own grips") + (rush ? " (rush)" : ""));
-    }
-    nudge("n-rg", q.rg > 0 && q.rg < need && need - q.rg <= 4
-      ? "Add " + (need - q.rg) + " more club" + (need - q.rg > 1 ? "s" : "") + " and the full-bag price kicks in: up to 14 clubs for " + $(g && S.launchLive ? B.launchBag.price : cap) + "." : "");
-
-    // Loft & lie
-    var llNeed = atCap(R.loftPer, R.loftSet);
-    if (loft === "check") {
-      add("Loft & lie check", R.loftCheck);
-      if (launchBag) add("Free loft & lie check with launch full bag", -R.loftCheck, true);
-      msg.push("Loft & lie check");
-    }
-    if (loft === "adjust" && q.ll > 0) {
-      add("Loft & lie adjust, " + q.ll + " clubs" + (q.ll >= llNeed ? " (set)" : ""), bundle(q.ll, R.loftPer, R.loftSet, R.loftSetMax));
-      msg.push("Loft & lie check & adjust, " + q.ll + " clubs");
-    }
-    nudge("n-ll", loft === "adjust" && q.ll > 0 && q.ll < llNeed ? "Adjusting " + llNeed + " or more clubs? The set price is " + $(R.loftSet) + " for up to " + R.loftSetMax + "." : "");
-
-    // Reshaft
-    var irons = q.rs + q.rgph, set = irons >= R.ironSetMin, shafts = irons + q.rw;
-    if (q.rs) { add("Reshaft steel iron/wedge × " + q.rs + (set ? " (set price)" : ""), q.rs * (set ? R.ironSetSteel : R.reshaftSteel)); msg.push("Reshaft steel iron/wedge × " + q.rs); }
-    if (q.rgph) { add("Reshaft graphite iron/wedge × " + q.rgph + (set ? " (set price)" : ""), q.rgph * (set ? R.ironSetGraphite : R.reshaftGraphite)); msg.push("Reshaft graphite iron/wedge × " + q.rgph); }
-    if (q.rw) { add("Reshaft driver/wood/hybrid × " + q.rw, q.rw * R.reshaftWood); msg.push("Reshaft driver/wood/hybrid × " + q.rw); }
-    nudge("n-rs", irons > 0 && !set && R.ironSetMin - irons <= 3 ? "Add " + (R.ironSetMin - irons) + " more iron" + (R.ironSetMin - irons > 1 ? "s" : "") + " for set pricing: " + $(R.ironSetSteel) + " steel, " + $(R.ironSetGraphite) + " graphite per club." : "");
-
-    // Paint fill
-    var pfNeed = atCap(R.paintPer, R.paintSet), cn = [];
-    if (q.pf) { add("Paint fill, " + q.pf + " clubs" + (q.pf >= pfNeed ? " (set)" : ""), bundle(q.pf, R.paintPer, R.paintSet, 10)); msg.push("Paint fill " + q.pf + " clubs"); }
-    if (q.pf && q.pf < pfNeed && pfNeed - q.pf <= 3) cn.push("Paint fill " + pfNeed + "+ clubs for the " + $(R.paintSet) + " set price.");
-    nudge("n-cl", cn.join(" "));
-
-    // Season tune-up
-    var tune = q.rg >= 10 && loft === "adjust" && q.ll >= 6;
-    if (tune) { add("Season tune-up bundle", -B.tuneUpOff, true); saves.push("Season tune-up"); }
-    if (launchBag) saves.push("Launch full-bag price");
-
-    // Parts fee or rush, and when it will be ready
-    if (partsOrdered) {
-      if (rush) { add("Rush: overnight parts", R.rush); msg.push("Rush overnight parts"); }
-      else if (gripParts >= R.partsFreeOver) add("Parts fee (free at $" + R.partsFreeOver + "+ in parts)", 0);
-      else add("Parts fee" + (shafts ? " (free if parts reach $" + R.partsFreeOver + ")" : ""), R.partsFee);
-    }
-    var ready = !partsOrdered ? "Next day" : rush ? "About " + R.rushDays : irons >= R.ironSetMin ? "4–5 business days" : shafts ? "3–5 business days" : R.partsDays;
-    document.getElementById("q-ready").textContent = lines.length ? ready : "—";
-
-    total = r2(total);
-    var box = document.getElementById("q-lines"); box.textContent = "";
-    if (!lines.length) box.appendChild(el("p", "empty", "Add clubs to see your price."));
-    lines.forEach(function(l){
-      var d = el("div", "ln" + (l[2] ? " off" : ""));
-      d.appendChild(el("span", null, l[0]));
-      d.appendChild(el("span", null, l[1] === 0 ? "Free" : (l[1] < 0 ? "−" : "") + $(Math.abs(l[1]))));
-      box.appendChild(d);
-    });
-    if (shafts) { var d = el("div", "ln"); d.appendChild(el("span", null, "Shafts (" + shafts + ") and ferrules")); d.appendChild(el("span", null, "+ parts")); box.appendChild(d); }
-    document.getElementById("q-total").textContent = $(total) + (shafts ? "+" : "");
-    document.getElementById("q-fine").textContent = (shafts ? "Plus the shafts you pick (see shaft prices below). " : "") +
-      "Before sales tax on parts. Final price confirmed by text before any work starts.";
-
-    var text = ["Hi Jackson! Quote from the website:"].concat(msg.map(function(m){ return "• " + m; }));
-    if (saves.length) text.push("Deals: " + saves.join(", "));
-    text.push("Estimate: " + $(total) + (shafts ? " + shafts" : ""), "Ready in: " + ready, "(" + S.ref + ")");
-    lastText = msg.length ? text.join("\n") : "Hi Jackson! I'd like a quote. (" + S.ref + ")";
-    document.getElementById("q-send").href = S.smsHref(lastText);
-  }
-  document.getElementById("q-copy").addEventListener("click", function(){
-    var b = this; try { navigator.clipboard.writeText(lastText).then(function(){ b.textContent = "Copied. Paste it into a text or email."; }); } catch (e) {}
-  });
-  calc();
 })();
 </script>
 </body>
