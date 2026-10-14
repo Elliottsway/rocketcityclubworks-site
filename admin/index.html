@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shop Admin · Rocket City ClubWorks</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#091E13">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Big+Shoulders+Display:wght@800;900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+/* Shop admin: Cloudflare Access protects this page and the /api/admin endpoints. */
+body{padding-bottom:0}
+.adm{padding:18px 0 40px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 16px}
+.tabs button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:600 .88rem var(--body);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.list{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;text-decoration:none}
+.row b{font-family:var(--mono)}
+.row small{display:block;color:var(--muted)}
+.st{font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:var(--tint);color:var(--accent);white-space:nowrap}
+.st.submitted{background:#4A3B10;color:#FFD66B}
+.st.paid{background:#123E2A;color:#7CC795}
+.det{display:grid;gap:14px}
+@media (min-width:980px){.det{grid-template-columns:1fr 1.3fr;align-items:start}}
+.box{padding:16px}
+.box h2{font-size:1.3rem;color:var(--accent);margin:0 0 10px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:.95rem}
+.kv span{color:var(--muted)}
+.kv a{color:var(--accent)}
+/* price lines: one row per line on desktop, stacked on phones */
+.lhead,.lrow{display:grid;grid-template-columns:minmax(0,1fr) 64px 92px 104px 36px 36px;gap:6px;align-items:center}
+.lhead{font:600 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 2px 4px}
+.lrow{padding:6px 0;border-top:1px solid var(--line)}
+.lrow input,.lrow select{min-height:42px;padding:8px}
+.lrow .tx{display:flex;justify-content:center}
+.lrow .tx input{width:22px;min-height:0}
+.lrow .x{background:none;border:0;color:#FF9B8F;font-size:1.3rem;cursor:pointer;min-height:42px}
+@media (max-width:640px){
+  .lhead{display:none}
+  .lrow{grid-template-columns:64px 1fr 1fr 40px 36px}
+  .lrow .d{grid-column:1/-1}
+}
+.addrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.addrow button,.small{min-height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--dots);background:var(--surface-2);color:var(--ink);font:600 .85rem var(--body);cursor:pointer}
+.totals{margin-top:12px;display:grid;gap:4px;font-family:var(--mono)}
+.totals div{display:flex;justify-content:space-between}
+.totals .big{font-size:1.2rem;color:var(--accent)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:.92rem}
+.hist small{display:block;font-family:var(--mono);font-size:.66rem;color:var(--muted);text-transform:uppercase}
+.spec{margin:0;padding-left:18px}
+.msgline{color:var(--muted);font-size:.9rem}
+#signout[hidden]{display:none!important}
+#auth{margin-inline:16px!important}@media (min-width:460px){#auth{margin-inline:auto!important}}
+#signout{display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;background:none;color:inherit;font:700 .9rem var(--body);cursor:pointer}
+@media (max-width:400px){#signout{display:inline-flex}}
+.err{color:#FF9B8F;font-weight:600}.ok{color:var(--accent);font-weight:600}
+@media (max-width:640px){td.m input{width:76px}td.n input{width:52px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="mark" href="/admin/" aria-label="Admin home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
+  <nav aria-label="Main"><a href="/admin/">Tickets</a><a href="/">Site</a></nav>
+  <div class="cta"><button class="ghost" id="signout" type="button">Sign out</button></div>
+</div></header>
+<main class="wrap adm">
+  <form id="auth" class="card box" hidden style="max-width:420px;margin:24px auto;display:grid;gap:10px;box-sizing:border-box">
+    <h1 style="font-size:2rem;margin:0">Shop login</h1>
+    <label for="pw">Passphrase</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Sign in</button>
+    <p id="pwmsg" class="err" role="alert"></p>
+  </form>
+
+  <section id="v-list">
+    <h1 style="font-size:2.4rem">Work tickets</h1>
+    <div class="tabs" id="tabs">
+      <button type="button" data-s="open" aria-pressed="true">Open</button><button type="button" data-s="submitted">Needs pricing</button>
+      <button type="button" data-s="awaiting_approval">Waiting on customer</button><button type="button" data-s="paid">Paid · order parts</button>
+      <button type="button" data-s="in_progress">On the bench</button><button type="button" data-s="ready">Ready</button><button type="button" data-s="all">All</button>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section id="v-det" hidden>
+    <a href="/admin/" class="small" style="display:inline-flex;align-items:center;text-decoration:none;margin-bottom:10px">← All tickets</a>
+    <h1 id="d-num" style="font-size:2.4rem">RC-</h1>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 14px"><span class="st" id="d-st"></span><span class="msgline" id="d-sum"></span></div>
+    <div class="det">
+      <div style="display:grid;gap:14px">
+        <div class="card box"><h2>Customer</h2><div class="kv" id="d-cust"></div>
+          <div class="acts"><button class="small" id="d-copy" type="button">Copy ticket link</button><a class="small" id="d-text" href="#" style="display:inline-flex;align-items:center;text-decoration:none">Text link to customer</a></div></div>
+        <div class="card box"><h2>They asked for</h2><ul class="spec" id="d-spec"></ul><p class="msgline" id="d-cnote"></p></div>
+        <div class="card box"><h2>History</h2><ul class="hist" id="d-hist"></ul></div>
+      </div>
+      <div style="display:grid;gap:14px">
+        <div class="card box">
+          <h2>Price</h2>
+          <div class="lhead"><span>Item</span><span>Qty</span><span>Each $</span><span>Type</span><span>Tax</span><span></span></div>
+          <div id="d-lines"></div>
+          <div class="addrow">
+            <button type="button" data-k="labor">+ Labor</button><button type="button" data-k="part">+ Part</button><button type="button" data-k="fee">+ Fee</button><button type="button" data-k="discount">+ Discount</button>
+            <label style="display:flex;align-items:center;gap:6px;margin:0 0 0 auto;font-size:.85rem">Tax on parts % <input id="d-tax" type="number" step="0.01" min="0" max="20" style="width:80px;min-height:38px"></label>
+          </div>
+          <div class="totals" id="d-tot"></div>
+        </div>
+        <div class="card box">
+          <h2>Note to customer</h2>
+          <textarea id="d-note" placeholder="Shown on their ticket: what you confirmed, changed or recommend."></textarea>
+          <label for="d-msg" style="margin-top:10px">Message (adds to their history)</label>
+          <input id="d-msg" placeholder="Optional: e.g. Your grips are in, starting tonight">
+          <div class="acts">
+            <button class="btn" id="d-send" type="button">Save &amp; send for approval</button>
+            <button class="btn out" id="d-save" type="button">Save only</button>
+          </div>
+          <div class="acts">
+            <label for="d-status" class="sr">Status</label>
+            <select id="d-status" style="max-width:240px">
+              <option value="submitted">Needs pricing</option><option value="awaiting_approval">Waiting on customer</option><option value="approved">Approved, not paid</option>
+              <option value="paid">Paid</option><option value="parts_ordered">Parts ordered</option><option value="in_progress">On the bench</option>
+              <option value="ready">Ready for pickup</option><option value="completed">Picked up</option><option value="cancelled">Cancelled</option>
+            </select>
+            <button class="small" id="d-setst" type="button">Update status</button>
+          </div>
+          <p id="d-out" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  var $ = function(i){ return document.getElementById(i); };
+  var LABEL = { submitted: 'Needs pricing', awaiting_approval: 'Waiting on customer', approved: 'Approved, not paid', paid: 'Paid · order parts', parts_ordered: 'Parts ordered', in_progress: 'On the bench', ready: 'Ready', completed: 'Picked up', cancelled: 'Cancelled' };
+  var money = function(c){ return (c < 0 ? '−$' : '$') + (Math.abs(c) / 100).toFixed(2); };
+  function el(tag, text, cls){ var e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; }
+  function api(path, opts){
+    return fetch('/api/admin' + path, opts).then(function(r){
+      if (r.status === 401) { $('auth').hidden = false; $('auth').style.display = 'grid'; $('signout').hidden = true; $('v-list').hidden = true; $('v-det').hidden = true; $('pw').focus(); throw new Error('auth'); }
+      return r.json().then(function(j){ if (!r.ok) throw new Error(j.error || 'Error'); return j; });
+    });
+  }
+  var id = new URLSearchParams(location.search).get('t');
+  $('auth').style.display = 'none';
+  $('auth').addEventListener('submit', function(e){
+    e.preventDefault(); $('pwmsg').textContent = '';
+    fetch('/api/admin-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) })
+      .then(function(r){ if (r.ok) location.reload(); else $('pwmsg').textContent = 'That passphrase did not match.'; })
+      .catch(function(){ $('pwmsg').textContent = 'Could not reach the server.'; });
+  });
+  $('signout').addEventListener('click', function(){
+    fetch('/api/admin-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logout: true }) })
+      .finally(function(){ location.href = '/admin/'; });
+  });
+
+  // ---------- list ----------
+  function loadList(s){
+    document.querySelectorAll('#tabs button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.s === s)); });
+    api('/tickets?status=' + s).then(function(j){
+      var L = $('list'); L.textContent = '';
+      if (!j.tickets.length) L.appendChild(el('p', 'Nothing here.', 'msgline'));
+      j.tickets.forEach(function(t){
+        var a = el('a', null, 'card row'); a.href = '/admin/?t=' + t.id;
+        a.appendChild(el('b', t.label));
+        var mid = el('div'); mid.appendChild(el('span', t.name)); mid.appendChild(el('small', new Date(t.updated_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + money(t.total_cents) + (t.paid_cents ? ' · paid ' + money(t.paid_cents) : ''))); a.appendChild(mid);
+        a.appendChild(el('span', LABEL[t.status] || t.status, 'st ' + t.status)); L.appendChild(a);
+      });
+    }).catch(function(){});
+  }
+  document.querySelectorAll('#tabs button').forEach(function(b){ b.addEventListener('click', function(){ loadList(b.dataset.s); }); });
+
+  // ---------- detail ----------
+  var cur = null, lines = [];
+  function lineRow(l, i){
+    var row = el('div', null, 'lrow');
+    var di = el('input', null, 'd'); di.value = l.desc; di.setAttribute('aria-label', 'Item'); di.oninput = function(){ l.desc = di.value; }; row.appendChild(di);
+    var qi = el('input'); qi.type = 'number'; qi.min = 1; qi.value = l.qty; qi.setAttribute('aria-label', 'Quantity'); qi.oninput = function(){ l.qty = +qi.value || 1; totals(); }; row.appendChild(qi);
+    var mi = el('input'); mi.type = 'number'; mi.step = '0.01'; mi.value = (l.unit_cents / 100).toFixed(2); mi.setAttribute('aria-label', 'Price each'); mi.oninput = function(){ l.unit_cents = Math.round((+mi.value || 0) * 100); totals(); }; row.appendChild(mi);
+    var ks = el('select'); ks.setAttribute('aria-label', 'Type'); ['labor', 'part', 'fee', 'discount'].forEach(function(x){ ks.appendChild(new Option(x, x)); }); ks.value = l.kind; ks.onchange = function(){ l.kind = ks.value; if (l.kind === 'part') { l.taxable = true; renderLines(); } totals(); }; row.appendChild(ks);
+    var t = el('label', null, 'tx'); var tc = el('input'); tc.type = 'checkbox'; tc.checked = !!l.taxable; tc.setAttribute('aria-label', 'Taxable'); tc.onchange = function(){ l.taxable = tc.checked; totals(); }; t.appendChild(tc); row.appendChild(t);
+    var xb = el('button', '×', 'x'); xb.type = 'button'; xb.setAttribute('aria-label', 'Remove line'); xb.onclick = function(){ lines.splice(i, 1); renderLines(); }; row.appendChild(xb);
+    return row;
+  }
+  function renderLines(){ var B = $('d-lines'); B.textContent = ''; lines.forEach(function(l, i){ B.appendChild(lineRow(l, i)); }); totals(); }
+  function totals(){
+    var sub = 0, tx = 0, rate = (+$('d-tax').value || 0) / 100;
+    lines.forEach(function(l){ var t = l.qty * l.unit_cents; sub += t; if (l.taxable) tx += t; });
+    var tax = Math.round(Math.max(0, tx) * rate), tot = Math.max(0, sub + tax), T = $('d-tot'); T.textContent = '';
+    [['Subtotal', sub], ['Tax', tax], ['Total', tot], ['Paid', cur ? cur.paid_cents : 0], ['Due', tot - (cur ? cur.paid_cents : 0)]].forEach(function(x, i){
+      var r = el('div', null, i === 2 ? 'big' : ''); r.appendChild(el('span', x[0])); r.appendChild(el('span', money(x[1]))); T.appendChild(r);
+    });
+  }
+  document.querySelectorAll('.addrow button').forEach(function(b){ b.addEventListener('click', function(){
+    var k = b.dataset.k; lines.push({ desc: k === 'part' ? 'Part' : k === 'fee' ? 'Parts fee' : k === 'discount' ? 'Discount' : 'Labor', qty: 1, unit_cents: k === 'fee' ? 1000 : 0, kind: k, taxable: k === 'part' }); renderLines();
+  }); });
+  $('d-tax').addEventListener('input', totals);
+
+  function showTicket(t){
+    cur = t; lines = t.lines.map(function(l){ return Object.assign({}, l); });
+    $('v-list').hidden = true; $('v-det').hidden = false;
+    $('d-num').textContent = t.number; $('d-st').textContent = LABEL[t.status] || t.status; $('d-st').className = 'st ' + t.status;
+    $('d-sum').textContent = 'Version ' + t.version + ' · ' + money(t.total_cents) + (t.paid_cents ? ' · paid ' + money(t.paid_cents) : '');
+    var C = $('d-cust'); C.textContent = '';
+    [['Name', t.name], ['Phone', t.phone], ['Email', t.email], ['Came from', t.ref || 'web'], ['Created', new Date(t.created_at).toLocaleString()]].forEach(function(x){
+      if (!x[1]) return; C.appendChild(el('span', x[0]));
+      var v = x[0] === 'Phone' ? Object.assign(el('a', x[1]), { href: 'sms:' + x[1] }) : x[0] === 'Email' ? Object.assign(el('a', x[1]), { href: 'mailto:' + x[1] }) : el('b', x[1]);
+      C.appendChild(v);
+    });
+    var link = location.origin + '/ticket/?t=' + t.id;
+    $('d-text').href = 'sms:' + (t.phone || '') + '?&body=' + encodeURIComponent('Hi ' + t.name.split(' ')[0] + ', your ClubWorks work ticket ' + t.number + ': ' + link);
+    $('d-copy').onclick = function(){ navigator.clipboard && navigator.clipboard.writeText(link); this.textContent = 'Copied'; };
+    var S = $('d-spec'); S.textContent = ''; ((t.spec && t.spec.summary) || []).forEach(function(s){ S.appendChild(el('li', s)); });
+    $('d-cnote').textContent = t.customer_note ? 'Customer note: ' + t.customer_note : '';
+    var H = $('d-hist'); H.textContent = '';
+    t.events.slice().reverse().forEach(function(e){ var li = el('li'); li.appendChild(el('small', new Date(e.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + e.who + ' · ' + e.kind)); li.appendChild(el('span', e.kind === 'status' ? (LABEL[e.text] || e.text) : e.text)); H.appendChild(li); });
+    $('d-note').value = t.shop_note || ''; $('d-msg').value = '';
+    $('d-tax').value = +(t.tax_rate * 100).toFixed(3);
+    $('d-status').value = t.status;
+    renderLines();
+  }
+  function save(extra){
+    var out = $('d-out'); out.className = ''; out.textContent = 'Saving…';
+    var body = Object.assign({ version: cur.version, lines: lines, tax_rate: (+$('d-tax').value || 0) / 100, shop_note: $('d-note').value }, extra);
+    if ($('d-msg').value.trim()) body.message = $('d-msg').value.trim();
+    api('/tickets/' + encodeURIComponent(cur.id), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function(t){ showTicket(t); out.className = 'ok'; out.textContent = extra && extra.send_for_approval ? 'Sent. Text them the link so they can approve and pay.' : 'Saved.'; })
+      .catch(function(e){ out.className = 'err'; out.textContent = e.message; });
+  }
+  $('d-save').addEventListener('click', function(){ save({}); });
+  $('d-send').addEventListener('click', function(){ save({ send_for_approval: true }); });
+  $('d-setst').addEventListener('click', function(){ save({ status: $('d-status').value }); });
+
+  if (id) api('/tickets/' + encodeURIComponent(id)).then(showTicket).catch(function(e){ if (e.message !== 'auth') { $('v-det').hidden = true; $('list').textContent = e.message; } });
+  else loadList('open');
+})();
+</script>
+</body>
+</html>
