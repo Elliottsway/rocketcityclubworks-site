@@ -138,12 +138,15 @@ window.RCCW = {
       { name: "Fujikura Ventus Velocore+ Hybrid", price: 200.00 }
     ]},
     { id: "adapters", title: "Adapters", items: [
+      { name: "Titleist SureFit", note: "910, 913, 915", price: 19.99 },
+      { name: "Mizuno", note: "Quick Switch, ST-series drivers", price: "from $19.99" },
+      { name: "TaylorMade", note: "Driver, fairway & Rescue", price: "from $19.99" },
       { name: "Callaway", note: "Driver, fairway, hybrid", price: 26.99 },
-      { name: "Ping", note: "G410, G425, G430, G440", price: 26.99 },
+      { name: "Ping", note: "G30 through G440", price: 26.99 },
       { name: "Srixon ZXi", price: 26.99 },
-      { name: "Cobra", note: ".335 and .370", price: 28.99 },
+      { name: "Cobra", note: "Incl. FutureFit33", price: 28.99 },
       { name: "PXG", price: 30.00 },
-      { name: "TaylorMade, Titleist & others", price: "Quote" }
+      { name: "Tour Edge & others", note: "We'll source it", price: "Quote" }
     ]}
   ],
 

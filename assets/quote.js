@@ -11,7 +11,38 @@
   function bundle(n, per, cap, max){ return n <= max ? Math.min(n * per, cap) : cap + (n - max) * per; }
   function atCap(per, cap){ return Math.ceil(cap / per); }
   var CAT = { grips: [], shafts: [] };
-  var ADAPTERS = D.shafts.filter(function(s){ return s.id === 'adapters'; })[0].items.filter(function(a){ return typeof a.price === 'number'; });
+  // Shaft adapters (sleeves) from the GolfWorks 2026 booklet, retail. "fits" is the head list GolfWorks gives;
+  // customers also name their head so Jackson can confirm the sleeve before ordering.
+  var ADAPTERS = [
+    { brand: 'TaylorMade', id: 'TM0023', name: 'TaylorMade driver/fairway adapter', fits: 'Qi10, Stealth, SIM, M1–M6, R15, SLDR', use: 'wood', price: 24.99 },
+    { brand: 'TaylorMade', id: 'TM0030', name: 'TaylorMade Rescue adapter', fits: 'Stealth, SIM2, GAPR, M1, M3, R15, RBZ Rescue', use: 'hybrid', price: 22.99 },
+    { brand: 'TaylorMade', id: 'BB9054', name: 'TaylorMade R1 driver adapter (GolfWorks)', fits: 'R1 driver', use: 'driver', price: 19.99 },
+    { brand: 'Titleist', id: 'BB9058', name: 'Titleist SureFit adapter (GolfWorks)', fits: '913 & 915 drivers, 910 driver & fairways', use: 'wood', price: 19.99 },
+    { brand: 'Callaway', id: 'CA0020', name: 'Callaway Opti-Fit driver/fairway adapter', fits: 'Most Callaway adjustable drivers & fairways', use: 'wood', price: 26.99 },
+    { brand: 'Callaway', id: 'CA0029', name: 'Callaway OptiFit 4 fairway adapter (2026+)', fits: 'Quantum and 2026+ fairways', use: 'fairway', price: 26.99 },
+    { brand: 'Callaway', id: 'CA0024', name: 'Callaway Epic Flash fairway adapter', fits: 'Epic Flash & Epic Flash Sub Zero fairways', use: 'fairway', price: 26.99 },
+    { brand: 'Callaway', id: 'CA0025', name: 'Callaway Opti-Fit hybrid adapter', fits: 'Callaway adjustable hybrids', use: 'hybrid', price: 26.99 },
+    { brand: 'Callaway', id: 'CA0021', name: 'Callaway Big Bertha Alpha hybrid adapter', fits: 'Big Bertha Alpha hybrids', use: 'hybrid', price: 26.99 },
+    { brand: 'Ping', id: 'PGC016', name: 'Ping G440 driver/fairway adapter', fits: 'G440 drivers & fairways', use: 'wood', price: 26.99 },
+    { brand: 'Ping', id: 'PGC017', name: 'Ping G440 hybrid adapter', fits: 'G440 hybrids', use: 'hybrid', price: 26.99 },
+    { brand: 'Ping', id: 'PGC005', name: 'Ping G410/G425/G430 driver/fairway adapter', fits: 'G410, G425, G430 drivers & fairways', use: 'wood', price: 26.99 },
+    { brand: 'Ping', id: 'PGC006', name: 'Ping G410/G425/G430 hybrid adapter', fits: 'G410, G425, G430 hybrids', use: 'hybrid', price: 26.99 },
+    { brand: 'Ping', id: 'PGC002', name: 'Ping G-series adapter', fits: 'G30, G, G400 and earlier adjustable Ping heads', use: 'wood', price: 26.99 },
+    { brand: 'Cobra', id: 'CB9042', name: 'Cobra FutureFit33 driver/fairway adapter', fits: 'FutureFit33 drivers & fairways', use: 'wood', price: 28.99 },
+    { brand: 'Cobra', id: 'CB9043', name: 'Cobra FutureFit33 hybrid adapter', fits: 'FutureFit33 hybrids', use: 'hybrid', price: 28.99 },
+    { brand: 'Cobra', id: 'CB9040', name: 'Cobra driver/fairway adapter (.335)', fits: 'MyFly-era Cobra drivers & fairways', use: 'wood', price: 28.99 },
+    { brand: 'Cobra', id: 'CB9041', name: 'Cobra hybrid adapter', fits: 'MyFly-era Cobra hybrids', use: 'hybrid', price: 28.99 },
+    { brand: 'Mizuno', id: 'BB9133', name: 'Mizuno ST-Z / ST-G driver adapter (GolfWorks)', fits: 'ST-series drivers', use: 'driver', price: 21.99 },
+    { brand: 'Mizuno', id: 'BB9072', name: 'Mizuno Quick Switch adapter (GolfWorks)', fits: 'JPX 850 driver', use: 'driver', price: 19.99 },
+    { brand: 'Srixon', id: 'SG1004', name: 'Srixon ZXi adapter (.335)', fits: 'ZXi drivers & fairways', use: 'wood', price: 26.99 },
+    { brand: 'PXG', id: 'PX0001', name: 'PXG driver/fairway adapter', fits: 'PXG drivers & fairways', use: 'wood', price: 30.00 },
+    { brand: 'PXG', id: 'PX0002', name: 'PXG hybrid adapter', fits: 'PXG hybrids', use: 'hybrid', price: 30.00 }
+  ];
+  var POP_GRIPS = ['VT', 'VTC', 'GP0113', 'GP0125', 'GP0058', 'GP0107', 'WN0161', 'WN0084', 'ST0600'];
+  var POP_PUTTER = ['ST0200', 'ST0605', 'ST0607', 'FC0006', 'GP0183'];
+  var POP_SHAFTS = ['DGI', 'UDGI', 'FS0028', 'NP0016', 'TT0118', 'TT0223', 'US0124', 'FK0116', 'FK0118', 'MR0104', 'TT0104', 'TT0190', 'MR0119', 'FK0127', 'MR0105'];
+  var HEAD_BRANDS = ['TaylorMade', 'Titleist', 'Callaway', 'Ping', 'Cobra', 'Mizuno', 'Srixon', 'PXG', 'Tour Edge', 'Cleveland', 'Wilson', 'Other'];
+  function adapterFits(a, type){ return a.use === type || (a.use === 'wood' && (type === 'driver' || type === 'fairway')); }
   var PAINT = ['None', 'White', 'Black', 'Yellow', 'Red', 'Orange', 'Blue', 'Light blue', 'Green', 'Pink', 'Purple', 'Gold', 'Silver'];
   var TYPES = [['driver', 'Driver'], ['fairway', 'Fairway wood'], ['hybrid', 'Hybrid'], ['iron', 'Irons'], ['wedge', 'Wedges']];
   var WOOD = { driver: 1, fairway: 1, hybrid: 1 };
@@ -35,41 +66,94 @@
   }
 
   // ---------- search picker ----------
-  // A search box that filters a long list; picking an item shows its option menus.
+  // A search box with the results listed right under it. Picking an item shows its option menus
+  // (size, color, flex...). The last entry is always "Can't find it? Request it", which takes a
+  // free-text description that Jackson prices by hand.
+  var squash = function(x){ return String(x).toLowerCase().replace(/[^a-z0-9]+/g, ''); };
+  function optSummary(it){
+    var o = it.opts || {}, bits = [];
+    Object.keys(o).forEach(function(k){ if (o[k].length > 1) bits.push(o[k].length + ' ' + k.toLowerCase() + (/s$/.test(k) ? '' : 's')); });
+    return bits.join(', ');
+  }
   function Picker(host, opts){
-    var self = this; this.items = opts.items; this.sel = null; this.choice = {}; this.onChange = opts.onChange;
-    var wrap = el('div', 'pk'), lab = el('label', null, opts.label); var inp = el('input'); inp.type = 'search'; inp.autocomplete = 'off';
+    var self = this; this.items = opts.items; this.sel = null; this.choice = {}; this.onChange = opts.onChange; this.opts = opts; this.req = '';
+    var wrap = el('div', 'pk'), lab = el('label', null, opts.label); var inp = el('input'); inp.type = 'search'; inp.autocomplete = 'off'; inp.enterKeyHint = 'search';
     inp.placeholder = opts.placeholder; inp.id = 'pk' + Math.random().toString(36).slice(2, 8); lab.htmlFor = inp.id; inp.setAttribute('role', 'combobox'); inp.setAttribute('aria-expanded', 'false');
-    var list = el('div', 'pk-list'); list.setAttribute('role', 'listbox'); list.hidden = true;
+    var search = el('div', 'pk-search'), bar = el('div', 'pk-bar'), cancel = el('button', 'pk-change', 'Cancel'); cancel.type = 'button'; cancel.hidden = true;
+    var list = el('div', 'pk-list'); list.setAttribute('role', 'listbox'); list.hidden = true; list.id = inp.id + 'l'; inp.setAttribute('aria-controls', list.id);
     var chosen = el('div', 'pk-chosen'); chosen.hidden = true;
     var optsBox = el('div', 'pk-opts');
-    wrap.appendChild(lab); wrap.appendChild(inp); wrap.appendChild(list); wrap.appendChild(chosen); wrap.appendChild(optsBox); host.appendChild(wrap);
-    this.inp = inp; this.list = list; this.chosen = chosen; this.optsBox = optsBox;
-    function search(){
-      // Match every typed word; spaces and punctuation are ignored so "superstroke" finds "Super Stroke"
-      var squash = function(x){ return x.toLowerCase().replace(/[^a-z0-9]+/g, ''); };
-      var words = inp.value.trim().split(/\s+/).map(squash).filter(Boolean);
-      var hits = self.items().filter(function(it){ var h = squash(it.name + ' ' + it.brand + ' ' + it.id); return words.every(function(w){ return h.indexOf(w) >= 0; }); });
+    bar.appendChild(lab); bar.appendChild(cancel);
+    search.appendChild(bar); search.appendChild(inp); search.appendChild(list);
+    wrap.appendChild(search); wrap.appendChild(chosen); wrap.appendChild(optsBox); host.appendChild(wrap);
+    this.inp = inp; this.list = list; this.chosen = chosen; this.optsBox = optsBox; this.search = search; this.cancel = cancel;
+    function item(it){
+      var b = el('button', 'pk-item'); b.type = 'button'; b.setAttribute('role', 'option');
+      var sum = optSummary(it);
+      b.appendChild(el('span', null, it.name)); b.appendChild(el('small', null, [it.brand, (it.rows && it.rows.length > 1 ? 'from ' : '') + $(it.price), sum].filter(Boolean).join(' · ')));
+      b.onclick = function(){ self.pick(it); }; return b;
+    }
+    function run(){
+      var q = inp.value.trim(), words = q.split(/\s+/).map(squash).filter(Boolean), all = self.items();
       list.textContent = '';
       if (opts.extra) { var ex = el('button', 'pk-item pk-extra', opts.extra.label); ex.type = 'button'; ex.onclick = function(){ self.pick(opts.extra.item); }; list.appendChild(ex); }
-      hits.slice(0, 40).forEach(function(it){
-        var b = el('button', 'pk-item'); b.type = 'button'; b.setAttribute('role', 'option');
-        b.appendChild(el('span', null, it.name)); b.appendChild(el('small', null, it.brand + ' · ' + (it.rows && it.rows.length > 1 ? 'from ' : '') + $(it.price)));
-        b.onclick = function(){ self.pick(it); }; list.appendChild(b);
-      });
-      if (!hits.length) list.appendChild(el('p', 'pk-none', 'No match. Pick "something else" and describe it in your note.'));
-      if (hits.length > 40) list.appendChild(el('p', 'pk-none', (hits.length - 40) + ' more. Keep typing to narrow it down.'));
+      if (!words.length) {
+        // Nothing typed yet: offer brands to browse, then the most common picks
+        var count = {}; all.forEach(function(it){ if (it.brand) count[it.brand] = (count[it.brand] || 0) + 1; });
+        var brands = Object.keys(count).sort(function(a, b){ return count[b] - count[a]; }).slice(0, 10);
+        if (brands.length > 1) {
+          list.appendChild(el('p', 'pk-head', 'Browse by brand'));
+          var bx = el('div', 'pk-brands');
+          brands.forEach(function(br){ var c = el('button', null, br); c.type = 'button'; c.onclick = function(){ inp.value = br; run(); inp.focus(); }; bx.appendChild(c); });
+          list.appendChild(bx);
+        }
+        list.appendChild(el('p', 'pk-head', 'Popular'));
+        (opts.popular ? all.filter(function(it){ return opts.popular.indexOf(it.id) >= 0; }) : all).slice(0, 8).forEach(function(it){ list.appendChild(item(it)); });
+      } else {
+        // Every typed word must match the name, brand, part number or an option (color, size, flex)
+        var hits = all.filter(function(it){
+          var h = squash(it.name + ' ' + it.brand + ' ' + it.id + ' ' + Object.keys(it.opts || {}).map(function(k){ return it.opts[k].join(' '); }).join(' '));
+          return words.every(function(w){ return h.indexOf(w) >= 0; });
+        });
+        hits.slice(0, 40).forEach(function(it){ list.appendChild(item(it)); });
+        if (!hits.length) list.appendChild(el('p', 'pk-none', 'Nothing in the price book matches "' + q + '". Request it below and Jackson will check if he can get it.'));
+        if (hits.length > 40) list.appendChild(el('p', 'pk-none', (hits.length - 40) + ' more. Keep typing to narrow it down.'));
+      }
+      var rq = el('button', 'pk-item pk-req'); rq.type = 'button';
+      rq.appendChild(el('span', null, "Can't find it? Request a " + opts.noun));
+      rq.appendChild(el('small', null, 'Tell us what you want and Jackson will see if he can get it'));
+      rq.onclick = function(){ self.pick({ id: 'REQ', name: 'Requested ' + opts.noun, brand: '', price: 0, request: true, opts: {} }, q); };
+      list.appendChild(rq);
       list.hidden = false; inp.setAttribute('aria-expanded', 'true');
     }
-    inp.addEventListener('input', search); inp.addEventListener('focus', search);
-    document.addEventListener('click', function(e){ if (!wrap.contains(e.target)) { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); } });
+    this.run = run;
+    inp.addEventListener('input', run); inp.addEventListener('focus', run);
+    cancel.onclick = function(){ self.closeSearch(); };
   }
-  Picker.prototype.pick = function(it){
-    var self = this; this.sel = it; this.choice = {}; this.list.hidden = true; this.inp.value = ''; this.inp.hidden = true;
-    this.chosen.hidden = false; this.chosen.textContent = '';
-    this.chosen.appendChild(el('b', null, it.name)); this.chosen.appendChild(el('span', null, it.own ? '' : $(it.price)));
-    var ch = el('button', 'pk-change', 'Change'); ch.type = 'button'; ch.onclick = function(){ self.inp.hidden = false; self.inp.focus(); }; this.chosen.appendChild(ch);
+  Picker.prototype.closeSearch = function(){
+    if (!this.sel) return;
+    this.list.hidden = true; this.inp.setAttribute('aria-expanded', 'false'); this.search.hidden = true; this.cancel.hidden = true;
+    this.chosen.hidden = false; this.optsBox.hidden = false;
+  };
+  Picker.prototype.openSearch = function(){
+    this.search.hidden = false; this.cancel.hidden = !this.sel; this.chosen.hidden = true; this.optsBox.hidden = true;
+    this.inp.value = ''; this.inp.focus(); this.run();
+  };
+  Picker.prototype.pick = function(it, typed){
+    var self = this; this.sel = it; this.choice = {}; this.req = it.request ? (typed || '') : '';
+    this.chosen.textContent = '';
+    this.chosen.appendChild(el('b', null, it.name)); this.chosen.appendChild(el('span', null, it.own ? '' : it.request ? 'Price TBD' : $(it.price)));
+    var ch = el('button', 'pk-change', 'Change'); ch.type = 'button'; ch.onclick = function(){ self.openSearch(); }; this.chosen.appendChild(ch);
     this.optsBox.textContent = '';
+    if (it.request) {
+      var f = el('div', 'pk-reqbox'), id = 'r' + Math.random().toString(36).slice(2, 8), l = el('label', null, 'Which ' + this.opts.noun + '? Brand, model, ' + this.opts.reqHint); l.htmlFor = id;
+      var t = el('input'); t.id = id; t.value = this.req; t.placeholder = this.opts.reqExample; t.maxLength = 160;
+      t.oninput = function(){ self.req = t.value; self.onChange(); };
+      f.appendChild(l); f.appendChild(t); f.appendChild(el('p', 'fine-sm', 'Jackson checks his suppliers and adds the price before you approve anything.'));
+      this.optsBox.appendChild(f); this.optsBox.style.gridTemplateColumns = '1fr';
+      this.closeSearch(); this.onChange(); setTimeout(function(){ t.focus(); }, 0); return;
+    }
+    this.optsBox.style.gridTemplateColumns = '';
     Object.keys(it.opts || {}).forEach(function(name){
       var f = el('div', 'pk-opt'), id = 'o' + Math.random().toString(36).slice(2, 8), l = el('label', null, name); l.htmlFor = id;
       var s = el('select'); s.id = id; it.opts[name].forEach(function(v){ s.appendChild(new Option(v, v)); });
@@ -77,11 +161,13 @@
       s.onchange = function(){ self.choice[name] = s.value; self.onChange(); };
       f.appendChild(l); f.appendChild(s); self.optsBox.appendChild(f);
     });
-    this.onChange();
+    this.closeSearch(); this.onChange();
   };
-  Picker.prototype.price = function(){ return !this.sel || this.sel.own ? 0 : priceFor(this.sel, this.choice); };
+  Picker.prototype.isRequest = function(){ return !!(this.sel && this.sel.request); };
+  Picker.prototype.price = function(){ return !this.sel || this.sel.own || this.sel.request ? 0 : priceFor(this.sel, this.choice); };
   Picker.prototype.desc = function(){
     if (!this.sel) return '';
+    if (this.sel.request) return 'Requested ' + this.opts.noun + ': ' + (this.req.trim() || '(not described yet)');
     var c = this.choice, extra = Object.keys(c).map(function(k){ return c[k]; }).join(', ');
     return this.sel.name + (extra ? ' (' + extra + ')' : '');
   };
@@ -97,7 +183,7 @@
   }
 
   function addShaftRow(){
-    var row = { n: 1, type: 'iron', adapter: -1 }, box = el('div', 'srow card');
+    var row = { n: 1, type: 'iron', adapter: null, brand: '', model: '', adapterReq: '', hand: 'RH' }, box = el('div', 'srow card');
     var top = el('div', 'srow-top');
     var tl = el('label', null, 'Club'), ts = el('select'); var tid = 'st' + Math.random().toString(36).slice(2, 7); tl.htmlFor = tid; ts.id = tid;
     TYPES.forEach(function(t){ ts.appendChild(new Option(t[1], t[0])); }); ts.value = row.type;
@@ -109,18 +195,54 @@
     var rm = el('button', 'pk-change', 'Remove'); rm.type = 'button';
     top.appendChild(tw); top.appendChild(cw); box.appendChild(top);
     var pkHost = el('div'); box.appendChild(pkHost);
-    var adW = el('div'); var al = el('label', null, 'Adapter'), as = el('select'); var aid = 'ad' + Math.random().toString(36).slice(2, 7); al.htmlFor = aid; as.id = aid;
-    as.appendChild(new Option('Move my current adapter (no charge)', '-1')); ADAPTERS.forEach(function(a, i){ as.appendChild(new Option('New ' + a.name + ' adapter · ' + $(a.price), String(i))); });
-    adW.appendChild(al); adW.appendChild(as); box.appendChild(adW); box.appendChild(rm);
-    row.pk = new Picker(pkHost, { label: 'Shaft', placeholder: 'Search shafts: brand, model or flex (e.g. Ventus, Dynamic Gold)', onChange: calc,
+    // Club head: brand + model, so Jackson can confirm the shaft tip and adapter fit the head
+    var hd = el('div', 'head2');
+    var hbW = el('div'), hbl = el('label', null, 'Club head brand'), hb = el('select'); var hbid = 'hb' + Math.random().toString(36).slice(2, 7); hbl.htmlFor = hbid; hb.id = hbid;
+    hb.appendChild(new Option('Choose…', '')); HEAD_BRANDS.forEach(function(x){ hb.appendChild(new Option(x, x)); });
+    hbW.appendChild(hbl); hbW.appendChild(hb);
+    var hmW = el('div'), hml = el('label', null, 'Head model'), hm = el('input'); var hmid = 'hm' + Math.random().toString(36).slice(2, 7); hml.htmlFor = hmid; hm.id = hmid; hm.maxLength = 80;
+    hm.placeholder = 'e.g. Qi10 LS driver, 9°';
+    hmW.appendChild(hml); hmW.appendChild(hm); hd.appendChild(hbW); hd.appendChild(hmW);
+    // Adapter (woods and hybrids only)
+    var adW = el('div', 'pk-reqbox'); var al = el('label', null, 'Adapter (the sleeve that screws into the head)'), as = el('select'); var aid = 'ad' + Math.random().toString(36).slice(2, 7); al.htmlFor = aid; as.id = aid;
+    var afits = el('p', 'fine-sm'); var aother = el('input'); aother.maxLength = 120; aother.placeholder = 'Which adapter or head? e.g. Tour Edge C723 driver'; aother.hidden = true; aother.setAttribute('aria-label', 'Describe the adapter you need');
+    var ahand = el('select'); ahand.appendChild(new Option('Right-handed', 'RH')); ahand.appendChild(new Option('Left-handed', 'LH')); ahand.setAttribute('aria-label', 'Adapter hand'); ahand.hidden = true;
+    adW.appendChild(al); adW.appendChild(as); adW.appendChild(ahand); adW.appendChild(aother); adW.appendChild(afits);
+    function fillAdapters(){
+      var keep = as.value; as.textContent = '';
+      as.appendChild(new Option('Keep my current adapter (no charge)', 'keep'));
+      var list = ADAPTERS.filter(function(a){ return (!row.brand || row.brand === 'Other' || a.brand === row.brand) && adapterFits(a, row.type); });
+      var groups = {}; list.forEach(function(a){ (groups[a.brand] = groups[a.brand] || []).push(a); });
+      Object.keys(groups).forEach(function(br){
+        var og = document.createElement('optgroup'); og.label = br;
+        groups[br].forEach(function(a){ og.appendChild(new Option('New ' + a.name + ' · ' + $(a.price), a.id)); });
+        as.appendChild(og);
+      });
+      as.appendChild(new Option(row.brand && !list.length ? 'New ' + row.brand + ' adapter: request it (price TBD)' : 'Other adapter: request it (price TBD)', 'other'));
+      as.value = [].some.call(as.options, function(o){ return o.value === keep; }) ? keep : 'keep';
+      adapterChanged();
+    }
+    function adapterChanged(){
+      var v = as.value, a = ADAPTERS.filter(function(x){ return x.id === v; })[0];
+      row.adapter = v === 'keep' ? null : v === 'other' ? { request: true } : a;
+      aother.hidden = v !== 'other'; ahand.hidden = v === 'keep';
+      afits.textContent = a ? 'Fits: ' + a.fits + '. Jackson confirms it matches your head before ordering.' : v === 'other' ? 'Jackson checks if he can get the right one and adds the price before you approve.' : '';
+      calc();
+    }
+    hb.onchange = function(){ row.brand = hb.value; fillAdapters(); calc(); };
+    hm.oninput = function(){ row.model = hm.value; calc(); };
+    as.onchange = adapterChanged; aother.oninput = function(){ row.adapterReq = aother.value; calc(); };
+    ahand.onchange = function(){ row.hand = ahand.value; calc(); };
+    box.appendChild(hd); box.appendChild(adW); box.appendChild(rm);
+    row.pk = new Picker(pkHost, { label: 'Shaft', placeholder: 'Type a brand or model (e.g. Ventus, Dynamic Gold)', onChange: calc,
       items: function(){ return CAT.shafts.filter(function(s){ return !s.use.length || s.use.indexOf(row.type) >= 0; }); },
+      noun: 'shaft', reqHint: 'flex and weight', reqExample: 'e.g. Fujikura Ventus TR Blue 6-S', popular: POP_SHAFTS,
       extra: { label: 'Use my own shaft (labor only)', item: { id: 'OWN', name: 'My own shaft', brand: '', price: 0, own: true, opts: {} } } });
-    ts.onchange = function(){ row.type = ts.value; adW.hidden = !WOOD[row.type]; calc(); };
+    ts.onchange = function(){ row.type = ts.value; adW.hidden = !WOOD[row.type]; fillAdapters(); };
     mi.onclick = function(){ row.n = Math.max(1, row.n - 1); out.textContent = row.n; calc(); };
     pl.onclick = function(){ row.n = Math.min(14, row.n + 1); out.textContent = row.n; calc(); };
-    as.onchange = function(){ row.adapter = +as.value; calc(); };
     rm.onclick = function(){ shaftRows.splice(shaftRows.indexOf(row), 1); box.remove(); calc(); };
-    adW.hidden = !WOOD[row.type];
+    adW.hidden = !WOOD[row.type]; fillAdapters();
     row.box = box; shaftRows.push(row); g('q-shafts').appendChild(box); calc();
   }
 
@@ -129,7 +251,8 @@
   function calc(){
     if (!gripPk) return;
     var lines = [], msg = [], saves = [];
-    function add(desc, qty, unit, kind, taxable, off){ lines.push({ desc: desc, qty: qty, unit_cents: Math.round(unit * 100), kind: kind, taxable: !!taxable, off: !!off }); }
+    var tbd = false;
+    function add(desc, qty, unit, kind, taxable, off, req){ lines.push({ desc: req ? desc + ' (Jackson to price)' : desc, qty: qty, unit_cents: Math.round(unit * 100), kind: kind, taxable: !!taxable, off: !!off, tbd: !!req }); }
     var ordered = gripMode === 'order';
     g('q-grippick').hidden = !ordered || q.rg === 0;
     // Regrip
@@ -137,7 +260,7 @@
     var fullBag = q.rg >= need, launchBag = false, parts = 0;
     if (q.rg > 0) {
       add('Regrip labor, ' + q.rg + ' club' + (q.rg > 1 ? 's' : '') + (fullBag ? ' (full bag)' : ''), 1, bundle(q.rg, per, cap, R.bagMax), 'labor');
-      if (ordered && gripPk.sel) { var gp = gripPk.price(); add(gripPk.desc(), q.rg, gp, 'part', true); parts += gp * q.rg; }
+      if (ordered && gripPk.sel) { var gp = gripPk.price(); add(gripPk.desc(), q.rg, gp, 'part', true, false, gripPk.isRequest()); parts += gp * q.rg; if (gripPk.isRequest()) tbd = true; }
       msg.push('Regrip ' + q.rg + ' club' + (q.rg > 1 ? 's' : '') + ': ' + (ordered ? (gripPk.sel ? gripPk.desc() : 'grip not picked yet') : 'my own grips'));
       if (ordered && fullBag && S.launchLive) { launchBag = true; add('Launch full-bag price', 1, -(R.regripOursBag - B.launchBag.price), 'discount', false, true); saves.push('Launch full-bag price'); }
     }
@@ -147,7 +270,7 @@
     var putter = g('q-putter').checked; g('q-putterpick').hidden = !putter;
     if (putter) {
       add('Putter grip install', 1, R.putterGrip, 'labor');
-      if (putterPk.sel && !putterPk.sel.own) { var pp = putterPk.price(); add(putterPk.desc(), 1, pp, 'part', true); parts += pp; }
+      if (putterPk.sel && !putterPk.sel.own) { var pp = putterPk.price(); add(putterPk.desc(), 1, pp, 'part', true, false, putterPk.isRequest()); parts += pp; if (putterPk.isRequest()) tbd = true; }
       msg.push('Putter regrip: ' + (putterPk.sel ? putterPk.desc() : 'grip not picked yet'));
     }
     // Loft & lie
@@ -163,9 +286,12 @@
       var label = TYPES.filter(function(t){ return t[0] === r.type; })[0][1];
       var each = WOOD[r.type] ? R.reshaftWood : set ? (graphite ? R.ironSetGraphite : R.ironSetSteel) : (graphite ? R.reshaftGraphite : R.reshaftSteel);
       add('Reshaft ' + label.toLowerCase() + (set && !WOOD[r.type] ? ' (set price)' : ''), r.n, each, 'labor');
-      if (s && !s.own) { var sp = r.pk.price(); add(r.pk.desc(), r.n, sp, 'part', true); parts += sp * r.n; }
-      if (WOOD[r.type] && r.adapter >= 0) { var a = ADAPTERS[r.adapter]; add(a.name + ' adapter', r.n, a.price, 'part', true); parts += a.price * r.n; }
-      msg.push('Reshaft ' + r.n + ' ' + label.toLowerCase() + ': ' + (s ? r.pk.desc() : 'shaft not picked yet') + (WOOD[r.type] && r.adapter >= 0 ? ' + new ' + ADAPTERS[r.adapter].name + ' adapter' : ''));
+      var head = [r.brand, r.model.trim()].filter(Boolean).join(' ');
+      if (s && !s.own) { var sp = r.pk.price(); add(r.pk.desc(), r.n, sp, 'part', true, false, r.pk.isRequest()); parts += sp * r.n; if (r.pk.isRequest()) tbd = true; }
+      var ad = WOOD[r.type] && r.adapter, hand = r.hand === 'LH' ? ', left-handed' : '';
+      var adDesc = !ad ? '' : ad.request ? 'Requested adapter: ' + (r.adapterReq.trim() || (head || 'not described yet')) + hand : ad.name + ' (' + ad.id + hand + ')';
+      if (ad) { add(adDesc + (head && !ad.request ? ' for ' + head : ''), r.n, ad.request ? 0 : ad.price, 'part', true, false, !!ad.request); if (ad.request) tbd = true; else parts += ad.price * r.n; }
+      msg.push('Reshaft ' + r.n + ' ' + label.toLowerCase() + (head ? ' (' + head + ')' : '') + ': ' + (s ? r.pk.desc() : 'shaft not picked yet') + (!adDesc ? (WOOD[r.type] ? ' + keep current adapter' : '') : ad.request ? ' + ' + adDesc : ' + new ' + adDesc));
     });
     var rs = g('n-rs'), need6 = R.ironSetMin - irons;
     rs.hidden = !(irons > 0 && need6 > 0 && need6 <= 3); rs.textContent = rs.hidden ? '' : 'Add ' + need6 + ' more iron' + (need6 > 1 ? 's' : '') + ' for set pricing: ' + $(R.ironSetSteel) + ' steel, ' + $(R.ironSetGraphite) + ' graphite per club.';
@@ -179,7 +305,7 @@
     // Season tune-up
     if (q.rg >= 10 && loft === 'adjust' && q.ll >= 6) { add('Season tune-up bundle', 1, -B.tuneUpOff, 'discount', false, true); saves.push('Season tune-up'); }
     // Parts fee / rush and timing
-    var partsOrdered = parts > 0;
+    var partsOrdered = parts > 0 || tbd;
     g('q-parts').hidden = !partsOrdered;
     var rush = partsOrdered && g('q-rush').checked;
     if (partsOrdered) {
@@ -194,19 +320,19 @@
     var box = g('q-lines'); box.textContent = '';
     if (!anyWork) box.appendChild(el('p', 'empty', 'Add clubs to see your price.'));
     lines.forEach(function(l){
-      var d = el('div', 'ln' + (l.off ? ' off' : ''));
+      var d = el('div', 'ln' + (l.off ? ' off' : '') + (l.tbd ? ' tbd' : ''));
       d.appendChild(el('span', null, l.qty > 1 ? l.desc + ' × ' + l.qty : l.desc));
       var amt = l.qty * l.unit_cents / 100;
-      d.appendChild(el('span', null, amt === 0 ? 'Free' : (amt < 0 ? '−' : '') + $(Math.abs(r2(amt)))));
+      d.appendChild(el('span', null, l.tbd ? 'Price TBD' : amt === 0 ? 'Free' : (amt < 0 ? '−' : '') + $(Math.abs(r2(amt)))));
       box.appendChild(d);
     });
-    g('q-total').textContent = $(total);
+    g('q-total').textContent = $(total) + (tbd ? ' + TBD' : '');
     g('q-ready').textContent = ready;
     g('q-submit').disabled = !anyWork;
 
     var text = ['Hi Jackson! Quote from the website:'].concat(msg.map(function(m){ return '• ' + m; }));
     if (saves.length) text.push('Deals: ' + saves.join(', '));
-    text.push('Estimate: ' + $(total), 'Ready in: ' + ready, '(' + S.ref + ')');
+    text.push('Estimate: ' + $(total) + (tbd ? ' + requested parts to price' : ''), 'Ready in: ' + ready, '(' + S.ref + ')');
     last = { lines: lines.map(function(l){ return { desc: l.desc, qty: l.qty, unit_cents: l.unit_cents, kind: l.kind, taxable: l.taxable }; }), summary: msg.concat(saves.length ? ['Deals: ' + saves.join(', ')] : []).concat(['Ready in: ' + ready]), text: anyWork ? text.join('\n') : "Hi Jackson! I'd like a quote. (" + S.ref + ')' };
     g('q-send').href = S.smsHref(last.text);
   }
@@ -231,9 +357,11 @@
   function start(cat){
     CAT = cat;
     var grips = function(){ return CAT.grips.filter(function(x){ return !x.putter; }); };
-    gripPk = new Picker(g('q-grippick'), { label: 'Grip', placeholder: 'Search grips: brand, model or color (e.g. Tour Velvet, MCC, Dri-Tac)', items: grips, onChange: calc });
+    gripPk = new Picker(g('q-grippick'), { label: 'Grip', placeholder: 'Type a brand, model or color (e.g. Tour Velvet, MCC, red)', items: grips, onChange: calc,
+      noun: 'grip', reqHint: 'size and color', reqExample: 'e.g. Golf Pride MCC Teams, midsize, Alabama crimson', popular: POP_GRIPS });
     putterPk = new Picker(g('q-putterpick'), { label: 'Putter grip', placeholder: 'Search putter grips (e.g. SuperStroke, Pistol)', onChange: calc,
       items: function(){ return CAT.grips.filter(function(x){ return x.putter; }); },
+      noun: 'putter grip', reqHint: 'size and color', reqExample: 'e.g. SuperStroke Traxion Tour 2.0, black/red', popular: POP_PUTTER,
       extra: { label: 'Use my own putter grip', item: { id: 'OWN', name: 'My own putter grip', brand: '', price: 0, own: true, opts: {} } } });
     var tv = grips().filter(function(x){ return x.id === 'VT'; })[0] || grips()[0];
     if (tv) gripPk.pick(tv);
