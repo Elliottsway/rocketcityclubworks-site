@@ -201,8 +201,8 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
           <div id="q-lines"><p class="empty">Add clubs to see your price.</p></div>
           <div class="tot"><b>Total</b><span id="q-total">$0</span></div>
           <div class="ln" style="padding-top:8px"><span>Ready in</span><span id="q-ready">—</span></div>
-          <p class="fine">Before sales tax on parts. Jackson confirms parts, fit and the final price before you pay.</p>
-          <button class="btn" id="q-submit" type="button" disabled>Submit for review</button>
+          <p class="fine">Estimate only. Jackson confirms parts, fit and the final price before you pay.</p>
+          <button class="btn" id="q-submit" type="button" disabled hidden>Submit for review</button>
           <form id="q-form" class="qform" hidden novalidate>
             <div><label for="f-name">Name</label><input id="f-name" autocomplete="name" required></div>
             <div><label for="f-phone">Mobile number</label><input id="f-phone" type="tel" autocomplete="tel" placeholder="(256) 555-0123"></div>
@@ -212,7 +212,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
             <button class="btn" type="submit">Send work ticket</button>
             <p id="q-fout" class="fine" aria-live="polite"></p>
           </form>
-          <a class="copy" id="q-send" href="sms:+12055889164">Or text this quote</a>
+          <a class="btn" id="q-send" href="sms:+12055889164">Text this quote to Jackson</a>
           <button class="copy" type="button" id="q-copy">Copy quote</button>
         </div>
       </div>

@@ -245,6 +245,12 @@
     g('q-submit').onclick = function(){ g('q-form').hidden = false; g('f-name').focus(); };
     g('q-form').addEventListener('submit', submit);
     g('q-copy').onclick = function(){ var b = this; try { navigator.clipboard.writeText(last.text).then(function(){ b.textContent = 'Copied'; }); } catch (e) {} };
+    // Online work tickets switch on by themselves once the ticket database is connected.
+    fetch('/api/health').then(function(r){ return r.ok ? r.json() : {}; }).then(function(h){
+      if (!h.tickets) return;
+      g('q-submit').hidden = false;
+      var send = g('q-send'); send.className = 'copy'; send.textContent = 'Or text this quote';
+    }).catch(function(){});
     g('q-loading').hidden = true; g('q-body').hidden = false;
     calc();
   }
