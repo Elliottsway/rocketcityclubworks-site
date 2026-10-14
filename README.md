@@ -13,7 +13,10 @@ Edit `assets/prices.js` and update `asOf`. Nothing else needs to change.
 This repo is public: never put trade cost or margin in it. Keep those in a private sheet.
 
 ## Offers
-Launch offers live in `prices.js` under `offers`. They hide themselves on the site after `endsISO`.
+Bundle deals live in `prices.js` under `bundles`. The launch deal hides itself after `endsISO`.
+
+## Parts & turnaround
+Nothing is stocked. Grips and parts are ordered from GolfWorks per job (before 11:30am CT) and arrive in ~2 business days; a $10 parts fee per order covers shipping (free at $100+). Rush = overnight parts, $25.
 
 ## Tracking where customers come from
 The `?ref=` value on any page URL is added to the pre-filled text (for example `(CARD)`), so you can tell which card, flyer or post brought someone in.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Service &amp; Price Menu · Rocket City ClubWorks</title>
-<meta name="description" content="Instant prices for regripping, loft and lie, reshafting, repairs and refinishing, plus grip and shaft prices. Huntsville and Madison, AL.">
+<meta name="description" content="Instant prices for regripping, loft and lie, reshafting, repairs, paint fill and stamping, plus grip and shaft prices. Huntsville and Madison, AL.">
 <link rel="canonical" href="https://rocketcityclubworks.com/menu/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Rocket City ClubWorks · Service & Price Menu">
@@ -112,7 +112,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
 
 <nav class="jump" aria-label="Menu sections">
   <div class="wrap">
-    <a href="#quote">Instant price</a><a href="#regrip">Regrips</a><a href="#loft">Loft &amp; lie</a><a href="#shafts">Shafts</a><a href="#repairs">Repairs</a><a href="#refinish">Refinish</a><a href="#grips">Grip prices</a><a href="#shaftprices">Shaft prices</a><a href="#deals">Deals</a>
+    <a href="#quote">Instant price</a><a href="#regrip">Regrips</a><a href="#loft">Loft &amp; lie</a><a href="#shafts">Shafts</a><a href="#repairs">Repairs</a><a href="#personal">Paint &amp; stamp</a><a href="#grips">Grip prices</a><a href="#shaftprices">Shaft prices</a><a href="#deals">Deals</a>
   </div>
 </nav>
 
@@ -128,7 +128,6 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
             <div class="line"><span>Clubs to regrip<small>Full-bag price from 10 clubs, up to 14</small></span>
               <div class="step" data-k="rg" data-max="14"><button type="button" aria-label="Fewer clubs to regrip">−</button><output>0</output><button type="button" aria-label="More clubs to regrip">+</button></div></div>
             <div><label for="q-grip">Grip</label><select id="q-grip"></select></div>
-            <label class="chk" id="q-rush-wrap" hidden><input type="checkbox" id="q-rush"><span>Rush the special order (+<span data-p="rush">$15</span>)<small>Ships same day, ready in 2–3 days instead of 3–5</small></span></label>
             <p class="nudge" id="n-rg" hidden></p>
           </div>
           <div class="grp">
@@ -147,10 +146,14 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
             <p class="nudge" id="n-rs" hidden></p>
           </div>
           <div class="grp">
-            <b>Clean &amp; paint</b>
-            <div class="line"><span>Deep clean<small>Full-bag price from 9 clubs</small></span><div class="step" data-k="cl" data-max="14"><button type="button" aria-label="Fewer clubs to clean">−</button><output>0</output><button type="button" aria-label="More clubs to clean">+</button></div></div>
-            <div class="line"><span>Paint fill<small>Set price from 7 clubs, up to 10</small></span><div class="step" data-k="pf" data-max="14"><button type="button" aria-label="Fewer clubs to paint fill">−</button><output>0</output><button type="button" aria-label="More clubs to paint fill">+</button></div></div>
+            <b>Paint fill</b>
+            <div class="line"><span>Clubs to paint fill<small>Set price from 8 clubs, up to 10</small></span><div class="step" data-k="pf" data-max="14"><button type="button" aria-label="Fewer clubs to paint fill">−</button><output>0</output><button type="button" aria-label="More clubs to paint fill">+</button></div></div>
             <p class="nudge" id="n-cl" hidden></p>
+          </div>
+          <div class="grp" id="q-parts" hidden>
+            <b>Parts &amp; timing</b>
+            <p style="margin:0;font-size:.9rem;color:var(--muted)">Grips and shafts are ordered for your job and arrive in about 2 business days. One <span data-p="partsFee">$10</span> parts fee per order, free when parts total $100+.</p>
+            <label class="chk"><input type="checkbox" id="q-rush"><span>Rush: overnight parts (<span data-p="rush">$25</span> instead of the $10 fee)<small>Ready in about 2 business days</small></span></label>
           </div>
         </div>
 
@@ -158,6 +161,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
           <div class="hd"><b>Your quote</b><span>Estimate</span></div>
           <div id="q-lines"><p class="empty">Add clubs to see your price.</p></div>
           <div class="tot"><b>Total</b><span id="q-total">$0</span></div>
+          <div class="ln" style="padding-top:8px"><span>Ready in</span><span id="q-ready">—</span></div>
           <p class="fine" id="q-fine">Before sales tax on parts. Final price confirmed by text before any work starts.</p>
           <a class="btn" id="q-send" href="sms:+12055889164">Text this quote to book</a>
           <button class="copy" type="button" id="q-copy">Copy quote</button>
@@ -172,7 +176,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
     <details class="card parts wide anchor" id="grips" open>
       <summary><h2>Grip prices</h2></summary>
       <div class="in">
-        <p class="note">Price per grip, with the installed price (grip + labor) underneath. Grips marked <span class="tag">in stock</span> are ready next day; everything else is special order.</p>
+        <p class="note">Price per grip, with the installed price (grip + labor) underneath. Grips are ordered for your job and arrive in about 2 business days.</p>
         <div id="grip-list"></div>
         <h3>Golf balls</h3>
         <div id="ball-list"></div>
@@ -185,18 +189,18 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
       <div class="in">
         <p class="note">Price per part. Add reshaft labor and a grip for your installed price. We confirm tip size and adapter fit before ordering.</p>
         <div id="shaft-list"></div>
-        <p class="note">Nearly any shaft from True Temper, Fujikura, Mitsubishi, KBS, Nippon, Aldila and UST can be ordered. Special-order shafts, heads and adapters ship for $10 on orders under $75. Alabama sales tax applies to parts.</p>
+        <p class="note">Nearly any shaft from True Temper, Fujikura, Mitsubishi, KBS, Nippon, Aldila and UST can be ordered. Parts we order carry one $10 parts fee per order, free when parts total $100+. Alabama sales tax applies to parts.</p>
       </div>
     </details>
 
     <section class="deals wide" id="deals">
       <div class="t">Bundle deals</div>
-      <div class="deal" data-launch><div><b>Launch price: full-bag regrip</b><small>Grips bought here, up to 14 clubs, plus a free loft &amp; lie check. Through <span data-launch-ends></span>.</small></div>
-        <div class="px"><s><span data-p="regripOursBag">$40</span></s><span data-launch-price>$35</span></div></div>
-      <div class="deal"><div><b>Season tune-up</b><small>Regrip 10+ clubs, adjust loft &amp; lie on 6+ irons and deep clean 10+ clubs in one visit.</small></div>
-        <div class="px"><span data-tuneup>$20</span> off</div></div>
-      <div class="deal"><div><b>Iron set reshaft</b><small>Reshaft 6 or more irons and wedges. Steel <span data-p="ironSetSteel">$15</span>, graphite <span data-p="ironSetGraphite">$20</span> per club.</small></div>
-        <div class="px"><s>$20/club</s>$15</div></div>
+      <div class="deal" data-launch><div><b>Launch price: full-bag regrip</b><small>Grips ordered through us, up to 14 clubs, plus a free loft &amp; lie check. Through <span data-launch-ends></span>.</small></div>
+        <div class="px"><s><span data-p="regripOursBag">$50</span></s><span data-launch-price>$40</span></div></div>
+      <div class="deal"><div><b>Season tune-up</b><small>Regrip 10+ clubs and adjust loft &amp; lie on 6+ irons in one visit.</small></div>
+        <div class="px"><span data-tuneup>$10</span> off</div></div>
+      <div class="deal"><div><b>Iron set reshaft</b><small>Reshaft 6 or more irons and wedges. Steel <span data-p="ironSetSteel">$17</span>, graphite <span data-p="ironSetGraphite">$22</span> per club.</small></div>
+        <div class="px"><s>$20/club</s>$17</div></div>
       <div class="deal"><div><b>Full bag, your own grips</b><small>Up to 14 clubs for the price of 10.</small></div>
         <div class="px"><s>$70</s><span data-p="regripOwnBag">$50</span></div></div>
       <div class="d">No codes needed · the instant price applies them for you</div>
@@ -226,7 +230,6 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
   function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function row(it, sub){
     var r = el("div", "row"), nm = el("div", "nm", it.name);
-    if (it.stock) nm.appendChild(el("span", "tag", "in stock"));
     if (it.note) nm.appendChild(el("span", "nt", it.note));
     var pr = el("div", "pr", money(it.price));
     if (sub) pr.appendChild(el("small", null, sub));
@@ -273,11 +276,11 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
   chips.forEach(function(a){ a.addEventListener("click", function(){ var t = document.querySelector(a.getAttribute("href")); if (t && t.tagName === "DETAILS") t.open = true; }); });
 
   // ---------- quote builder ----------
-  var q = { rg: 0, ll: 8, rs: 0, rgph: 0, rw: 0, cl: 0, pf: 0 };
+  var q = { rg: 0, ll: 8, rs: 0, rgph: 0, rw: 0, pf: 0 };
   var gripSel = document.getElementById("q-grip");
   gripSel.appendChild(new Option("My own grips (" + $(R.regripOwn) + "/club labor)", "own"));
-  D.grips.forEach(function(g, i){ gripSel.appendChild(new Option(g.name + " · " + $(g.price) + (g.stock ? " ✓" : ""), String(i))); });
-  gripSel.value = String(D.grips.findIndex(function(g){ return g.stock; }));
+  D.grips.forEach(function(g, i){ gripSel.appendChild(new Option(g.name + " · " + $(g.price), String(i))); });
+  gripSel.value = String(D.grips.findIndex(function(g){ return /Tour Velvet$/.test(g.name); }));
 
   document.querySelectorAll(".step").forEach(function(st){
     var k = st.getAttribute("data-k"), max = +st.getAttribute("data-max"), out = st.querySelector("output"), b = st.querySelectorAll("button");
@@ -300,17 +303,16 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
     var g = gripSel.value === "own" ? null : D.grips[+gripSel.value];
     var loft = document.getElementById("q-loft").value;
     document.getElementById("q-loft-n").hidden = loft !== "adjust";
-    var rushWrap = document.getElementById("q-rush-wrap");
-    rushWrap.hidden = !(q.rg > 0 && g && !g.stock);
-    var rush = !rushWrap.hidden && document.getElementById("q-rush").checked;
+    var partsOrdered = (q.rg > 0 && g) || q.rs + q.rgph + q.rw > 0;
+    document.getElementById("q-parts").hidden = !partsOrdered;
+    var rush = partsOrdered && document.getElementById("q-rush").checked, gripParts = 0;
 
     // Regrip
     var per = g ? R.regripOurs : R.regripOwn, cap = g ? R.regripOursBag : R.regripOwnBag, need = atCap(per, cap);
     var fullBag = q.rg >= need, launchBag = false;
     if (q.rg > 0) {
       add("Regrip labor, " + q.rg + " club" + (q.rg > 1 ? "s" : "") + (fullBag ? " (full bag)" : ""), bundle(q.rg, per, cap, R.bagMax));
-      if (g) add(q.rg + " × " + g.name, r2(q.rg * g.price));
-      if (rush) add("Rush special order", R.rush);
+      if (g) { gripParts = r2(q.rg * g.price); add(q.rg + " × " + g.name, gripParts); }
       if (g && fullBag && S.launchLive) { launchBag = true; add("Launch full-bag price", -(R.regripOursBag - B.launchBag.price), true); }
       msg.push("Regrip " + q.rg + " club" + (q.rg > 1 ? "s" : "") + ", " + (g ? g.name : "my own grips") + (rush ? " (rush)" : ""));
     }
@@ -337,18 +339,25 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
     if (q.rw) { add("Reshaft driver/wood/hybrid × " + q.rw, q.rw * R.reshaftWood); msg.push("Reshaft driver/wood/hybrid × " + q.rw); }
     nudge("n-rs", irons > 0 && !set && R.ironSetMin - irons <= 3 ? "Add " + (R.ironSetMin - irons) + " more iron" + (R.ironSetMin - irons > 1 ? "s" : "") + " for set pricing: " + $(R.ironSetSteel) + " steel, " + $(R.ironSetGraphite) + " graphite per club." : "");
 
-    // Clean & paint
-    var clNeed = atCap(R.cleanPer, R.cleanSet), pfNeed = atCap(R.paintPer, R.paintSet), cn = [];
-    if (q.cl) { add("Deep clean, " + q.cl + " clubs" + (q.cl >= clNeed ? " (full bag)" : ""), bundle(q.cl, R.cleanPer, R.cleanSet, R.bagMax)); msg.push("Deep clean " + q.cl + " clubs"); }
+    // Paint fill
+    var pfNeed = atCap(R.paintPer, R.paintSet), cn = [];
     if (q.pf) { add("Paint fill, " + q.pf + " clubs" + (q.pf >= pfNeed ? " (set)" : ""), bundle(q.pf, R.paintPer, R.paintSet, 10)); msg.push("Paint fill " + q.pf + " clubs"); }
-    if (q.cl && q.cl < clNeed && clNeed - q.cl <= 3) cn.push("Clean " + clNeed + "+ clubs and the whole bag is " + $(R.cleanSet) + ".");
     if (q.pf && q.pf < pfNeed && pfNeed - q.pf <= 3) cn.push("Paint fill " + pfNeed + "+ clubs for the " + $(R.paintSet) + " set price.");
     nudge("n-cl", cn.join(" "));
 
     // Season tune-up
-    var tune = q.rg >= 10 && loft === "adjust" && q.ll >= 6 && q.cl >= 10;
+    var tune = q.rg >= 10 && loft === "adjust" && q.ll >= 6;
     if (tune) { add("Season tune-up bundle", -B.tuneUpOff, true); saves.push("Season tune-up"); }
     if (launchBag) saves.push("Launch full-bag price");
+
+    // Parts fee or rush, and when it will be ready
+    if (partsOrdered) {
+      if (rush) { add("Rush: overnight parts", R.rush); msg.push("Rush overnight parts"); }
+      else if (gripParts >= R.partsFreeOver) add("Parts fee (free at $" + R.partsFreeOver + "+ in parts)", 0);
+      else add("Parts fee" + (shafts ? " (free if parts reach $" + R.partsFreeOver + ")" : ""), R.partsFee);
+    }
+    var ready = !partsOrdered ? "Next day" : rush ? "About " + R.rushDays : irons >= R.ironSetMin ? "4–5 business days" : shafts ? "3–5 business days" : R.partsDays;
+    document.getElementById("q-ready").textContent = lines.length ? ready : "—";
 
     total = r2(total);
     var box = document.getElementById("q-lines"); box.textContent = "";
@@ -356,7 +365,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
     lines.forEach(function(l){
       var d = el("div", "ln" + (l[2] ? " off" : ""));
       d.appendChild(el("span", null, l[0]));
-      d.appendChild(el("span", null, (l[1] < 0 ? "−" : "") + $(Math.abs(l[1]))));
+      d.appendChild(el("span", null, l[1] === 0 ? "Free" : (l[1] < 0 ? "−" : "") + $(Math.abs(l[1]))));
       box.appendChild(d);
     });
     if (shafts) { var d = el("div", "ln"); d.appendChild(el("span", null, "Shafts (" + shafts + ") and ferrules")); d.appendChild(el("span", null, "+ parts")); box.appendChild(d); }
@@ -366,7 +375,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
 
     var text = ["Hi Jackson! Quote from the website:"].concat(msg.map(function(m){ return "• " + m; }));
     if (saves.length) text.push("Deals: " + saves.join(", "));
-    text.push("Estimate: " + $(total) + (shafts ? " + shafts" : ""), "(" + S.ref + ")");
+    text.push("Estimate: " + $(total) + (shafts ? " + shafts" : ""), "Ready in: " + ready, "(" + S.ref + ")");
     lastText = msg.length ? text.join("\n") : "Hi Jackson! I'd like a quote. (" + S.ref + ")";
     document.getElementById("q-send").href = S.smsHref(lastText);
   }
