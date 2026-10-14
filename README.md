@@ -6,7 +6,7 @@ Static site for Rocket City ClubWorks, served by Cloudflare Pages. No build step
 - `menu/index.html`: full service and price menu with the instant-price quote builder. Card QR codes point here: `/menu/?ref=card`
 - `assets/prices.js`: **every price lives here.** Both pages and the quote builder read from it
 - `assets/site.css`, `assets/site.js`: shared styles and behavior
-- `404.html`, `favicon.svg`, `apple-touch-icon.png`, `og-image.png`, `robots.txt`, `sitemap.xml`
+- `404.html`, `favicon.png`, `favicon-32.png`, `apple-touch-icon.png`, `og-image.png`, `robots.txt`, `sitemap.xml`
 
 ## Changing prices
 Edit `assets/prices.js` and update `asOf`. Nothing else needs to change.
