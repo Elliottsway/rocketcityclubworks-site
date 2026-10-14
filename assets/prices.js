@@ -9,7 +9,7 @@ window.RCCW = {
   asOf: "October 2026",
   phone: "+12055889164",
   phoneLabel: "(205) 588-9164",
-  email: "RocketCityClubWorks@gmail.com",
+  email: "jackson@rocketcityclubworks.com",
 
   // Labor rules used by the quote builder and the "popular jobs" prices.
   // Labor is where the shop earns: parts sell at GolfWorks retail, which is only 6-14% over trade cost.
