@@ -3,8 +3,8 @@
    Numbers are customer prices. Never put trade cost or margin in this file:
    the repo and the site are public.
 
-   price: a number shows as $3 or $7.19; a string shows as written ("Quote", "Free", "from $15").
-   stock: true marks grips kept on hand for next-day work. */
+   price: a number shows as $5 or $7.19; a string shows as written ("Quote", "Free", "from $20").
+   Nothing is stocked: grips and parts are ordered from GolfWorks per job and arrive in ~2 business days. */
 window.RCCW = {
   asOf: "October 2026",
   phone: "+12055889164",
@@ -12,90 +12,88 @@ window.RCCW = {
   email: "jackson@rocketcityclubworks.com",
 
   // Labor rules used by the quote builder and the "popular jobs" prices.
-  // Labor is where the shop earns: parts sell at GolfWorks retail, which is only 6-14% over trade cost.
+  // Labor is where the shop earns: parts sell at GolfWorks retail, only 6-14% over trade cost.
   rules: {
-    regripOurs: 4,      // per club, grips bought here
-    regripOursBag: 40,  // full bag, grips bought here
+    regripOurs: 5,      // per club, grips ordered for the customer (same labor either way)
+    regripOursBag: 50,  // full bag, grips ordered
     regripOwn: 5,       // per club, customer's own grips
     regripOwnBag: 50,   // full bag, customer's own grips
     bagMax: 14,         // clubs covered by a full-bag price
     putterGrip: 5,
     loftCheck: 15,      // check only, up to 14 clubs
     loftPer: 5,         // check and adjust, per club
-    loftSet: 45,        // check and adjust a set
+    loftSet: 50,        // check and adjust a set
     loftSetMax: 12,
     reshaftSteel: 20,
     reshaftGraphite: 25,
     reshaftWood: 25,
     ironSetMin: 6,      // reshaft this many irons/wedges or more for set pricing
-    ironSetSteel: 15,
-    ironSetGraphite: 20,
-    cleanPer: 3,
-    cleanSet: 25,       // up to 14 clubs
+    ironSetSteel: 17,   // 6 x $17 = $102, never less than 5 x $20
+    ironSetGraphite: 22,
     paintPer: 8,
-    paintSet: 50,       // up to 10 clubs
-    rush: 15,           // a same-day special order ships on its own; covers the $9.99+ shipment
-    shipSmall: 10,      // special-order shafts, heads and adapters under $75
-    shipFreeOver: 75
+    paintSet: 60,       // up to 10 clubs
+    partsFee: 10,       // per order of special-order parts (covers GolfWorks ground shipping)
+    partsFreeOver: 100, // parts fee waived when parts total this much or more
+    rush: 25,           // overnight parts; replaces the parts fee
+    partsDays: "3–4 business days",
+    rushDays: "2 business days"
   },
 
   services: [
     { id: "regrip", title: "Regripping", items: [
-      { name: "Regrip, grips bought here", note: "Per club · + grip", price: 4 },
-      { name: "Full bag, grips bought here", note: "Up to 14 clubs · + grips", price: 40 },
-      { name: "Regrip, your own grips", note: "Per club · ready next day", price: 5 },
-      { name: "Full bag, your own grips", note: "Up to 14 clubs · ready next day", price: 50 },
-      { name: "Putter grip install", note: "+ grip if bought here", price: 5 },
-      { name: "Build-up wraps & logo alignment", price: "Free" }
+      { name: "Regrip, per club", note: "Your grips or ours · + grip if we order it", price: 5 },
+      { name: "Full bag, up to 14 clubs", note: "Your grips or ours · + grips if we order them", price: 50 },
+      { name: "Putter grip install", note: "+ grip if we order it", price: 5 },
+      { name: "Build-up wraps & logo alignment", price: "Free" },
+      { name: "Parts fee, grips & parts we order", note: "Per order · free when parts total $100+", price: 10 }
     ]},
     { id: "loft", title: "Loft & lie", items: [
       { name: "Check only", note: "Irons & wedges, up to 14 clubs", price: 15 },
       { name: "Check & adjust", note: "Per club", price: 5 },
-      { name: "Check & adjust a set", note: "Up to 12 clubs", price: 45 }
+      { name: "Check & adjust a set", note: "Up to 12 clubs", price: 50 }
     ]},
     { id: "shafts", title: "Shafts & builds", items: [
       { name: "Reshaft iron or wedge, steel", note: "+ shaft, ferrule & grip", price: 20 },
       { name: "Reshaft iron or wedge, graphite", note: "+ shaft, ferrule & grip", price: 25 },
-      { name: "Iron set reshaft, 6+ clubs", note: "Per club · steel $15, graphite $20", price: "from $15" },
+      { name: "Iron set reshaft, 6+ clubs", note: "Per club · steel $17, graphite $22", price: "from $17" },
       { name: "Reshaft driver, wood or hybrid", note: "+ shaft & grip · + adapter if new", price: 25 },
       { name: "Install or move an adapter", note: "Your shaft · + adapter if new", price: 20 },
       { name: "Custom club build", note: "+ heads, shafts, grips & ferrules", price: "Quote" }
     ]},
     { id: "repairs", title: "Repairs", items: [
-      { name: "Shorten a club", note: "+ grip if the old one can't be saved", price: 5 },
-      { name: "Extend a club", note: "+ extension & grip", price: 10 },
-      { name: "Loose head or rattle", note: "+ ferrule if replaced", price: 12 },
+      { name: "Shorten a club", note: "Grip saved when possible · + grip if not", price: 10 },
+      { name: "Extend a club", note: "+ extension & grip", price: 15 },
+      { name: "Loose head or rattle", note: "Re-epoxied, new ferrule included", price: 20 },
+      { name: "Broken club repair", note: "Priced once we see the break", price: "Quote" },
       { name: "Custom ferrules, per club", note: "+ ferrule · $5 with a reshaft or build", price: 15 }
     ]},
-    { id: "refinish", title: "Refinishing", items: [
-      { name: "Deep clean, per club", note: "Full bag $25", price: 3 },
-      { name: "Refurbish", note: "Groove clean, polish & buff", price: 15 },
-      { name: "Paint fill, per club", note: "Set of up to 10 $50 · paint included", price: 8 },
-      { name: "Custom stamping", note: "Initials, numbers or short text", price: "from $15" }
+    { id: "personal", title: "Paint fill & stamping", items: [
+      { name: "Paint fill, per club", note: "Set of up to 10 $60 · paint included", price: 8 },
+      { name: "Custom stamping", note: "Initials, numbers or short text", price: "from $20" }
     ]},
     { id: "tradein", title: "Trade-in", items: [
       { name: "Trade in shafts, adapters & heads", note: "Credit toward any service", price: "Quote" },
-      { name: "Pre-owned shafts & adapters", note: "Lower-cost repair option, when in stock", price: "Quote" }
+      { name: "Pre-owned shafts & adapters", note: "Lower-cost repair option, when available", price: "Quote" }
     ]}
   ],
 
   turnaround: [
-    { big: "Next day", small: "Your own grips or grips we stock" },
-    { big: "3–5 days", small: "Special-order grips, ordered Mon & Thu" },
-    { big: "Rush +$15", small: "Special order shipped same day, 2–3 days" }
+    { big: "Next day", small: "Your own grips, loft & lie, most repairs" },
+    { big: "3–4 days", small: "Grips & parts we order (2 days to arrive)" },
+    { big: "Rush 2 days", small: "Overnight parts, $25 instead of $10" }
   ],
 
-  // Sorted cheapest first. Shown with installed price (grip + labor) on the menu.
+  // Sorted cheapest first. Shown with installed price (grip + labor) on the menu. All ordered per job.
   grips: [
     { name: "SuperStroke Crossline 2.0", price: 6.19 },
-    { name: "Golf Pride Tour Velvet", note: "Standard or midsize", price: 7.19, stock: true },
+    { name: "Golf Pride Tour Velvet", note: "Standard or midsize", price: 7.19 },
     { name: "Golf Pride Tour Velvet Plus4", price: 7.19 },
     { name: "Ping ID8", price: 7.99 },
     { name: "Winn Dri-Tac Wrap", price: 8.99 },
     { name: "Winn Dri-Tac", note: "Standard", price: 9.79 },
     { name: "Golf Pride CP2 Wrap / CP2 Pro", price: 11.19 },
     { name: "Golf Pride Tour Wrap 2G", price: 11.19 },
-    { name: "Golf Pride MCC / MCC Plus4", note: "Standard or midsize", price: 13.19, stock: true },
+    { name: "Golf Pride MCC / MCC Plus4", note: "Standard or midsize", price: 13.19 },
     { name: "Golf Pride Z-Grip Cord", price: 13.19 },
     { name: "Golf Pride MCC Align", price: 15.19 }
   ],
@@ -151,7 +149,7 @@ window.RCCW = {
 
   // Bundle deals: no codes. The quote builder applies them automatically when an order qualifies.
   bundles: {
-    launchBag: { price: 35, endsISO: "2027-03-01", ends: "March 1, 2027" }, // full bag with grips bought here, + free loft & lie check
-    tuneUpOff: 20  // full-bag regrip + loft & lie set adjust + full-bag deep clean together
+    launchBag: { price: 40, endsISO: "2027-01-01", ends: "December 31, 2026" }, // full bag with grips we order, + free loft & lie check
+    tuneUpOff: 10  // full-bag regrip (10+ clubs) + loft & lie adjust on 6+ irons in one visit
   }
 };
