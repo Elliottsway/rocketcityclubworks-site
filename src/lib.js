@@ -107,7 +107,7 @@ export async function publicTicket(env, t) {
   return {
     id: t.id, number: ticketNo(t.number), kind: t.kind, title: t.title, status: t.status, status_label: LABEL[t.status] || t.status,
     created_at: t.created_at, updated_at: t.updated_at, spec: JSON.parse(t.spec || '{}'), customer_note: t.customer_note,
-    shop_note: t.shop_note, eta: t.eta, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents,
+    shop_note: t.shop_note, eta: t.eta, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents, refunded_cents: t.refunded_cents || 0,
     due_cents: Math.max(0, t.total_cents - t.paid_cents), version: t.version, approved_version: t.approved_version,
     can_pay: ['awaiting_approval', 'approved'].includes(t.status) && t.total_cents > t.paid_cents,
     lines: lines.map((l) => {

@@ -63,6 +63,23 @@
 .ocard .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .ocard ul{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem}
 pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;font:500 .85rem var(--mono);margin:0}
+.pick{display:grid;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.pk-res{max-height:min(55vh,360px);overflow:auto;border:1.5px solid var(--accent);border-radius:10px;background:var(--surface)}
+.pk-it{display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);padding:10px 12px;font:600 .92rem var(--body);cursor:pointer}
+.pk-it:hover,.pk-it:focus{background:var(--tint);outline:none}
+.pk-it small{grid-column:1/-1;color:var(--muted);font-weight:500;font-size:.78rem}
+.pk-it span:nth-child(2){font-family:var(--mono)}
+.pk-cfg{display:grid;gap:8px;padding:12px;border:1.5px solid var(--accent);border-radius:10px;background:var(--surface-2)}
+.pk-cfg .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.pk-cfg label{font-size:.8rem}
+.pays{display:grid;gap:10px}
+.pay1{display:grid;gap:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.pay1 .top1{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.pay1 .top1 span:last-child{font-family:var(--mono)}
+.pay1 small{color:var(--muted)}
+.pay1 a{color:var(--accent)}
+.refund{display:grid;grid-template-columns:110px 1fr auto;gap:6px;align-items:end}
+@media (max-width:520px){.refund{grid-template-columns:1fr}}
 #signout{min-height:40px;padding:0 15px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);background:none;color:inherit;font:700 .9rem var(--body);cursor:pointer}
 </style>
 </head>
@@ -97,6 +114,8 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       <div class="det">
         <div class="stack">
           <div id="d-pay" class="banner"></div>
+          <div class="card box" id="d-paybox" hidden><h2>Payments</h2><div class="pays" id="d-pays"></div>
+            <p class="hint" style="margin:10px 0 0">Everything here comes live from Square. <a href="https://app.squareup.com/dashboard/sales/transactions" target="_blank" rel="noopener" style="color:var(--accent)">Open Square transactions</a> (search by receipt #).</p></div>
           <div class="card box"><h2>Customer</h2><div class="kv" id="d-cust"></div>
             <div class="acts" style="margin-top:10px"><button class="small" type="button" id="d-copy">Copy ticket link</button><a class="small" id="d-cuslink" style="display:inline-flex;align-items:center;text-decoration:none">Customer history</a></div>
           </div>
@@ -107,6 +126,13 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
           <div class="card box">
             <h2>Price &amp; parts</h2>
             <div class="form" style="margin-bottom:10px"><div><label for="d-ttl">Ticket title</label><input id="d-ttl"></div></div>
+            <div class="pick">
+              <label for="pk-q">Add from your price list or the GolfWorks catalog</label>
+              <div class="chips" id="pk-cats" style="margin:0"></div>
+              <input id="pk-q" type="search" autocomplete="off" placeholder="Search: regrip, loft, Tour Velvet, Ventus, Ping G430…">
+              <div class="pk-res" id="pk-res" hidden></div>
+              <div class="pk-cfg" id="pk-cfg" hidden></div>
+            </div>
             <div class="lhead"><span>Item</span><span>Qty</span><span>Each $</span><span>Type</span><span>Tax</span><span></span></div>
             <div id="d-lines"></div>
             <div class="addrow">
@@ -190,12 +216,15 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
             <div><label for="nt-note">Details</label><textarea id="nt-note"></textarea></div>
             <button class="btn" type="button" id="nt-go">Open ticket</button><p id="nt-out" role="status"></p>
           </div>
+          <div class="card box"><h2>Payments</h2><div class="pays" id="cd-pays"></div></div>
           <div class="card box"><h2>Work history <span id="cd-spent" style="font-family:var(--mono);font-size:1rem;color:var(--muted)"></span></h2><div class="list" id="cd-tickets"></div></div>
         </div>
       </div>
     </section>
   </div>
 </main>
+<script src="/assets/prices.js"></script>
+<script src="/assets/parts.js"></script>
 <script src="/assets/app.js"></script>
 <script>
 (function(){
@@ -288,9 +317,9 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     $('d-title').textContent = t.number + ' · ' + (t.customer ? t.customer.name : '');
     var paid = t.total_cents > 0 && t.paid_cents >= t.total_cents;
     $('d-pay').className = 'banner ' + (paid ? 'good' : 'warn');
-    $('d-pay').textContent = paid ? '✓ Paid in full: ' + money(t.paid_cents) + ' (confirmed with Square). OK to order parts.'
+    $('d-pay').textContent = (t.refunded_cents ? 'Refunded ' + money(t.refunded_cents) + '. ' : '') + (paid ? '✓ Paid in full: ' + money(t.paid_cents) + ' (confirmed with Square). OK to order parts.'
       : t.paid_cents ? 'Partly paid: ' + money(t.paid_cents) + ' of ' + money(t.total_cents) + '. Don\'t order the new parts yet.'
-      : t.status === 'submitted' ? 'Not priced yet. Set the price, then "Save & send price to customer".' : 'Not paid yet: don\'t order parts.';
+      : t.status === 'submitted' ? 'Not priced yet. Set the price, then "Save & send price to customer".' : 'Not paid yet: don\'t order parts.');
     var c = t.customer || {}, K = $('d-cust'); K.textContent = '';
     function kv(k, v, href){ K.appendChild(el('span', k)); var x = href ? el('a', v) : el('b', v); if (href) x.href = href; K.appendChild(x); }
     kv('Name', c.name || '?'); if (c.phone) { kv('Call', c.phone_fmt, 'tel:' + c.phone); kv('Text', c.phone_fmt, 'sms:' + c.phone); } kv('Email', c.email || '', 'mailto:' + c.email);
@@ -303,8 +332,124 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     var L = $('d-lines'); L.textContent = ''; t.lines.forEach(function(l){ L.appendChild(lineRow(l)); });
     $('d-tax').value = +(t.tax_rate * 100).toFixed(3); $('d-eta').value = t.eta || ''; $('d-note').value = t.shop_note || ''; $('d-msg').value = ''; $('d-int').checked = false;
     var sel = $('d-status'); sel.textContent = ''; Object.keys(LABEL).forEach(function(s){ sel.appendChild(new Option(LABEL[s], s)); }); sel.value = t.status;
-    totals();
+    totals(); loadPays(t); $('pk-cfg').hidden = true; $('pk-q').value = ''; $('pk-res').hidden = true;
   }
+  // ---------- add from price list / catalog ----------
+  var D = window.RCCW, R = D.rules, PARTS = window.RCCWparts, CAT = null, pkCat = 'all';
+  function svc(name){ var f = null; D.services.forEach(function(g){ g.items.forEach(function(i){ if (i.name === name && typeof i.price === 'number') f = i.price; }); }); return f == null ? 0 : f; }
+  var LABOR = [
+    ['Regrip labor, per club', R.regripOurs], ['Regrip labor, full bag (up to 14 clubs)', R.regripOursBag], ['Putter grip install', R.putterGrip], ['Build-up wraps & logo alignment', 0],
+    ['Loft & lie check (up to 14 clubs)', R.loftCheck], ['Loft & lie check & adjust, per club', R.loftPer], ['Loft & lie check & adjust, set (up to 12)', R.loftSet],
+    ['Reshaft iron/wedge, steel', R.reshaftSteel], ['Reshaft iron/wedge, graphite', R.reshaftGraphite], ['Reshaft iron (set price, 6+), steel', R.ironSetSteel], ['Reshaft iron (set price, 6+), graphite', R.ironSetGraphite],
+    ['Reshaft driver, wood or hybrid', R.reshaftWood], ['Install or move an adapter', svc('Install or move an adapter')],
+    ['Shorten a club', svc('Shorten a club')], ['Extend a club', svc('Extend a club')], ['Loose head or rattle repair', svc('Loose head or rattle')], ['Broken club repair', 0],
+    ['Custom ferrule install, per club', svc('Custom ferrules, per club')], ['Ferrule with reshaft or build, per club', 5],
+    ['Paint fill, per club', R.paintPer], ['Paint fill, set (up to 10 clubs)', R.paintSet], ['Custom stamping', 20], ['Custom club build labor', 0]
+  ].map(function(x){ return { cat: 'labor', name: x[0], price: x[1], kind: 'labor' }; });
+  var FEES = [
+    { name: 'Parts fee', price: R.partsFee, kind: 'fee' }, { name: 'Rush: overnight parts', price: R.rush, kind: 'fee' },
+    { name: 'Launch full-bag price', price: -(R.regripOursBag - D.bundles.launchBag.price), kind: 'discount' },
+    { name: 'Season tune-up bundle', price: -D.bundles.tuneUpOff, kind: 'discount' }, { name: 'Trade-in credit', price: 0, kind: 'discount' }, { name: 'Discount', price: 0, kind: 'discount' }
+  ].map(function(x){ x.cat = 'fees'; return x; });
+  var CATS = [['all', 'All'], ['labor', 'Labor'], ['grips', 'Grips'], ['putter', 'Putter grips'], ['shafts', 'Shafts'], ['adapters', 'Adapters'], ['fees', 'Fees & discounts']];
+  var squash = function(x){ return String(x).toLowerCase().replace(/[^a-z0-9]+/g, ''); };
+  function items(){
+    var out = LABOR.concat(FEES);
+    PARTS.ADAPTERS.forEach(function(a){ out.push({ cat: 'adapters', name: a.name, price: a.price, kind: 'part', part_no: a.id, note: 'Fits ' + a.fits, opts: { Hand: ['Right-handed', 'Left-handed'] } }); });
+    if (CAT) {
+      CAT.grips.forEach(function(g){ out.push({ cat: g.putter ? 'putter' : 'grips', name: g.name, price: g.price, kind: 'part', part_no: g.id, note: g.brand, opts: g.opts, src: g }); });
+      CAT.shafts.forEach(function(x){ out.push({ cat: 'shafts', name: x.name, price: x.price, kind: 'part', part_no: x.id, note: x.brand + (x.use && x.use.length ? ' · ' + x.use.join(', ') : ''), opts: x.opts, src: x }); });
+    }
+    return out;
+  }
+  function loadCat(){ if (CAT) return; fetch('/assets/catalog.json').then(function(r){ return r.json(); }).then(function(c){ CAT = c; pkSearch(); }); }
+  function pkChips(){
+    var C = $('pk-cats'); C.textContent = '';
+    CATS.forEach(function(c){ var b = el('button', c[1]); b.type = 'button'; b.setAttribute('aria-pressed', String(c[0] === pkCat)); b.onclick = function(){ pkCat = c[0]; pkChips(); pkSearch(); $('pk-q').focus(); }; C.appendChild(b); });
+  }
+  function pkSearch(){
+    var q = $('pk-q').value.trim(), words = q.split(/\s+/).map(squash).filter(Boolean), R2 = $('pk-res'); R2.textContent = '';
+    if (!words.length && pkCat === 'all') { R2.hidden = true; return; }
+    var hits = items().filter(function(it){
+      if (pkCat !== 'all' && it.cat !== pkCat) return false;
+      var h = squash(it.name + ' ' + (it.part_no || '') + ' ' + (it.note || '') + ' ' + Object.keys(it.opts || {}).map(function(k){ return it.opts[k].join(' '); }).join(' '));
+      return words.every(function(w){ return h.indexOf(w) >= 0; });
+    });
+    hits.slice(0, 40).forEach(function(it){
+      var b = el('button', null, 'pk-it'); b.type = 'button';
+      b.appendChild(el('span', it.name)); b.appendChild(el('span', it.price ? money(Math.round(it.price * 100)) : 'set price'));
+      b.appendChild(el('small', [CATS.filter(function(c){ return c[0] === it.cat; })[0][1], it.part_no, it.note].filter(Boolean).join(' · ')));
+      b.onclick = function(){ pkConfig(it); }; R2.appendChild(b);
+    });
+    if (!hits.length) R2.appendChild(el('p', CAT || pkCat === 'labor' || pkCat === 'fees' ? 'No match. Use the + buttons below for a custom line.' : 'Loading catalog…', 'empty'));
+    if (hits.length > 40) R2.appendChild(el('p', (hits.length - 40) + ' more. Keep typing.', 'empty'));
+    R2.hidden = false;
+  }
+  function pkConfig(it){
+    var B = $('pk-cfg'); B.textContent = ''; $('pk-res').hidden = true;
+    B.appendChild(el('b', it.name + (it.part_no ? '  (' + it.part_no + ')' : '')));
+    if (it.note) B.appendChild(el('small', it.note));
+    var sel = {}, grid = el('div', null, 'opts');
+    Object.keys(it.opts || {}).forEach(function(k){
+      var w = el('div'), l = el('label', k), s2 = el('select'); it.opts[k].forEach(function(v){ s2.appendChild(new Option(v, v)); }); sel[k] = it.opts[k][0];
+      s2.onchange = function(){ sel[k] = s2.value; if (it.src) pr.value = PARTS.priceFor(it.src, sel).toFixed(2); };
+      w.appendChild(l); w.appendChild(s2); grid.appendChild(w);
+    });
+    var qw = el('div'), ql = el('label', 'Qty'), qn = el('input'); qn.type = 'number'; qn.min = 1; qn.value = 1; qw.appendChild(ql); qw.appendChild(qn); grid.appendChild(qw);
+    var pw = el('div'), pl = el('label', 'Each $'), pr = el('input'); pr.type = 'number'; pr.step = '0.01'; pr.value = (it.src ? PARTS.priceFor(it.src, sel) : it.price).toFixed(2); pw.appendChild(pl); pw.appendChild(pr); grid.appendChild(pw);
+    B.appendChild(grid);
+    var acts = el('div', null, 'acts'), add = el('button', 'Add to ticket', 'small'), cancel = el('button', 'Cancel', 'small');
+    add.type = cancel.type = 'button';
+    add.onclick = function(){
+      var extra = Object.keys(sel).map(function(k){ return sel[k]; }).filter(function(v){ return v && v !== 'Right-handed'; }).join(', ');
+      $('d-lines').appendChild(lineRow({ desc: it.name + (extra ? ' (' + extra + ')' : ''), qty: Math.max(1, Number(qn.value) || 1), unit_cents: Math.round(Number(pr.value) * 100), kind: it.kind, taxable: it.kind === 'part', part_no: it.part_no || '', track: 'to_order' }));
+      totals(); B.hidden = true; $('pk-q').value = ''; $('pk-q').focus();
+    };
+    cancel.onclick = function(){ B.hidden = true; pkSearch(); };
+    acts.appendChild(add); acts.appendChild(cancel); B.appendChild(acts); B.hidden = false; qn.focus();
+  }
+  $('pk-q').addEventListener('focus', loadCat);
+  $('pk-q').addEventListener('input', pkSearch);
+  pkChips();
+
+  // ---------- payments & refunds ----------
+  function payCard(p, ticketView){
+    var d = el('div', null, 'pay1'), top = el('div', null, 'top1');
+    top.appendChild(el('span', (p.card || 'Card') + (p.number ? ' · ' + p.number : ''))); top.appendChild(el('span', money(p.amount_cents))); d.appendChild(top);
+    d.appendChild(el('small', A.when(p.at) + (p.status ? ' · ' + p.status.toLowerCase() : '') + (p.receipt_number ? ' · receipt #' + p.receipt_number : '') + (p.fee_cents ? ' · Square fee ' + money(p.fee_cents) : '') + (p.refunded_cents ? ' · refunded ' + money(p.refunded_cents) : '')));
+    var links = el('div', null, 'acts');
+    if (p.receipt_url) { var a = el('a', 'Square receipt'); a.href = p.receipt_url; a.target = '_blank'; a.rel = 'noopener'; links.appendChild(a); }
+    if (p.ticket_id) { var t2 = el('a', 'Open ticket'); t2.href = '/admin/?t=' + encodeURIComponent(p.ticket_id); links.appendChild(t2); }
+    d.appendChild(links);
+    if (ticketView && p.refundable_cents > 0) {
+      var f = el('div', null, 'refund'), amt = el('input'), why = el('input'), go = el('button', 'Refund', 'small'), out = el('p');
+      amt.type = 'number'; amt.step = '0.01'; amt.value = (p.refundable_cents / 100).toFixed(2); amt.setAttribute('aria-label', 'Refund amount');
+      why.placeholder = 'Reason (customer sees this)'; why.setAttribute('aria-label', 'Refund reason'); go.type = 'button';
+      go.onclick = function(){
+        var c = Math.round(Number(amt.value) * 100);
+        if (!c || !confirm('Refund ' + money(c) + ' to ' + (p.card || 'the card') + '? This goes through Square right away and can\'t be undone.')) return;
+        go.disabled = true; out.textContent = 'Refunding…';
+        api('/tickets/' + encodeURIComponent(cur.id) + '/refund', { method: 'POST', body: { payment_id: p.id, amount_cents: c, reason: why.value, key: p.id.slice(0, 20) + '-' + Date.now() } })
+          .then(function(j){ renderPays(j); api('/tickets/' + encodeURIComponent(cur.id)).then(function(t){ cur = t; }); })
+          .catch(function(x){ out.className = 'err'; out.textContent = x.message; go.disabled = false; });
+      };
+      f.appendChild(amt); f.appendChild(why); f.appendChild(go); d.appendChild(f); d.appendChild(out);
+    }
+    return d;
+  }
+  function renderPays(j){
+    var P2 = $('d-pays'); P2.textContent = '';
+    if (!j.payments.length) P2.appendChild(el('p', 'No payments yet.', 'empty'));
+    j.payments.forEach(function(p){ P2.appendChild(payCard(p, true)); });
+    (j.refunds || []).forEach(function(r){ P2.appendChild(el('small', 'Refund ' + money(r.amount_cents) + ' · ' + A.when(r.at) + ' · ' + (r.status || '').toLowerCase() + (r.reason ? ' · ' + r.reason : ''))); });
+  }
+  function loadPays(t){
+    $('d-paybox').hidden = !t.paid_cents;
+    if (!t.paid_cents) return;
+    $('d-pays').textContent = 'Loading from Square…';
+    api('/tickets/' + encodeURIComponent(t.id) + '/payments').then(renderPays).catch(function(x){ $('d-pays').textContent = x.message; });
+  }
+
   function save(send){
     var body = { version: cur.version, lines: readLines(), tax_rate: (Number($('d-tax').value) || 0) / 100, shop_note: $('d-note').value, eta: $('d-eta').value || null, title: $('d-ttl').value, message: $('d-msg').value, internal: $('d-int').checked };
     if (send) body.send_for_approval = true; else if ($('d-status').value !== cur.status) body.status = $('d-status').value;
@@ -400,6 +545,11 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       var M = $('cd-meta'); M.textContent = '';
       [['Customer since', A.date(c.created_at)], ['Account', c.created_by === 'shop' ? 'Added by you' + (c.last_login_at ? ', has signed in' : ', not signed in yet') : 'Signed up online'], ['Last sign-in', c.last_login_at ? A.when(c.last_login_at) : 'never']].forEach(function(p){ M.appendChild(el('span', p[0])); M.appendChild(el('b', p[1])); });
       $('cd-spent').textContent = money(j.spent_cents) + ' paid';
+      api('/customers/' + encodeURIComponent(cid) + '/payments').then(function(k){
+        var P3 = $('cd-pays'); P3.textContent = '';
+        if (!k.payments.length) P3.appendChild(el('p', 'No payments yet.', 'empty'));
+        k.payments.forEach(function(p){ P3.appendChild(payCard(p, false)); });
+      }).catch(function(){});
       var L = $('cd-tickets'); L.textContent = '';
       if (!j.tickets.length) L.appendChild(el('p', 'No tickets yet.', 'empty'));
       j.tickets.forEach(function(t){

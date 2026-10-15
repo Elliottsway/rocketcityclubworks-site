@@ -1,4 +1,5 @@
 // Jackson's dashboard API: tickets, parts orders, customers.
+import { ticketPayments, refundPayment } from './square.js';
 import { json, err, now, newId, clip, cleanEmail, okEmail, cleanPhone, fmtPhone, readJson, cleanLines, priceKey, totals, getTicket, getCustomer,
   addEvent, events, publicTicket, ordersFor, trackingUrl, isPaid, notifyCustomer, sendEmail, siteUrl, ticketNo, money, STATUSES, LABEL, TRACK } from './lib.js';
 
@@ -248,4 +249,43 @@ export async function inviteCustomer(request, env, id) {
   const ok = await sendEmail(env, { to: c.email, subject: 'Your Rocket City ClubWorks account',
     text: `Hi ${c.name.split(' ')[0]},\n\nJackson set up an account for you so you can track your clubs, approve prices and pay online.\n\nSign in with this email (we'll send you a code, no password needed):\n${siteUrl(env, '/account/')}\n\nJackson\nRocket City ClubWorks` });
   return ok ? json({ ok: true }) : err('The email did not send.', 502);
+}
+
+// ---------- payments & refunds ----------
+// GET /api/admin/tickets/:id/payments
+export async function ticketPaymentsAdmin(request, env, id) {
+  const t = await getTicket(env, id);
+  if (!t) return err('Ticket not found.', 404);
+  return json(await ticketPayments(env, t));
+}
+// POST /api/admin/tickets/:id/refund {payment_id, amount_cents, reason, key}
+export async function refundTicket(request, env, id, ctx) {
+  const t = await getTicket(env, id);
+  if (!t) return err('Ticket not found.', 404);
+  let b; try { b = await readJson(request); } catch { return err('Bad request'); }
+  const pay = await env.DB.prepare('SELECT * FROM payments WHERE square_payment_id = ? AND ticket_id = ?').bind(String(b.payment_id || ''), t.id).first();
+  if (!pay) return err('That payment is not on this ticket.', 404);
+  const live = await ticketPayments(env, t);
+  const p = live.payments.find((x) => x.id === pay.square_payment_id);
+  const amount = Math.round(Number(b.amount_cents) || 0);
+  if (amount <= 0) return err('Enter a refund amount.');
+  if (amount > p.refundable_cents) return err(`At most ${money(p.refundable_cents)} can be refunded on this payment.`);
+  let r;
+  try {
+    r = await refundPayment(env, { paymentId: pay.square_payment_id, amount, reason: clip(b.reason, 190) || `Refund for ${ticketNo(t.number)}`,
+      idempotencyKey: clip(b.key, 40) || `${pay.square_payment_id}-r-${amount}-${p.refunded_cents}` });
+  } catch (e) { return err('Square: ' + e.message, 502); }
+  await env.DB.prepare('INSERT OR IGNORE INTO refunds (square_refund_id, ticket_id, square_payment_id, amount_cents, reason, status, at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(r.id, t.id, pay.square_payment_id, amount, clip(b.reason, 190), r.status, now()).run();
+  await env.DB.prepare('UPDATE payments SET refunded_cents = refunded_cents + ? WHERE square_payment_id = ?').bind(amount, pay.square_payment_id).run();
+  await env.DB.prepare('UPDATE tickets SET refunded_cents = refunded_cents + ?, updated_at = ? WHERE id = ?').bind(amount, now(), t.id).run();
+  await addEvent(env, t.id, 'shop', 'paid', `Refund of ${money(amount)} issued to ${p.card || 'the card used'}.${b.reason ? ' ' + clip(b.reason, 190) : ''}`);
+  ctx.waitUntil(notifyCustomer(env, t, 'refund issued', `Jackson issued a refund of ${money(amount)} to ${p.card || 'your card'}. It usually shows up in 2 to 7 business days.${b.reason ? '\n\nNote: ' + clip(b.reason, 190) : ''}`));
+  return json(await ticketPayments(env, await getTicket(env, t.id)));
+}
+// GET /api/admin/customers/:id/payments
+export async function customerPayments(request, env, id) {
+  const r = await env.DB.prepare(`SELECT p.square_payment_id AS id, p.amount_cents, p.refunded_cents, p.at, p.card, p.receipt_url, p.receipt_number, t.id AS ticket_id, t.number
+      FROM payments p JOIN tickets t ON t.id = p.ticket_id WHERE t.customer_id = ? ORDER BY p.at DESC`).bind(id).all();
+  return json({ payments: (r.results || []).map((x) => ({ ...x, number: ticketNo(x.number) })) });
 }

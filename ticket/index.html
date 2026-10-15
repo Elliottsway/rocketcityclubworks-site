@@ -62,6 +62,7 @@
         <div class="ln sub" id="p-taxl" hidden><span>Sales tax on parts</span><span id="p-tax"></span></div>
         <div class="tot"><b id="p-totl">Total</b><span id="p-total"></span></div>
         <div class="ln sub" id="p-paidl" hidden><span>Paid</span><span id="p-paid"></span></div>
+        <div class="ln sub" id="p-refl" hidden><span>Refunded to your card</span><span id="p-ref"></span></div>
         <div class="ln" id="p-duel" hidden><span><b>Due now</b></span><span id="p-due"></span></div>
         <button class="btn" type="button" id="p-pay" hidden>Approve &amp; pay</button>
         <p class="fine" id="p-fine"></p>
@@ -122,6 +123,7 @@
     $('p-totl').textContent = priced ? 'Total' : 'Estimate'; $('p-total').textContent = money(t.total_cents);
     $('p-ver').textContent = priced ? 'Version ' + t.version : 'Not final yet';
     $('p-paidl').hidden = !t.paid_cents; $('p-paid').textContent = '−' + money(t.paid_cents);
+    $('p-refl').hidden = !t.refunded_cents; $('p-ref').textContent = money(t.refunded_cents || 0);
     $('p-duel').hidden = !(t.paid_cents && t.due_cents); $('p-due').textContent = money(t.due_cents);
     $('p-pay').hidden = !t.can_pay; $('p-pay').textContent = 'Approve & pay · ' + money(t.due_cents);
     $('p-fine').textContent = t.can_pay ? 'Secure card payment by Square. Your parts are ordered as soon as the payment clears.'
