@@ -3,242 +3,432 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Shop Admin · Rocket City ClubWorks</title>
+<title>Shop Dashboard · Rocket City ClubWorks</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#091E13">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Big+Shoulders+Display:wght@800;900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/app.css">
 <style>
-/* Shop admin: Cloudflare Access protects this page and the /api/admin endpoints. */
-body{padding-bottom:0}
-.adm{padding:18px 0 40px}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 16px}
-.tabs button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:600 .88rem var(--body);cursor:pointer}
-.tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.adm{padding-top:14px;padding-bottom:60px}
+.adm h1{font-size:2.2rem;margin:4px 0 10px}
+.views{display:flex;gap:6px;margin:6px 0 14px;overflow-x:auto}
+.views a{flex:0 0 auto;min-height:42px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font-weight:700;text-decoration:none}
+.views a[aria-current]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chips button{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:600 .85rem var(--body);cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--tint);color:var(--accent);border-color:var(--accent)}
+.chips b{font-family:var(--mono);margin-left:4px}
+.srch{margin-bottom:10px}
 .list{display:grid;gap:8px}
-.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;text-decoration:none}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:12px 14px;text-decoration:none;color:var(--ink)}
 .row b{font-family:var(--mono)}
 .row small{display:block;color:var(--muted)}
-.st{font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:var(--tint);color:var(--accent);white-space:nowrap}
-.st.submitted{background:#4A3B10;color:#FFD66B}
-.st.paid{background:#123E2A;color:#7CC795}
+.row .money{font-family:var(--mono);font-weight:600;text-align:right}
 .det{display:grid;gap:14px}
-@media (min-width:980px){.det{grid-template-columns:1fr 1.3fr;align-items:start}}
-.box{padding:16px}
-.box h2{font-size:1.3rem;color:var(--accent);margin:0 0 10px}
+@media (min-width:1000px){.det{grid-template-columns:1fr 1.35fr;align-items:start}}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:.95rem}
 .kv span{color:var(--muted)}
 .kv a{color:var(--accent)}
-/* price lines: one row per line on desktop, stacked on phones */
-.lhead,.lrow{display:grid;grid-template-columns:minmax(0,1fr) 64px 92px 104px 36px 36px;gap:6px;align-items:center}
-.lhead{font:600 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 2px 4px}
-.lrow{padding:6px 0;border-top:1px solid var(--line)}
-.lrow input,.lrow select{min-height:42px;padding:8px}
-.lrow .tx{display:flex;justify-content:center}
-.lrow .tx input{width:22px;min-height:0}
-.lrow .x{background:none;border:0;color:#FF9B8F;font-size:1.3rem;cursor:pointer;min-height:42px}
-@media (max-width:640px){
-  .lhead{display:none}
-  .lrow{grid-template-columns:64px 1fr 1fr 40px 36px}
-  .lrow .d{grid-column:1/-1}
-}
+.banner{padding:12px 14px;border-radius:10px;font-weight:700}
+.banner.good{background:#123E2A;color:#9BE0B2}
+.banner.warn{background:#4A3B10;color:#FFD66B}
+.lhead,.lrow{display:grid;grid-template-columns:minmax(0,1fr) 54px 84px 92px 30px 30px;gap:6px;align-items:center}
+.lhead{font:600 .66rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 2px 4px}
+.lrow{padding:8px 0;border-top:1px solid var(--line)}
+.lrow input,.lrow select{min-height:40px;padding:6px 8px;font-size:.92rem}
+.lrow select{padding-right:22px;background-position:right 6px center}
+.lrow .tx{display:flex;justify-content:center}.lrow .tx input{width:20px;min-height:0}
+.lrow .x{background:none;border:0;color:#FF9B8F;font-size:1.3rem;cursor:pointer;min-height:40px}
+.lrow .pp{grid-column:1/-1;display:grid;grid-template-columns:110px 1fr;gap:6px}
+.lrow .pp small{grid-column:1/-1;color:var(--muted);font-size:.8rem}
+@media (max-width:640px){.lhead{display:none}.lrow{grid-template-columns:54px 1fr 1fr 30px 30px}.lrow .d{grid-column:1/-1}}
 .addrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.addrow button,.small{min-height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--dots);background:var(--surface-2);color:var(--ink);font:600 .85rem var(--body);cursor:pointer}
+.small{min-height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--dots);background:var(--surface-2);color:var(--ink);font:600 .85rem var(--body);cursor:pointer}
 .totals{margin-top:12px;display:grid;gap:4px;font-family:var(--mono)}
 .totals div{display:flex;justify-content:space-between}
 .totals .big{font-size:1.2rem;color:var(--accent)}
-.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.hist{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:.92rem}
-.hist small{display:block;font-family:var(--mono);font-size:.66rem;color:var(--muted);text-transform:uppercase}
-.spec{margin:0;padding-left:18px}
-.msgline{color:var(--muted);font-size:.9rem}
-#signout[hidden]{display:none!important}
-#auth{margin-inline:16px!important}@media (min-width:460px){#auth{margin-inline:auto!important}}
-#signout{display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;background:none;color:inherit;font:700 .9rem var(--body);cursor:pointer}
-@media (max-width:400px){#signout{display:inline-flex}}
-.err{color:#FF9B8F;font-weight:600}.ok{color:var(--accent);font-weight:600}
-@media (max-width:640px){td.m input{width:76px}td.n input{width:52px}}
+.hist li.internal{border-color:#FFD66B}
+.olist{display:grid;gap:6px}
+.oitem{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.oitem input[type=checkbox]{width:22px;height:22px;min-height:0}
+.oitem small{display:block;color:var(--muted)}
+.oitem code{font-family:var(--mono);font-weight:600}
+.ocard{padding:14px;display:grid;gap:10px}
+.ocard .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.ocard ul{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem}
+pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;font:500 .85rem var(--mono);margin:0}
+#signout{min-height:40px;padding:0 15px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);background:none;color:inherit;font:700 .9rem var(--body);cursor:pointer}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <a class="mark" href="/admin/" aria-label="Admin home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
-  <nav aria-label="Main"><a href="/admin/">Tickets</a><a href="/">Site</a></nav>
-  <div class="cta"><button class="ghost" id="signout" type="button">Sign out</button></div>
+  <a class="mark" href="/admin/" aria-label="Dashboard home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
+  <nav aria-label="Main"><a href="/admin/">Tickets</a><a href="/admin/?v=orders">Orders</a><a href="/admin/?v=customers">Customers</a><a href="/">Site</a></nav>
+  <div class="cta"><button id="signout" type="button" hidden>Sign out</button></div>
 </div></header>
 <main class="wrap adm">
-  <form id="auth" class="card box" hidden style="max-width:420px;margin:24px auto;display:grid;gap:10px;box-sizing:border-box">
-    <h1 style="font-size:2rem;margin:0">Shop login</h1>
-    <label for="pw">Passphrase</label>
-    <input id="pw" type="password" autocomplete="current-password" required>
+  <form id="login" class="card box form" hidden style="max-width:420px;margin:24px auto">
+    <h1 style="margin:0">Shop login</h1>
+    <div><label for="pw">Passphrase</label><input id="pw" type="password" autocomplete="current-password"></div>
     <button class="btn" type="submit">Sign in</button>
     <p id="pwmsg" class="err" role="alert"></p>
   </form>
 
-  <section id="v-list">
-    <h1 style="font-size:2.4rem">Work tickets</h1>
-    <div class="tabs" id="tabs">
-      <button type="button" data-s="open" aria-pressed="true">Open</button><button type="button" data-s="submitted">Needs pricing</button>
-      <button type="button" data-s="awaiting_approval">Waiting on customer</button><button type="button" data-s="paid">Paid · order parts</button>
-      <button type="button" data-s="in_progress">On the bench</button><button type="button" data-s="ready">Ready</button><button type="button" data-s="all">All</button>
-    </div>
-    <div class="list" id="list"></div>
-  </section>
+  <div id="app" hidden>
+    <nav class="views" aria-label="Dashboard"><a href="/admin/" id="nv-t">Tickets</a><a href="/admin/?v=orders" id="nv-o">Parts orders</a><a href="/admin/?v=customers" id="nv-c">Customers</a></nav>
 
-  <section id="v-det" hidden>
-    <a href="/admin/" class="small" style="display:inline-flex;align-items:center;text-decoration:none;margin-bottom:10px">← All tickets</a>
-    <h1 id="d-num" style="font-size:2.4rem">RC-</h1>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 14px"><span class="st" id="d-st"></span><span class="msgline" id="d-sum"></span></div>
-    <div class="det">
-      <div style="display:grid;gap:14px">
-        <div class="card box"><h2>Customer</h2><div class="kv" id="d-cust"></div>
-          <div class="acts"><button class="small" id="d-copy" type="button">Copy ticket link</button><a class="small" id="d-text" href="#" style="display:inline-flex;align-items:center;text-decoration:none">Text link to customer</a></div></div>
-        <div class="card box"><h2>They asked for</h2><ul class="spec" id="d-spec"></ul><p class="msgline" id="d-cnote"></p></div>
-        <div class="card box"><h2>History</h2><ul class="hist" id="d-hist"></ul></div>
-      </div>
-      <div style="display:grid;gap:14px">
-        <div class="card box">
-          <h2>Price</h2>
-          <div class="lhead"><span>Item</span><span>Qty</span><span>Each $</span><span>Type</span><span>Tax</span><span></span></div>
-          <div id="d-lines"></div>
-          <div class="addrow">
-            <button type="button" data-k="labor">+ Labor</button><button type="button" data-k="part">+ Part</button><button type="button" data-k="fee">+ Fee</button><button type="button" data-k="discount">+ Discount</button>
-            <label style="display:flex;align-items:center;gap:6px;margin:0 0 0 auto;font-size:.85rem">Tax on parts % <input id="d-tax" type="number" step="0.01" min="0" max="20" style="width:80px;min-height:38px"></label>
+    <!-- tickets list -->
+    <section id="v-list" hidden>
+      <div class="chips" id="chips"></div>
+      <input class="srch" id="q" type="search" placeholder="Search name, phone, email or RC-number">
+      <div class="list" id="list"></div>
+    </section>
+
+    <!-- ticket detail -->
+    <section id="v-det" hidden>
+      <a href="/admin/" class="linkbtn">← All tickets</a>
+      <h1 id="d-title"></h1>
+      <div class="det">
+        <div class="stack">
+          <div id="d-pay" class="banner"></div>
+          <div class="card box"><h2>Customer</h2><div class="kv" id="d-cust"></div>
+            <div class="acts" style="margin-top:10px"><button class="small" type="button" id="d-copy">Copy ticket link</button><a class="small" id="d-cuslink" style="display:inline-flex;align-items:center;text-decoration:none">Customer history</a></div>
           </div>
-          <div class="totals" id="d-tot"></div>
+          <div class="card box"><h2>What they asked for</h2><ul class="spec" id="d-spec"></ul><p class="note" id="d-cnote" hidden style="margin-top:10px"></p></div>
+          <div class="card box"><h2>History</h2><ul class="hist" id="d-hist"></ul></div>
         </div>
-        <div class="card box">
-          <h2>Note to customer</h2>
-          <textarea id="d-note" placeholder="Shown on their ticket: what you confirmed, changed or recommend."></textarea>
-          <label for="d-msg" style="margin-top:10px">Message (adds to their history)</label>
-          <input id="d-msg" placeholder="Optional: e.g. Your grips are in, starting tonight">
-          <div class="acts">
-            <button class="btn" id="d-send" type="button">Save &amp; send for approval</button>
-            <button class="btn out" id="d-save" type="button">Save only</button>
+        <div class="stack">
+          <div class="card box">
+            <h2>Price &amp; parts</h2>
+            <div class="form" style="margin-bottom:10px"><div><label for="d-ttl">Ticket title</label><input id="d-ttl"></div></div>
+            <div class="lhead"><span>Item</span><span>Qty</span><span>Each $</span><span>Type</span><span>Tax</span><span></span></div>
+            <div id="d-lines"></div>
+            <div class="addrow">
+              <button class="small" type="button" data-add="labor">+ Labor</button><button class="small" type="button" data-add="part">+ Part</button>
+              <button class="small" type="button" data-add="fee">+ Fee</button><button class="small" type="button" data-add="discount">+ Discount</button>
+            </div>
+            <div class="row2" style="margin-top:12px">
+              <div><label for="d-tax">Sales tax on parts %</label><input id="d-tax" type="number" step="0.01" min="0" max="20" inputmode="decimal"></div>
+              <div><label for="d-eta">Estimated ready date</label><input id="d-eta" type="date"></div>
+            </div>
+            <div class="totals" id="d-tot"></div>
           </div>
-          <div class="acts">
-            <label for="d-status" class="sr">Status</label>
-            <select id="d-status" style="max-width:240px">
-              <option value="submitted">Needs pricing</option><option value="awaiting_approval">Waiting on customer</option><option value="approved">Approved, not paid</option>
-              <option value="paid">Paid</option><option value="parts_ordered">Parts ordered</option><option value="in_progress">On the bench</option>
-              <option value="ready">Ready for pickup</option><option value="completed">Picked up</option><option value="cancelled">Cancelled</option>
-            </select>
-            <button class="small" id="d-setst" type="button">Update status</button>
+          <div class="card box form">
+            <div><label for="d-note">Note to the customer (stays on their ticket)</label><textarea id="d-note"></textarea></div>
+            <div><label for="d-msg">Send a message (emails them)</label><textarea id="d-msg" placeholder="Optional"></textarea>
+              <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:.85rem"><input type="checkbox" id="d-int" style="width:20px;min-height:0"> Private note for me only (not emailed)</label></div>
+            <div><label for="d-status">Status</label><select id="d-status"></select></div>
+            <div class="acts">
+              <button class="btn" id="d-send" type="button">Save &amp; send price to customer</button>
+              <button class="btn out" id="d-save" type="button">Save</button>
+            </div>
+            <p id="d-out" role="status"></p>
           </div>
-          <p id="d-out" aria-live="polite"></p>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- parts orders -->
+    <section id="v-orders" hidden>
+      <div class="card box" style="margin-bottom:14px">
+        <h2>Ready to order <small style="color:var(--muted);font-size:.8rem">(paid in full)</small></h2>
+        <div class="olist" id="o-to"></div>
+        <div id="o-form" class="form" hidden style="margin-top:12px">
+          <label>Order list to paste into GolfWorks</label>
+          <pre class="copy" id="o-copytext"></pre>
+          <button class="small" type="button" id="o-copy">Copy list</button>
+          <div class="row2"><div><label for="o-no">GolfWorks order #</label><input id="o-no" placeholder="e.g. 1234567"></div>
+            <div><label for="o-eta">Expected delivery</label><input id="o-eta" type="date"></div></div>
+          <button class="btn" type="button" id="o-rec">Record order for checked parts</button>
+          <p id="o-out" role="status"></p>
+        </div>
+      </div>
+      <div class="card box" style="margin-bottom:14px" id="o-unpaidbox" hidden>
+        <h2>Not paid yet <small style="color:#FFD66B;font-size:.8rem">don't order</small></h2>
+        <div class="olist" id="o-unpaid"></div>
+      </div>
+      <h2 style="color:var(--accent)">Orders</h2>
+      <div class="list" id="o-list"></div>
+    </section>
+
+    <!-- customers -->
+    <section id="v-cust" hidden>
+      <div class="acts" style="margin-bottom:10px"><input class="srch" id="cq" type="search" placeholder="Search name, phone or email" style="flex:1 1 240px;margin:0"><button class="small" type="button" id="c-add">+ Add customer</button></div>
+      <form id="c-new" class="card box form" hidden style="margin-bottom:12px">
+        <h2>New customer</h2>
+        <div class="row2"><div><label for="n-name">Name</label><input id="n-name"></div><div><label for="n-phone">Phone</label><input id="n-phone" type="tel"></div></div>
+        <div><label for="n-email">Email (they sign in with this)</label><input id="n-email" type="email"></div>
+        <div><label for="n-notes">Private notes</label><textarea id="n-notes"></textarea></div>
+        <button class="btn" type="submit">Add customer</button><p id="n-out" role="status"></p>
+      </form>
+      <div class="list" id="c-list"></div>
+    </section>
+
+    <!-- customer detail -->
+    <section id="v-cdet" hidden>
+      <a href="/admin/?v=customers" class="linkbtn">← All customers</a>
+      <h1 id="cd-name"></h1>
+      <div class="det">
+        <form class="card box form" id="cd-form">
+          <div class="row2"><div><label for="cd-n">Name</label><input id="cd-n"></div><div><label for="cd-p">Phone</label><input id="cd-p" type="tel"></div></div>
+          <div><label for="cd-e">Email</label><input id="cd-e" type="email"></div>
+          <div><label for="cd-notes">Private notes (only you see these)</label><textarea id="cd-notes"></textarea></div>
+          <div class="kv" id="cd-meta"></div>
+          <div class="acts"><button class="btn out" type="submit">Save</button><button class="small" type="button" id="cd-invite">Email them a sign-in invite</button></div>
+          <p id="cd-out" role="status"></p>
+        </form>
+        <div class="stack">
+          <div class="card box form">
+            <h2>New ticket for this customer</h2>
+            <div><label for="nt-title">Title</label><input id="nt-title" placeholder="e.g. Regrip 13 + driver reshaft"></div>
+            <div><label for="nt-note">Details</label><textarea id="nt-note"></textarea></div>
+            <button class="btn" type="button" id="nt-go">Open ticket</button><p id="nt-out" role="status"></p>
+          </div>
+          <div class="card box"><h2>Work history <span id="cd-spent" style="font-family:var(--mono);font-size:1rem;color:var(--muted)"></span></h2><div class="list" id="cd-tickets"></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
 </main>
+<script src="/assets/app.js"></script>
 <script>
 (function(){
-  var $ = function(i){ return document.getElementById(i); };
-  var LABEL = { submitted: 'Needs pricing', awaiting_approval: 'Waiting on customer', approved: 'Approved, not paid', paid: 'Paid · order parts', parts_ordered: 'Parts ordered', in_progress: 'On the bench', ready: 'Ready', completed: 'Picked up', cancelled: 'Cancelled' };
-  var money = function(c){ return (c < 0 ? '−$' : '$') + (Math.abs(c) / 100).toFixed(2); };
-  function el(tag, text, cls){ var e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; }
+  var A = window.RCCWapp, $ = A.$, el = A.el, money = A.money;
+  var LABEL = { submitted: 'Needs pricing', awaiting_approval: 'Waiting on customer', approved: 'Approved, paying', paid: 'Paid · order parts', parts_ordered: 'Parts ordered', in_progress: 'On the bench', ready: 'Ready', completed: 'Picked up', cancelled: 'Cancelled' };
+  var TABS = [['open', 'Open'], ['submitted', 'Needs pricing'], ['waiting', 'Waiting on customer'], ['paid', 'Order parts'], ['parts_ordered', 'Parts ordered'], ['in_progress', 'On the bench'], ['ready', 'Ready'], ['completed', 'Done'], ['all', 'All']];
+  var TRACKS = [['to_order', 'To order'], ['ordered', 'Ordered'], ['shipped', 'Shipped'], ['received', 'Received'], ['installed', 'Installed']];
+  var qs = new URLSearchParams(location.search), view = qs.get('v'), tid = qs.get('t'), cid = qs.get('c'), cur = null, tab = 'open';
   function api(path, opts){
-    return fetch('/api/admin' + path, opts).then(function(r){
-      if (r.status === 401) { $('auth').hidden = false; $('auth').style.display = 'grid'; $('signout').hidden = true; $('v-list').hidden = true; $('v-det').hidden = true; $('pw').focus(); throw new Error('auth'); }
-      return r.json().then(function(j){ if (!r.ok) throw new Error(j.error || 'Error'); return j; });
+    opts = opts || {};
+    return A.api('/api/admin' + path, { method: opts.method, body: opts.body, noRedirect: true }).catch(function(x){
+      if (x.status === 401) { $('app').hidden = true; $('login').hidden = false; $('signout').hidden = true; $('pw').focus(); }
+      throw x;
     });
   }
-  var id = new URLSearchParams(location.search).get('t');
-  $('auth').style.display = 'none';
-  $('auth').addEventListener('submit', function(e){
+  $('login').addEventListener('submit', function(e){
     e.preventDefault(); $('pwmsg').textContent = '';
-    fetch('/api/admin-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) })
-      .then(function(r){ if (r.ok) location.reload(); else $('pwmsg').textContent = 'That passphrase did not match.'; })
-      .catch(function(){ $('pwmsg').textContent = 'Could not reach the server.'; });
+    A.api('/api/admin-login', { method: 'POST', body: { password: $('pw').value }, noRedirect: true }).then(function(){ location.reload(); }).catch(function(x){ $('pwmsg').textContent = x.message; });
   });
-  $('signout').addEventListener('click', function(){
-    fetch('/api/admin-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logout: true }) })
-      .finally(function(){ location.href = '/admin/'; });
-  });
+  $('signout').onclick = function(){ A.api('/api/admin-login', { method: 'POST', body: { logout: true }, noRedirect: true }).then(function(){ location.href = '/admin/'; }); };
+  function show(id){ ['v-list', 'v-det', 'v-orders', 'v-cust', 'v-cdet'].forEach(function(v){ $(v).hidden = v !== id; }); $('app').hidden = false; $('signout').hidden = false; }
+  function nav(which){ ['nv-t', 'nv-o', 'nv-c'].forEach(function(n){ if (n === which) $(n).setAttribute('aria-current', 'page'); else $(n).removeAttribute('aria-current'); }); }
 
-  // ---------- list ----------
-  function loadList(s){
-    document.querySelectorAll('#tabs button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.s === s)); });
-    api('/tickets?status=' + s).then(function(j){
+  // ---------- tickets ----------
+  var qTimer;
+  function loadList(){
+    api('/tickets?status=' + tab + '&q=' + encodeURIComponent($('q').value.trim())).then(function(j){
+      show('v-list'); nav('nv-t');
+      var C = $('chips'); C.textContent = '';
+      var open = 0; Object.keys(j.counts).forEach(function(k){ if (k !== 'completed' && k !== 'cancelled') open += j.counts[k]; });
+      TABS.forEach(function(t){
+        var b = el('button', t[1]); b.type = 'button'; b.setAttribute('aria-pressed', String(t[0] === tab));
+        var n = t[0] === 'open' ? open : t[0] === 'waiting' ? (j.counts.awaiting_approval || 0) + (j.counts.approved || 0) : j.counts[t[0]];
+        if (n && t[0] !== 'all') b.appendChild(el('b', String(n)));
+        b.onclick = function(){ tab = t[0]; loadList(); }; C.appendChild(b);
+      });
       var L = $('list'); L.textContent = '';
-      if (!j.tickets.length) L.appendChild(el('p', 'Nothing here.', 'msgline'));
-      j.tickets.forEach(function(t){
-        var a = el('a', null, 'card row'); a.href = '/admin/?t=' + t.id;
-        a.appendChild(el('b', t.label));
-        var mid = el('div'); mid.appendChild(el('span', t.name)); mid.appendChild(el('small', new Date(t.updated_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + money(t.total_cents) + (t.paid_cents ? ' · paid ' + money(t.paid_cents) : ''))); a.appendChild(mid);
-        a.appendChild(el('span', LABEL[t.status] || t.status, 'st ' + t.status)); L.appendChild(a);
+      var rows = j.tickets;
+      if (!rows.length) L.appendChild(el('p', 'Nothing here.', 'empty'));
+      rows.forEach(function(t){ L.appendChild(row(t)); });
+    }).catch(function(){});
+  }
+  function row(t){
+    var a = el('a', null, 'card row'); a.href = '/admin/?t=' + encodeURIComponent(t.id);
+    a.appendChild(el('b', t.number));
+    var m = el('div'); m.appendChild(el('span', (t.name || '?') + ' · ' + (t.title || ''))); m.appendChild(el('small', (LABEL[t.status] || t.status) + ' · ' + A.date(t.updated_at) + (t.eta ? ' · ready ' + A.day(t.eta) : ''))); a.appendChild(m);
+    var r = el('div', null, 'money'); r.appendChild(el('div', money(t.total_cents))); r.appendChild(el('small', t.paid ? 'PAID' : t.paid_cents ? money(t.paid_cents) + ' paid' : '')); a.appendChild(r);
+    return a;
+  }
+  $('q').addEventListener('input', function(){ clearTimeout(qTimer); qTimer = setTimeout(loadList, 250); });
+
+  // ---------- ticket detail ----------
+  function lineRow(l){
+    var r = el('div', null, 'lrow'); r.line = l;
+    function inp(cls, val, type){ var i = el('input'); i.value = val; if (type) i.type = type; var w = el('div', null, cls); w.appendChild(i); r.appendChild(w); return i; }
+    var d = inp('d', l.desc); d.setAttribute('aria-label', 'Description');
+    var q = inp('n', l.qty, 'number'); q.min = 1; q.setAttribute('aria-label', 'Quantity');
+    var u = inp('m', (l.unit_cents / 100).toFixed(2), 'number'); u.step = '0.01'; u.setAttribute('aria-label', 'Price each');
+    var k = el('select'); ['labor', 'part', 'fee', 'discount'].forEach(function(x){ k.appendChild(new Option(x, x)); }); k.value = l.kind; k.setAttribute('aria-label', 'Type');
+    var kw = el('div'); kw.appendChild(k); r.appendChild(kw);
+    var tw = el('div', null, 'tx'), tx = el('input'); tx.type = 'checkbox'; tx.checked = !!l.taxable; tx.setAttribute('aria-label', 'Taxable'); tw.appendChild(tx); r.appendChild(tw);
+    var x = el('button', '×', 'x'); x.type = 'button'; x.setAttribute('aria-label', 'Remove line'); x.onclick = function(){ r.remove(); totals(); }; r.appendChild(x);
+    var pp = el('div', null, 'pp'); var pn = el('input'); pn.placeholder = 'Part #'; pn.value = l.part_no || ''; pn.setAttribute('aria-label', 'Part number');
+    var tr = el('select'); TRACKS.forEach(function(t){ tr.appendChild(new Option(t[1], t[0])); }); tr.value = l.track || 'to_order'; tr.setAttribute('aria-label', 'Part status');
+    pp.appendChild(pn); pp.appendChild(tr);
+    if (l.order) pp.appendChild(el('small', 'Order ' + (l.order.order_no || '#' + l.order.id) + ' · ' + l.order.status + (l.order.tracking ? ' · ' + (l.order.carrier || '') + ' ' + l.order.tracking : '')));
+    r.appendChild(pp);
+    function sync(){ pp.hidden = k.value !== 'part'; }
+    k.onchange = function(){ if (k.value === 'part') tx.checked = true; if (k.value === 'discount' && Number(u.value) > 0) u.value = (-Number(u.value)).toFixed(2); sync(); totals(); };
+    [q, u, tx].forEach(function(i){ i.addEventListener('input', totals); });
+    sync();
+    r.read = function(){ return { id: l.id, desc: d.value, qty: Number(q.value) || 1, unit_cents: Math.round(Number(u.value) * 100), kind: k.value, taxable: tx.checked, part_no: pn.value, track: tr.value, order_id: l.order_id }; };
+    return r;
+  }
+  function readLines(){ return [].map.call($('d-lines').children, function(r){ return r.read(); }); }
+  function totals(){
+    var ls = readLines(), sub = 0, txb = 0;
+    ls.forEach(function(l){ var t = l.qty * l.unit_cents; sub += t; if (l.taxable) txb += t; });
+    var rate = (Number($('d-tax').value) || 0) / 100, tax = Math.round(Math.max(0, txb) * rate), tot = Math.max(0, sub + tax);
+    var T = $('d-tot'); T.textContent = '';
+    [['Subtotal', sub], ['Tax', tax], ['Total', tot, 'big']].concat(cur && cur.paid_cents ? [['Paid', -cur.paid_cents], ['Due', Math.max(0, tot - cur.paid_cents), 'big']] : []).forEach(function(p){
+      var d = el('div', null, p[2] || ''); d.appendChild(el('span', p[0])); d.appendChild(el('span', money(p[1]))); T.appendChild(d);
+    });
+  }
+  document.querySelectorAll('[data-add]').forEach(function(b){
+    b.onclick = function(){ var k = b.dataset.add; $('d-lines').appendChild(lineRow({ desc: k === 'labor' ? 'Labor' : k === 'part' ? 'Part' : k === 'fee' ? 'Parts fee' : 'Discount', qty: 1, unit_cents: k === 'fee' ? 1000 : 0, kind: k, taxable: k === 'part', track: 'to_order' })); totals(); };
+  });
+  function showTicket(t){
+    cur = t; show('v-det'); nav('nv-t');
+    $('d-title').textContent = t.number + ' · ' + (t.customer ? t.customer.name : '');
+    var paid = t.total_cents > 0 && t.paid_cents >= t.total_cents;
+    $('d-pay').className = 'banner ' + (paid ? 'good' : 'warn');
+    $('d-pay').textContent = paid ? '✓ Paid in full: ' + money(t.paid_cents) + ' (confirmed with Square). OK to order parts.'
+      : t.paid_cents ? 'Partly paid: ' + money(t.paid_cents) + ' of ' + money(t.total_cents) + '. Don\'t order the new parts yet.'
+      : t.status === 'submitted' ? 'Not priced yet. Set the price, then "Save & send price to customer".' : 'Not paid yet: don\'t order parts.';
+    var c = t.customer || {}, K = $('d-cust'); K.textContent = '';
+    function kv(k, v, href){ K.appendChild(el('span', k)); var x = href ? el('a', v) : el('b', v); if (href) x.href = href; K.appendChild(x); }
+    kv('Name', c.name || '?'); if (c.phone) { kv('Call', c.phone_fmt, 'tel:' + c.phone); kv('Text', c.phone_fmt, 'sms:' + c.phone); } kv('Email', c.email || '', 'mailto:' + c.email);
+    $('d-cuslink').href = '/admin/?c=' + encodeURIComponent(c.id);
+    var S = $('d-spec'); S.textContent = ''; ((t.spec && t.spec.summary) || []).forEach(function(s){ S.appendChild(el('li', s)); });
+    $('d-cnote').hidden = !t.customer_note; $('d-cnote').textContent = 'Their note: ' + (t.customer_note || '');
+    var H = $('d-hist'); H.textContent = '';
+    t.all_events.slice().reverse().forEach(function(e){ var li = el('li', null, e.kind === 'internal' ? 'internal' : e.who === 'shop' ? 'shop' : ''); li.appendChild(el('small', A.when(e.at) + ' · ' + e.who + (e.kind === 'internal' ? ' · private' : ''))); li.appendChild(document.createTextNode(e.text || '')); H.appendChild(li); });
+    $('d-ttl').value = t.title || '';
+    var L = $('d-lines'); L.textContent = ''; t.lines.forEach(function(l){ L.appendChild(lineRow(l)); });
+    $('d-tax').value = +(t.tax_rate * 100).toFixed(3); $('d-eta').value = t.eta || ''; $('d-note').value = t.shop_note || ''; $('d-msg').value = ''; $('d-int').checked = false;
+    var sel = $('d-status'); sel.textContent = ''; Object.keys(LABEL).forEach(function(s){ sel.appendChild(new Option(LABEL[s], s)); }); sel.value = t.status;
+    totals();
+  }
+  function save(send){
+    var body = { version: cur.version, lines: readLines(), tax_rate: (Number($('d-tax').value) || 0) / 100, shop_note: $('d-note').value, eta: $('d-eta').value || null, title: $('d-ttl').value, message: $('d-msg').value, internal: $('d-int').checked };
+    if (send) body.send_for_approval = true; else if ($('d-status').value !== cur.status) body.status = $('d-status').value;
+    $('d-out').className = ''; $('d-out').textContent = 'Saving…';
+    api('/tickets/' + encodeURIComponent(cur.id), { method: 'PUT', body: body }).then(function(t){
+      showTicket(t); $('d-out').className = 'ok'; $('d-out').textContent = send ? 'Sent. ' + (t.customer ? t.customer.name.split(' ')[0] : 'They') + ' got an email to approve and pay.' : 'Saved.';
+    }).catch(function(x){ $('d-out').className = 'err'; $('d-out').textContent = x.message; });
+  }
+  $('d-send').onclick = function(){ save(true); };
+  $('d-save').onclick = function(){ save(false); };
+  $('d-copy').onclick = function(){ var u = location.origin + '/ticket/?t=' + cur.id; try { navigator.clipboard.writeText(u); this.textContent = 'Copied'; } catch (e) { prompt('Ticket link', u); } };
+
+  // ---------- parts orders ----------
+  function loadOrders(){
+    api('/orders').then(function(j){
+      show('v-orders'); nav('nv-o');
+      var T = $('o-to'); T.textContent = '';
+      if (!j.to_order.length) T.appendChild(el('p', 'Nothing to order. Parts show up here once a ticket is paid in full.', 'empty'));
+      j.to_order.forEach(function(p){
+        var d = el('label', null, 'oitem'); var cb = el('input'); cb.type = 'checkbox'; cb.checked = true; cb.item = p; cb.onchange = copyText; d.appendChild(cb);
+        var m = el('div'); m.appendChild(el('span', (p.qty > 1 ? p.qty + ' × ' : '') + p.desc)); m.appendChild(el('small', p.number + ' · ' + (p.customer || ''))); d.appendChild(m);
+        d.appendChild(el('code', p.part_no || 'no part #')); T.appendChild(d);
+      });
+      $('o-form').hidden = !j.to_order.length; copyText();
+      $('o-unpaidbox').hidden = !j.unpaid.length; var U = $('o-unpaid'); U.textContent = '';
+      j.unpaid.forEach(function(p){ var d = el('a', null, 'oitem'); d.href = '/admin/?t=' + p.ticket_id; d.style.textDecoration = 'none'; d.style.color = 'inherit'; d.appendChild(el('span', '⏸')); var m = el('div'); m.appendChild(el('span', (p.qty > 1 ? p.qty + ' × ' : '') + p.desc)); m.appendChild(el('small', p.number + ' · ' + (p.customer || '') + ' · waiting on payment')); d.appendChild(m); d.appendChild(el('code', p.part_no || '')); U.appendChild(d); });
+      var O = $('o-list'); O.textContent = '';
+      if (!j.orders.length) O.appendChild(el('p', 'No orders yet.', 'empty'));
+      j.orders.forEach(function(o){ O.appendChild(orderCard(o)); });
+    }).catch(function(){});
+  }
+  function checked(){ return [].filter.call(document.querySelectorAll('#o-to input[type=checkbox]'), function(c){ return c.checked; }).map(function(c){ return c.item; }); }
+  function copyText(){
+    var by = {}; checked().forEach(function(p){ var k = p.part_no || p.desc; by[k] = by[k] || { part: p.part_no, desc: p.desc, qty: 0 }; by[k].qty += p.qty; });
+    $('o-copytext').textContent = Object.keys(by).map(function(k){ var x = by[k]; return (x.part || '(no part #)') + '  qty ' + x.qty + '  ' + x.desc; }).join('\n') || 'Check the parts to order.';
+  }
+  $('o-copy').onclick = function(){ try { navigator.clipboard.writeText($('o-copytext').textContent); this.textContent = 'Copied'; } catch (e) {} };
+  $('o-rec').onclick = function(){
+    var items = checked().map(function(p){ return { ticket_id: p.ticket_id, line_id: p.line_id }; });
+    api('/orders', { method: 'POST', body: { order_no: $('o-no').value, eta: $('o-eta').value || null, items: items } })
+      .then(function(){ $('o-no').value = ''; loadOrders(); }).catch(function(x){ $('o-out').className = 'err'; $('o-out').textContent = x.message; });
+  };
+  function orderCard(o){
+    var c = el('div', null, 'card ocard');
+    var h = el('div'); h.appendChild(el('b', (o.vendor || 'GolfWorks') + ' ' + (o.order_no ? '#' + o.order_no : '(no order #)'))); h.appendChild(document.createTextNode('  ')); h.appendChild(el('span', o.status, 'pill ' + (o.status === 'delivered' ? 'good' : o.status === 'shipped' ? '' : 'warn')));
+    h.appendChild(el('small', '  placed ' + A.date(o.placed_at))); c.appendChild(h);
+    var g = el('div', null, 'grid');
+    function f(label, node){ var w = el('div'); var l = el('label', label); w.appendChild(l); w.appendChild(node); g.appendChild(w); return node; }
+    var no = f('Order #', el('input')); no.value = o.order_no || '';
+    var ca = f('Carrier', el('select')); ['', 'UPS', 'FedEx', 'USPS', 'Other'].forEach(function(x){ ca.appendChild(new Option(x || 'Choose…', x)); }); ca.value = o.carrier || '';
+    var tr = f('Tracking #', el('input')); tr.value = o.tracking || '';
+    var et = f('Expected', el('input')); et.type = 'date'; et.value = o.eta || '';
+    c.appendChild(g);
+    var ul = el('ul'); o.items.forEach(function(i){ ul.appendChild(el('li', i.number + ' · ' + (i.qty > 1 ? i.qty + ' × ' : '') + i.desc + (i.part_no ? ' (' + i.part_no + ')' : '') + ' · ' + i.track)); }); c.appendChild(ul);
+    var acts = el('div', null, 'acts'), out = el('p');
+    function put(extra){ var b = { order_no: no.value, carrier: ca.value, tracking: tr.value, eta: et.value || null }; for (var k in extra) b[k] = extra[k];
+      api('/orders/' + o.id, { method: 'PUT', body: b }).then(loadOrders).catch(function(x){ out.className = 'err'; out.textContent = x.message; }); }
+    var s = el('button', 'Save' + (o.status === 'placed' ? ' (adding tracking marks it shipped)' : ''), 'small'); s.type = 'button'; s.onclick = function(){ put({}); }; acts.appendChild(s);
+    if (o.status !== 'delivered') { var d = el('button', 'Mark delivered to shop', 'small'); d.type = 'button'; d.onclick = function(){ put({ status: 'delivered' }); }; acts.appendChild(d); }
+    if (o.url) { var a = el('a', 'Track', 'small'); a.href = o.url; a.target = '_blank'; a.rel = 'noopener'; a.style.cssText = 'display:inline-flex;align-items:center;text-decoration:none'; acts.appendChild(a); }
+    c.appendChild(acts); c.appendChild(out);
+    return c;
+  }
+
+  // ---------- customers ----------
+  var cTimer;
+  function loadCustomers(){
+    api('/customers?q=' + encodeURIComponent($('cq').value.trim())).then(function(j){
+      show('v-cust'); nav('nv-c');
+      var L = $('c-list'); L.textContent = '';
+      if (!j.customers.length) L.appendChild(el('p', 'No customers yet.', 'empty'));
+      j.customers.forEach(function(c){
+        var a = el('a', null, 'card row'); a.href = '/admin/?c=' + encodeURIComponent(c.id);
+        a.appendChild(el('b', String(c.tickets)));
+        var m = el('div'); m.appendChild(el('span', c.name)); m.appendChild(el('small', [c.phone_fmt, c.email].filter(Boolean).join(' · '))); a.appendChild(m);
+        var r = el('div', null, 'money'); r.appendChild(el('div', money(c.spent_cents))); r.appendChild(el('small', c.last_ticket ? 'last ' + A.date(c.last_ticket) : 'no tickets')); a.appendChild(r);
+        L.appendChild(a);
       });
     }).catch(function(){});
   }
-  document.querySelectorAll('#tabs button').forEach(function(b){ b.addEventListener('click', function(){ loadList(b.dataset.s); }); });
+  $('cq').addEventListener('input', function(){ clearTimeout(cTimer); cTimer = setTimeout(loadCustomers, 250); });
+  $('c-add').onclick = function(){ $('c-new').hidden = !$('c-new').hidden; $('n-name').focus(); };
+  $('c-new').addEventListener('submit', function(e){
+    e.preventDefault();
+    api('/customers', { method: 'POST', body: { name: $('n-name').value, phone: $('n-phone').value, email: $('n-email').value, shop_notes: $('n-notes').value } })
+      .then(function(j){ location.href = '/admin/?c=' + encodeURIComponent(j.id); }).catch(function(x){ $('n-out').className = 'err'; $('n-out').textContent = x.message; });
+  });
+  function loadCustomer(){
+    api('/customers/' + encodeURIComponent(cid)).then(function(j){
+      show('v-cdet'); nav('nv-c');
+      var c = j.customer; $('cd-name').textContent = c.name;
+      $('cd-n').value = c.name; $('cd-p').value = c.phone_fmt || ''; $('cd-e').value = c.email; $('cd-notes').value = c.shop_notes || '';
+      var M = $('cd-meta'); M.textContent = '';
+      [['Customer since', A.date(c.created_at)], ['Account', c.created_by === 'shop' ? 'Added by you' + (c.last_login_at ? ', has signed in' : ', not signed in yet') : 'Signed up online'], ['Last sign-in', c.last_login_at ? A.when(c.last_login_at) : 'never']].forEach(function(p){ M.appendChild(el('span', p[0])); M.appendChild(el('b', p[1])); });
+      $('cd-spent').textContent = money(j.spent_cents) + ' paid';
+      var L = $('cd-tickets'); L.textContent = '';
+      if (!j.tickets.length) L.appendChild(el('p', 'No tickets yet.', 'empty'));
+      j.tickets.forEach(function(t){
+        var a = el('a', null, 'card row'); a.href = '/admin/?t=' + encodeURIComponent(t.id);
+        a.appendChild(el('b', t.number));
+        var m = el('div'); m.appendChild(el('span', (t.title || '') + ' · ' + (LABEL[t.status] || t.status))); m.appendChild(el('small', A.date(t.created_at) + ' · ' + (t.work.join(', ') || 'not priced yet'))); a.appendChild(m);
+        a.appendChild(el('div', money(t.total_cents), 'money')); L.appendChild(a);
+      });
+    }).catch(function(x){ if (x.status !== 401) { show('v-cust'); $('c-list').textContent = x.message; } });
+  }
+  $('cd-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    api('/customers/' + encodeURIComponent(cid), { method: 'PUT', body: { name: $('cd-n').value, phone: $('cd-p').value, email: $('cd-e').value, shop_notes: $('cd-notes').value } })
+      .then(function(){ $('cd-out').className = 'ok'; $('cd-out').textContent = 'Saved.'; }).catch(function(x){ $('cd-out').className = 'err'; $('cd-out').textContent = x.message; });
+  });
+  $('cd-invite').onclick = function(){
+    api('/customers/' + encodeURIComponent(cid) + '/invite', { method: 'POST', body: {} })
+      .then(function(){ $('cd-out').className = 'ok'; $('cd-out').textContent = 'Invite sent.'; }).catch(function(x){ $('cd-out').className = 'err'; $('cd-out').textContent = x.message; });
+  };
+  $('nt-go').onclick = function(){
+    api('/tickets', { method: 'POST', body: { customer_id: cid, title: $('nt-title').value, note: $('nt-note').value } })
+      .then(function(j){ location.href = '/admin/?t=' + encodeURIComponent(j.id); }).catch(function(x){ $('nt-out').className = 'err'; $('nt-out').textContent = x.message; });
+  };
 
-  // ---------- detail ----------
-  var cur = null, lines = [];
-  function lineRow(l, i){
-    var row = el('div', null, 'lrow');
-    var di = el('input', null, 'd'); di.value = l.desc; di.setAttribute('aria-label', 'Item'); di.oninput = function(){ l.desc = di.value; }; row.appendChild(di);
-    var qi = el('input'); qi.type = 'number'; qi.min = 1; qi.value = l.qty; qi.setAttribute('aria-label', 'Quantity'); qi.oninput = function(){ l.qty = +qi.value || 1; totals(); }; row.appendChild(qi);
-    var mi = el('input'); mi.type = 'number'; mi.step = '0.01'; mi.value = (l.unit_cents / 100).toFixed(2); mi.setAttribute('aria-label', 'Price each'); mi.oninput = function(){ l.unit_cents = Math.round((+mi.value || 0) * 100); totals(); }; row.appendChild(mi);
-    var ks = el('select'); ks.setAttribute('aria-label', 'Type'); ['labor', 'part', 'fee', 'discount'].forEach(function(x){ ks.appendChild(new Option(x, x)); }); ks.value = l.kind; ks.onchange = function(){ l.kind = ks.value; if (l.kind === 'part') { l.taxable = true; renderLines(); } totals(); }; row.appendChild(ks);
-    var t = el('label', null, 'tx'); var tc = el('input'); tc.type = 'checkbox'; tc.checked = !!l.taxable; tc.setAttribute('aria-label', 'Taxable'); tc.onchange = function(){ l.taxable = tc.checked; totals(); }; t.appendChild(tc); row.appendChild(t);
-    var xb = el('button', '×', 'x'); xb.type = 'button'; xb.setAttribute('aria-label', 'Remove line'); xb.onclick = function(){ lines.splice(i, 1); renderLines(); }; row.appendChild(xb);
-    return row;
-  }
-  function renderLines(){ var B = $('d-lines'); B.textContent = ''; lines.forEach(function(l, i){ B.appendChild(lineRow(l, i)); }); totals(); }
-  function totals(){
-    var sub = 0, tx = 0, rate = (+$('d-tax').value || 0) / 100;
-    lines.forEach(function(l){ var t = l.qty * l.unit_cents; sub += t; if (l.taxable) tx += t; });
-    var tax = Math.round(Math.max(0, tx) * rate), tot = Math.max(0, sub + tax), T = $('d-tot'); T.textContent = '';
-    [['Subtotal', sub], ['Tax', tax], ['Total', tot], ['Paid', cur ? cur.paid_cents : 0], ['Due', tot - (cur ? cur.paid_cents : 0)]].forEach(function(x, i){
-      var r = el('div', null, i === 2 ? 'big' : ''); r.appendChild(el('span', x[0])); r.appendChild(el('span', money(x[1]))); T.appendChild(r);
-    });
-  }
-  document.querySelectorAll('.addrow button').forEach(function(b){ b.addEventListener('click', function(){
-    var k = b.dataset.k; lines.push({ desc: k === 'part' ? 'Part' : k === 'fee' ? 'Parts fee' : k === 'discount' ? 'Discount' : 'Labor', qty: 1, unit_cents: k === 'fee' ? 1000 : 0, kind: k, taxable: k === 'part' }); renderLines();
-  }); });
-  $('d-tax').addEventListener('input', totals);
-
-  function showTicket(t){
-    cur = t; lines = t.lines.map(function(l){ return Object.assign({}, l); });
-    $('v-list').hidden = true; $('v-det').hidden = false;
-    $('d-num').textContent = t.number; $('d-st').textContent = LABEL[t.status] || t.status; $('d-st').className = 'st ' + t.status;
-    $('d-sum').textContent = 'Version ' + t.version + ' · ' + money(t.total_cents) + (t.paid_cents ? ' · paid ' + money(t.paid_cents) : '');
-    var C = $('d-cust'); C.textContent = '';
-    [['Name', t.name], ['Phone', t.phone], ['Email', t.email], ['Came from', t.ref || 'web'], ['Created', new Date(t.created_at).toLocaleString()]].forEach(function(x){
-      if (!x[1]) return; C.appendChild(el('span', x[0]));
-      var v = x[0] === 'Phone' ? Object.assign(el('a', x[1]), { href: 'sms:' + x[1] }) : x[0] === 'Email' ? Object.assign(el('a', x[1]), { href: 'mailto:' + x[1] }) : el('b', x[1]);
-      C.appendChild(v);
-    });
-    var link = location.origin + '/ticket/?t=' + t.id;
-    $('d-text').href = 'sms:' + (t.phone || '') + '?&body=' + encodeURIComponent('Hi ' + t.name.split(' ')[0] + ', your ClubWorks work ticket ' + t.number + ': ' + link);
-    $('d-copy').onclick = function(){ navigator.clipboard && navigator.clipboard.writeText(link); this.textContent = 'Copied'; };
-    var S = $('d-spec'); S.textContent = ''; ((t.spec && t.spec.summary) || []).forEach(function(s){ S.appendChild(el('li', s)); });
-    $('d-cnote').textContent = t.customer_note ? 'Customer note: ' + t.customer_note : '';
-    var H = $('d-hist'); H.textContent = '';
-    t.events.slice().reverse().forEach(function(e){ var li = el('li'); li.appendChild(el('small', new Date(e.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + e.who + ' · ' + e.kind)); li.appendChild(el('span', e.kind === 'status' ? (LABEL[e.text] || e.text) : e.text)); H.appendChild(li); });
-    $('d-note').value = t.shop_note || ''; $('d-msg').value = '';
-    $('d-tax').value = +(t.tax_rate * 100).toFixed(3);
-    $('d-status').value = t.status;
-    renderLines();
-  }
-  function save(extra){
-    var out = $('d-out'); out.className = ''; out.textContent = 'Saving…';
-    var body = Object.assign({ version: cur.version, lines: lines, tax_rate: (+$('d-tax').value || 0) / 100, shop_note: $('d-note').value }, extra);
-    if ($('d-msg').value.trim()) body.message = $('d-msg').value.trim();
-    api('/tickets/' + encodeURIComponent(cur.id), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-      .then(function(t){ showTicket(t); out.className = 'ok'; out.textContent = extra && extra.send_for_approval ? 'Sent. Text them the link so they can approve and pay.' : 'Saved.'; })
-      .catch(function(e){ out.className = 'err'; out.textContent = e.message; });
-  }
-  $('d-save').addEventListener('click', function(){ save({}); });
-  $('d-send').addEventListener('click', function(){ save({ send_for_approval: true }); });
-  $('d-setst').addEventListener('click', function(){ save({ status: $('d-status').value }); });
-
-  if (id) api('/tickets/' + encodeURIComponent(id)).then(showTicket).catch(function(e){ if (e.message !== 'auth') { $('v-det').hidden = true; $('list').textContent = e.message; } });
-  else loadList('open');
+  if (tid) api('/tickets/' + encodeURIComponent(tid)).then(showTicket).catch(function(x){ if (x.status !== 401) { loadList(); } });
+  else if (cid) loadCustomer();
+  else if (view === 'orders') loadOrders();
+  else if (view === 'customers') loadCustomers();
+  else loadList();
 })();
 </script>
 </body>

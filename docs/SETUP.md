@@ -1,63 +1,53 @@
-# Work tickets & Square payments — setup
+# Service tickets: how the site works
 
-The site is still a static Cloudflare Pages site. The ticket system adds:
+The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the static pages from this repo and runs the service-ticket API in `src/`. Pushing to `main` deploys it through Workers Builds, using `wrangler.jsonc`. `.assetsignore` keeps code and docs off the public site.
 
-- `functions/` (Pages Functions, the `/api/*` routes)
-- a D1 database
-- a few secrets
+## Pages
 
-No secret values belong in this repo.
+| Page | Who | What |
+|---|---|---|
+| `/account/` | Customers | Sign up / sign in with a 6-digit email code, see all their tickets, submit a saved instant-price quote |
+| `/request/` | Customers | Service request form (needs an account) |
+| `/menu/#quote` | Customers | Instant price; "Submit for review" saves the quote and sends them to sign in |
+| `/ticket/?t=…` | Customers | One ticket: status, ready date, parts and shipping, price, Approve & pay, messages |
+| `/admin/` | Jackson | Tickets, Parts orders, Customers (passphrase login) |
 
-## How it works
+## Ticket flow
 
-1. **Quote.** A customer builds a quote on `/menu/` and taps **Submit for review**. This creates a ticket (RC-1001, RC-1002, …) and opens its private page at `/ticket/?t=<random id>`.
-2. **Review.** Jackson signs in at `/admin/`, adjusts the line items, and taps **Save & send for approval**. Text or email the ticket link to the customer.
-3. **Approve and pay.** The customer taps **Approve & pay**, which opens Square's checkout. Square's webhook marks the ticket **Paid**.
-4. **Track.** Jackson moves the ticket through Parts ordered → On the bench → Ready → Picked up. The customer sees each step on their ticket page.
+1. **Submitted:** the customer sends a quote or request. Jackson gets an email.
+2. **Priced:** Jackson edits the lines and taps **Save & send price to customer**. The customer gets an email.
+3. **Approved:** the customer taps **Approve & pay** and goes to Square checkout for the amount due.
+4. **Paid:** this is set only after the site checks the payment with Square's API. Two things trigger that check:
+   - the signed webhook arrives, or
+   - the customer returns from checkout.
 
-If parts are added after payment, re-price and send again. The customer then pays only the balance.
+   The payment must be COMPLETED, at our location, for this ticket's Square order. The amount recorded comes from Square, not from the webhook body.
+5. **Parts:** parts on fully paid tickets appear under **Parts orders → Ready to order**.
+   - Copy the list into GolfWorks and record the order number.
+   - Adding tracking marks the parts shipped and emails the customer.
+   - **Mark delivered** marks them received.
+6. **On the bench → Ready → Picked up:** set from the ticket's status menu. "Ready" emails the customer.
 
-## Cloudflare (Pages project → Settings)
+If the price goes up after payment, the ticket returns to "waiting on customer". The customer then pays only the balance, and the new parts stay off the order list until that payment clears.
 
-| Kind | Name | Value |
-| --- | --- | --- |
-| D1 binding | `DB` | database `rccw`, created from `db/schema.sql` |
-| Variable | `SITE_URL` | `https://rocketcityclubworks.com` |
-| Variable | `TAX_RATE` | e.g. `0.09` for 9% (default `0`) |
-| Variable | `NOTIFY_TO` / `NOTIFY_FROM` | alert email address / sender on the domain |
-| Secret | `ADMIN_PASSWORD` | long passphrase for `/admin/` |
-| Secret | `IP_SALT` | any random string (used for rate limits) |
-| Secret | `SQUARE_ACCESS_TOKEN` | Square app → Production → Access token |
-| Variable | `SQUARE_LOCATION_ID` | Square app → Locations |
-| Variable | `SQUARE_ENV` | `production` (or `sandbox` while testing) |
-| Secret | `SQUARE_WEBHOOK_SIGNATURE_KEY` | Square app → Webhooks → subscription → Signature key |
-| Variable | `SQUARE_WEBHOOK_URL` | `https://rocketcityclubworks.com/api/square/webhook` |
+## Cloudflare resources
 
-The Square webhook subscription points at the URL above, with the events `payment.created` and `payment.updated`.
+| What | Name |
+|---|---|
+| Worker | `rocketcityclubworks-site` (custom domain rocketcityclubworks.com) |
+| D1 database | `rccw` (binding `DB`), schema in `db/schema.sql` |
+| Plain vars | in `wrangler.jsonc` (`SITE_URL`, `NOTIFY_TO`, `MAIL_FROM`, `TAX_RATE`, `SQUARE_ENV`, `SQUARE_WEBHOOK_URL`) |
+| Secrets | `ADMIN_PASSWORD`, `RESEND_API_KEY`, `SQUARE_ACCESS_TOKEN`, `SQUARE_LOCATION_ID`, `SQUARE_WEBHOOK_SIGNATURE_KEY` (set with `wrangler secret put`, never in the repo) |
 
-**Optional:** put Cloudflare Access in front of `/admin*` and `/api/admin*`, then set:
-
-- `ACCESS_TEAM_DOMAIN`
-- `ACCESS_AUD`
-- `ADMIN_EMAILS`
-
-Either sign-in method works.
-
-**Never set `DEV_ADMIN` in Cloudflare.** It turns off the admin login and is only for local testing.
-
-Don't commit a `wrangler.toml`. It would override the bindings set in the dashboard.
-
-## Database
-
-```sh
-npx wrangler d1 create rccw
-npx wrangler d1 execute rccw --remote --file db/schema.sql
-```
+- **Email** goes through Resend from `shop@rocketcityclubworks.com`. The domain is verified with DNS records in Cloudflare (`resend._domainkey`, `send`, `_dmarc`). Replies go to jackson@rocketcityclubworks.com.
+- **Square webhook:** `https://rocketcityclubworks.com/api/square/webhook`, events `payment.created` and `payment.updated`.
+- **Sales tax:** change `TAX_RATE` in `wrangler.jsonc` (e.g. `"0.09"`) once registered. Existing tickets keep their rate, which can be changed per ticket in the dashboard.
 
 ## Local testing
 
-Make a copy of the site outside the repo. Add a `wrangler.toml` with a D1 binding and `[vars]` (`DEV_ADMIN = "1"`, test Square values), then run:
+Make a copy of the repo outside git and add a `.dev.vars` with test values (`DEV_SHOW_CODE=1` shows sign-in codes on screen; point `SQUARE_API_BASE` at a mock). Then run:
 
 ```sh
-npx wrangler pages dev . --port 8788
+npx wrangler d1 execute rccw --local --file=db/schema.sql
+npx wrangler dev
 ```

@@ -252,7 +252,7 @@
     if (!gripPk) return;
     var lines = [], msg = [], saves = [];
     var tbd = false;
-    function add(desc, qty, unit, kind, taxable, off, req){ lines.push({ desc: req ? desc + ' (Jackson to price)' : desc, qty: qty, unit_cents: Math.round(unit * 100), kind: kind, taxable: !!taxable, off: !!off, tbd: !!req }); }
+    function add(desc, qty, unit, kind, taxable, off, req, partNo){ lines.push({ desc: req ? desc + ' (Jackson to price)' : desc, qty: qty, unit_cents: Math.round(unit * 100), kind: kind, taxable: !!taxable, off: !!off, tbd: !!req, part_no: partNo || null }); }
     var ordered = gripMode === 'order';
     g('q-grippick').hidden = !ordered || q.rg === 0;
     // Regrip
@@ -260,7 +260,7 @@
     var fullBag = q.rg >= need, launchBag = false, parts = 0;
     if (q.rg > 0) {
       add('Regrip labor, ' + q.rg + ' club' + (q.rg > 1 ? 's' : '') + (fullBag ? ' (full bag)' : ''), 1, bundle(q.rg, per, cap, R.bagMax), 'labor');
-      if (ordered && gripPk.sel) { var gp = gripPk.price(); add(gripPk.desc(), q.rg, gp, 'part', true, false, gripPk.isRequest()); parts += gp * q.rg; if (gripPk.isRequest()) tbd = true; }
+      if (ordered && gripPk.sel) { var gp = gripPk.price(); add(gripPk.desc(), q.rg, gp, 'part', true, false, gripPk.isRequest(), gripPk.sel.id); parts += gp * q.rg; if (gripPk.isRequest()) tbd = true; }
       msg.push('Regrip ' + q.rg + ' club' + (q.rg > 1 ? 's' : '') + ': ' + (ordered ? (gripPk.sel ? gripPk.desc() : 'grip not picked yet') : 'my own grips'));
       if (ordered && fullBag && S.launchLive) { launchBag = true; add('Launch full-bag price', 1, -(R.regripOursBag - B.launchBag.price), 'discount', false, true); saves.push('Launch full-bag price'); }
     }
@@ -270,7 +270,7 @@
     var putter = g('q-putter').checked; g('q-putterpick').hidden = !putter;
     if (putter) {
       add('Putter grip install', 1, R.putterGrip, 'labor');
-      if (putterPk.sel && !putterPk.sel.own) { var pp = putterPk.price(); add(putterPk.desc(), 1, pp, 'part', true, false, putterPk.isRequest()); parts += pp; if (putterPk.isRequest()) tbd = true; }
+      if (putterPk.sel && !putterPk.sel.own) { var pp = putterPk.price(); add(putterPk.desc(), 1, pp, 'part', true, false, putterPk.isRequest(), putterPk.sel.id); parts += pp; if (putterPk.isRequest()) tbd = true; }
       msg.push('Putter regrip: ' + (putterPk.sel ? putterPk.desc() : 'grip not picked yet'));
     }
     // Loft & lie
@@ -287,10 +287,10 @@
       var each = WOOD[r.type] ? R.reshaftWood : set ? (graphite ? R.ironSetGraphite : R.ironSetSteel) : (graphite ? R.reshaftGraphite : R.reshaftSteel);
       add('Reshaft ' + label.toLowerCase() + (set && !WOOD[r.type] ? ' (set price)' : ''), r.n, each, 'labor');
       var head = [r.brand, r.model.trim()].filter(Boolean).join(' ');
-      if (s && !s.own) { var sp = r.pk.price(); add(r.pk.desc(), r.n, sp, 'part', true, false, r.pk.isRequest()); parts += sp * r.n; if (r.pk.isRequest()) tbd = true; }
+      if (s && !s.own) { var sp = r.pk.price(); add(r.pk.desc(), r.n, sp, 'part', true, false, r.pk.isRequest(), s.id); parts += sp * r.n; if (r.pk.isRequest()) tbd = true; }
       var ad = WOOD[r.type] && r.adapter, hand = r.hand === 'LH' ? ', left-handed' : '';
       var adDesc = !ad ? '' : ad.request ? 'Requested adapter: ' + (r.adapterReq.trim() || (head || 'not described yet')) + hand : ad.name + ' (' + ad.id + hand + ')';
-      if (ad) { add(adDesc + (head && !ad.request ? ' for ' + head : ''), r.n, ad.request ? 0 : ad.price, 'part', true, false, !!ad.request); if (ad.request) tbd = true; else parts += ad.price * r.n; }
+      if (ad) { add(adDesc + (head && !ad.request ? ' for ' + head : ''), r.n, ad.request ? 0 : ad.price, 'part', true, false, !!ad.request, ad.request ? null : ad.id); if (ad.request) tbd = true; else parts += ad.price * r.n; }
       msg.push('Reshaft ' + r.n + ' ' + label.toLowerCase() + (head ? ' (' + head + ')' : '') + ': ' + (s ? r.pk.desc() : 'shaft not picked yet') + (!adDesc ? (WOOD[r.type] ? ' + keep current adapter' : '') : ad.request ? ' + ' + adDesc : ' + new ' + adDesc));
     });
     var rs = g('n-rs'), need6 = R.ironSetMin - irons;
@@ -333,20 +333,30 @@
     var text = ['Hi Jackson! Quote from the website:'].concat(msg.map(function(m){ return '• ' + m; }));
     if (saves.length) text.push('Deals: ' + saves.join(', '));
     text.push('Estimate: ' + $(total) + (tbd ? ' + requested parts to price' : ''), 'Ready in: ' + ready, '(' + S.ref + ')');
-    last = { lines: lines.map(function(l){ return { desc: l.desc, qty: l.qty, unit_cents: l.unit_cents, kind: l.kind, taxable: l.taxable }; }), summary: msg.concat(saves.length ? ['Deals: ' + saves.join(', ')] : []).concat(['Ready in: ' + ready]), text: anyWork ? text.join('\n') : "Hi Jackson! I'd like a quote. (" + S.ref + ')' };
+    last = { lines: lines.map(function(l){ return { desc: l.desc, qty: l.qty, unit_cents: l.unit_cents, kind: l.kind, taxable: l.taxable, part_no: l.part_no && l.part_no !== 'REQ' ? l.part_no : null }; }), total_label: $(total) + (tbd ? ' + TBD' : ''), summary: msg.concat(saves.length ? ['Deals: ' + saves.join(', ')] : []).concat(['Ready in: ' + ready]), text: anyWork ? text.join('\n') : "Hi Jackson! I'd like a quote. (" + S.ref + ')' };
     g('q-send').href = S.smsHref(last.text);
   }
 
-  // ---------- submit as a work ticket ----------
+  // ---------- submit as a service ticket (needs a customer account) ----------
+  var me = null;
+  function openSubmit(){
+    if (!me) {
+      // Save the quote, then sign in / create an account; the account page submits it.
+      try { localStorage.setItem('rccw_pending_quote', JSON.stringify({ lines: last.lines, summary: last.summary, total_label: last.total_label, ref: S.ref, note: '' })); } catch (e) {}
+      location.href = '/account/?next=' + encodeURIComponent('/account/');
+      return;
+    }
+    g('q-form').hidden = false; g('q-submit').hidden = true; g('f-note').focus();
+  }
   function submit(e){
     e.preventDefault();
-    var f = g('q-form'), out = g('q-fout'), btn = f.querySelector('button[type=submit]');
-    var body = { name: g('f-name').value, phone: g('f-phone').value, email: g('f-email').value, note: g('f-note').value, website: g('f-website').value,
-      ref: S.ref, lines: last.lines, summary: last.summary.join('\n'), spec: { summary: last.summary } };
+    var out = g('q-fout'), btn = g('q-form').querySelector('button[type=submit]');
     btn.disabled = true; out.className = 'fine'; out.textContent = 'Sending…';
-    fetch('/api/tickets', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
+    fetch('/api/tickets', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: 'quote', lines: last.lines, summary: last.summary, note: g('f-note').value, ref: S.ref }) })
+      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, status: r.status, j: j }; }); })
       .then(function(x){
+        if (x.status === 401) { me = null; btn.disabled = false; return openSubmit(); }
         if (!x.ok) { out.className = 'err'; out.textContent = x.j.error || 'Something went wrong.'; btn.disabled = false; return; }
         location.href = '/ticket/?t=' + encodeURIComponent(x.j.id) + '&new=1';
       })
@@ -370,13 +380,17 @@
     ['q-loft', 'q-putter', 'q-paint', 'q-rush', 'pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id){ g(id).addEventListener('change', calc); });
     ['pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id, i){ var s = g(id); PAINT.forEach(function(c){ s.appendChild(new Option(c, c)); }); s.value = i === 2 ? 'None' : 'White'; });
     g('q-addshaft').onclick = addShaftRow;
-    g('q-submit').onclick = function(){ g('q-form').hidden = false; g('f-name').focus(); };
+    g('q-submit').onclick = openSubmit;
     g('q-form').addEventListener('submit', submit);
     g('q-copy').onclick = function(){ var b = this; try { navigator.clipboard.writeText(last.text).then(function(){ b.textContent = 'Copied'; }); } catch (e) {} };
     // Online work tickets switch on by themselves once the ticket database is connected.
     fetch('/api/health').then(function(r){ return r.ok ? r.json() : {}; }).then(function(h){
-      if (!h.tickets) return;
+      if (!h.tickets || !h.accounts) return;
       g('q-submit').hidden = false;
+      fetch('/api/me', { credentials: 'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+        me = j && j.customer; g('q-acct').hidden = !!me;
+        if (me) g('f-who').textContent = 'Sending as ' + me.name + ' · ' + me.email;
+      }).catch(function(){ g('q-acct').hidden = false; });
       var send = g('q-send'); send.className = 'copy'; send.textContent = 'Or text this quote';
     }).catch(function(){});
     g('q-loading').hidden = true; g('q-body').hidden = false;

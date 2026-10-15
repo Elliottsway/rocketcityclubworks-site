@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Request Service · Rocket City ClubWorks</title>
+<meta name="description" content="Send a service request for regrips, reshafts, loft and lie, broken club repair or hard-to-find parts in Huntsville.">
+<meta name="theme-color" content="#091E13">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Big+Shoulders+Display:wght@800;900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/app.css">
+<style>.rq{max-width:620px}</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
+    <nav aria-label="Main"><a href="/">Home</a><a href="/menu/">Prices</a><a href="/request/" aria-current="page">Request service</a><a href="/account/">My account</a></nav>
+    <div class="cta"><a class="ghost" href="/account/">My account</a><a class="solid" href="/menu/#quote">Instant price</a></div>
+  </div>
+</header>
+<main class="wrap app rq">
+  <div class="eyebrow">Service request</div>
+  <h1>What do your clubs need?</h1>
+  <p class="lede">Tell Jackson what's going on. He'll reply on your ticket with questions or a price to approve. Know exactly what you want? The <a href="/menu/#quote" style="color:var(--accent)">instant price</a> is faster.</p>
+  <p id="loading" class="empty">Loading…</p>
+  <form id="f" class="card box form" hidden novalidate>
+    <p style="margin:0" class="hint" id="who"></p>
+    <div><label for="r-cat">Service</label><select id="r-cat"></select></div>
+    <div><label for="r-clubs">Which clubs?</label><input id="r-clubs" placeholder="e.g. 4–PW irons, TaylorMade P790; driver"></div>
+    <div><label for="r-desc">What do you need?</label><textarea id="r-desc" placeholder="What's wrong or what you want done. Grip or shaft you like, sizes, anything you know."></textarea></div>
+    <div><label for="r-time">Timing</label><input id="r-time" placeholder="e.g. Before my tournament on the 25th"></div>
+    <button class="btn" type="submit" id="r-send">Send request</button>
+    <p class="err" id="r-err" role="alert"></p>
+    <p class="hint">Jackson may ask for photos on your ticket. Nothing is charged until you approve a price.</p>
+  </form>
+</main>
+<script src="/assets/app.js"></script>
+<script>
+(function(){
+  var A = window.RCCWapp, $ = A.$;
+  var pre = new URLSearchParams(location.search).get('service');
+  A.api('/api/me').then(function(j){
+    $('loading').hidden = true; $('f').hidden = false;
+    $('who').textContent = 'Signed in as ' + j.customer.name + ' · ' + j.customer.email;
+    j.categories.forEach(function(c){ $('r-cat').appendChild(new Option(c, c)); });
+    if (pre && j.categories.indexOf(pre) >= 0) $('r-cat').value = pre;
+  }).catch(function(x){ if (x.message !== 'auth') { $('loading').textContent = x.status === 503 ? 'Online requests are almost ready. Please text (205) 588-9164 for now.' : x.message; } });
+  $('f').addEventListener('submit', function(e){
+    e.preventDefault(); $('r-err').textContent = '';
+    if (!$('r-desc').value.trim()) { $('r-err').textContent = 'Please describe what you need.'; return; }
+    var b = $('r-send'); b.disabled = true; b.textContent = 'Sending…';
+    A.api('/api/tickets', { method: 'POST', body: { kind: 'request', category: $('r-cat').value, clubs: $('r-clubs').value, description: $('r-desc').value, timing: $('r-time').value } })
+      .then(function(j){ location.href = '/ticket/?t=' + encodeURIComponent(j.id) + '&new=1'; })
+      .catch(function(x){ $('r-err').textContent = x.message; b.disabled = false; b.textContent = 'Send request'; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 User-agent: *
 Disallow: /admin/
+Disallow: /account/
 Disallow: /ticket/
 Disallow: /api/
 Sitemap: https://rocketcityclubworks.com/sitemap.xml

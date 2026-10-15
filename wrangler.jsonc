@@ -1,0 +1,26 @@
+// Cloudflare Worker for rocketcityclubworks.com: the static site plus the service-ticket API (src/worker.js).
+// Secrets live in Cloudflare, not here: ADMIN_PASSWORD, RESEND_API_KEY, SQUARE_ACCESS_TOKEN,
+// SQUARE_LOCATION_ID, SQUARE_WEBHOOK_SIGNATURE_KEY. See docs/SETUP.md.
+{
+  "name": "rocketcityclubworks-site",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "rccw", "database_id": "568575b3-dcf3-4db7-a6bd-262fadb5c99a" }
+  ],
+  "vars": {
+    "SITE_URL": "https://rocketcityclubworks.com",
+    "NOTIFY_TO": "jackson@rocketcityclubworks.com",
+    "MAIL_FROM": "Rocket City ClubWorks <shop@rocketcityclubworks.com>",
+    "TAX_RATE": "0",
+    "SQUARE_ENV": "production",
+    "SQUARE_WEBHOOK_URL": "https://rocketcityclubworks.com/api/square/webhook"
+  },
+  "observability": { "enabled": true }
+}
