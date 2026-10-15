@@ -40,6 +40,16 @@
     <div class="steps" id="t-steps" aria-hidden="true"></div>
     <div class="stepl" id="t-stepl"></div>
     <div class="eta" id="t-eta" hidden><span>Estimated ready</span><b id="t-etad"></b></div>
+    <div class="card box pickupbox" id="pickbox" hidden style="margin-top:12px;border-color:var(--accent)">
+      <h2 style="margin:0 0 6px">Schedule pickup</h2>
+      <p id="pick-now" class="ok" hidden style="margin:0 0 8px"></p>
+      <form id="f-pick" class="form pickup" novalidate>
+        <div class="row2"><div><label for="pk-day">Day</label><input id="pk-day" type="date"></div>
+          <div><label for="pk-time">Time</label><select id="pk-time"><option>Morning (8–11am)</option><option>Midday (11am–2pm)</option><option>Afternoon (2–5pm)</option><option>Evening (5–7pm)</option></select></div></div>
+        <button class="btn" type="submit" id="pk-go">Request this pickup time</button>
+        <p id="pk-out" role="status"></p>
+      </form>
+    </div>
     <div class="tk" style="margin-top:16px">
       <div class="stack">
         <div class="card box" id="shopbox" hidden><h2>Note from Jackson</h2><div class="note" id="t-shop"></div></div>
@@ -51,6 +61,8 @@
           <form id="f-msg" class="form" style="margin-top:14px" novalidate>
             <label for="m-text">Message Jackson</label>
             <textarea id="m-text" placeholder="Questions, changes, pickup times…"></textarea>
+            <label class="filebtn" for="m-photos">📷 Add photos<input id="m-photos" type="file" accept="image/*" multiple></label>
+            <p class="hint" id="m-pcount" style="margin:0"></p>
             <button class="btn out" type="submit">Send message</button>
             <p id="m-out" role="status"></p>
           </form>
@@ -88,6 +100,10 @@
     var at = FLOW.indexOf(t.status === 'approved' ? 'awaiting_approval' : t.status), st = $('t-steps'); st.textContent = '';
     FLOW.forEach(function(s, i){ st.appendChild(el('span', null, i <= at ? 'on' : '')); });
     $('t-stepl').textContent = STEPL[t.status] || '';
+    var canPick = ['ready', 'in_progress'].indexOf(t.status) >= 0;
+    $('pickbox').hidden = !canPick && !(t.pickup_at && t.status === 'ready');
+    $('pick-now').hidden = !t.pickup_at; $('pick-now').textContent = t.pickup_at ? 'Pickup requested: ' + t.pickup_at + '. Jackson will confirm.' : '';
+    $('pk-go').textContent = t.pickup_at ? 'Change pickup time' : 'Request this pickup time';
     $('t-eta').hidden = !t.eta || ['completed', 'cancelled'].indexOf(t.status) >= 0; $('t-etad').textContent = A.day(t.eta);
     $('shopbox').hidden = !t.shop_note; $('t-shop').textContent = t.shop_note || '';
     var sp = $('t-spec'); sp.textContent = ''; ((t.spec && t.spec.summary) || []).forEach(function(s){ sp.appendChild(el('li', s)); });
@@ -133,7 +149,8 @@
     var H = $('t-hist'); H.textContent = '';
     t.events.slice().reverse().forEach(function(e){
       var li = el('li', null, e.who === 'shop' ? 'shop' : ''); li.appendChild(el('small', A.when(e.at) + ' · ' + (e.who === 'shop' ? 'Jackson' : e.who === 'customer' ? 'You' : 'Update')));
-      li.appendChild(document.createTextNode(e.text || '')); H.appendChild(li);
+      if (e.kind === 'photo') li.appendChild(A.photo('/api/photos/' + encodeURIComponent(e.text))); else li.appendChild(document.createTextNode(e.text || ''));
+      H.appendChild(li);
     });
   }
 
@@ -154,11 +171,23 @@
       .then(function(j){ location.href = j.url; })
       .catch(function(x){ $('p-err').textContent = x.message; b.disabled = false; if (x.status === 409) load(); });
   };
+  $('m-photos').onchange = function(){ var n = this.files.length; $('m-pcount').textContent = n ? n + ' photo' + (n > 1 ? 's' : '') + ' ready to send' : ''; };
   $('f-msg').addEventListener('submit', function(e){
-    e.preventDefault(); var v = $('m-text').value.trim(); if (!v) return;
-    A.api('/api/tickets/' + encodeURIComponent(id) + '/message', { method: 'POST', body: { text: v } })
-      .then(function(t){ $('m-text').value = ''; $('m-out').className = 'ok'; $('m-out').textContent = 'Sent. Jackson gets an email right away.'; render(t); })
-      .catch(function(x){ $('m-out').className = 'err'; $('m-out').textContent = x.message; });
+    e.preventDefault(); var v = $('m-text').value.trim(), files = $('m-photos').files; if (!v && !files.length) return;
+    var btn = this.querySelector('button[type=submit]'); btn.disabled = true; $('m-out').className = '';
+    A.uploadPhotos('/api/tickets/' + encodeURIComponent(id) + '/photos', files, function(m){ $('m-out').textContent = m; })
+      .then(function(n){ return A.api('/api/tickets/' + encodeURIComponent(id) + '/message', { method: 'POST', body: { text: v, photos: n } }); })
+      .then(function(t){ $('m-text').value = ''; $('m-photos').value = ''; $('m-pcount').textContent = ''; $('m-out').className = 'ok'; $('m-out').textContent = 'Sent. Jackson gets an email right away.'; render(t); })
+      .catch(function(x){ $('m-out').className = 'err'; $('m-out').textContent = x.message; load(); })
+      .then(function(){ btn.disabled = false; });
+  });
+  (function(){ var d = new Date(); d.setDate(d.getDate() + 1); $('pk-day').min = new Date().toISOString().slice(0, 10); $('pk-day').value = d.toISOString().slice(0, 10); })();
+  $('f-pick').addEventListener('submit', function(e){
+    e.preventDefault(); if (!$('pk-day').value) return;
+    var when = A.day($('pk-day').value) + ', ' + $('pk-time').value;
+    A.api('/api/tickets/' + encodeURIComponent(id) + '/pickup', { method: 'POST', body: { when: when } })
+      .then(function(){ $('pk-out').className = 'ok'; $('pk-out').textContent = 'Sent to Jackson.'; load(); })
+      .catch(function(x){ $('pk-out').className = 'err'; $('pk-out').textContent = x.message; });
   });
   if (!id) { $('loading').hidden = true; $('missing').hidden = false; }
   else if (qs.get('paid') === '1') { load().then(sync); }

@@ -47,7 +47,7 @@ export async function readJson(request) {
 
 // ---------- price lines ----------
 // A line: {id, desc, qty, unit_cents, kind, taxable, part_no, track, order_id}. Parts carry order tracking.
-export function cleanLines(lines, old) {
+export function cleanLines(lines, old, admin) {
   const prev = {};
   (old || []).forEach((l) => { if (l.id) prev[l.id] = l; });
   return (Array.isArray(lines) ? lines : []).slice(0, 80).map((l) => {
@@ -60,8 +60,19 @@ export function cleanLines(lines, old) {
       unit_cents: Math.round(Number(l.unit_cents) || 0), kind, taxable: !!l.taxable,
       part_no: kind === 'part' ? clip((l.part_no || '').toUpperCase().replace(/[^\w.-]/g, ''), 24) || null : null,
       track, order_id: kind === 'part' ? (l.order_id != null ? Number(l.order_id) || null : (p.order_id || null)) : null,
+      // private: Jackson's cost per unit (never sent to customers)
+      cost_cents: admin ? (l.cost_cents === '' || l.cost_cents == null ? (p.cost_cents ?? null) : Math.max(0, Math.round(Number(l.cost_cents) || 0))) : (p.cost_cents ?? null),
     };
   });
+}
+// Fill in missing part costs from the private GolfWorks trade prices (part_costs), scaled to the price charged.
+export async function fillCosts(env, lines) {
+  const want = [...new Set(lines.filter((l) => l.kind === 'part' && l.cost_cents == null && l.part_no).map((l) => l.part_no))];
+  if (!want.length) return lines;
+  const r = await env.DB.prepare(`SELECT part_no, ratio FROM part_costs WHERE part_no IN (${want.map(() => '?').join(',')})`).bind(...want).all();
+  const ratio = Object.fromEntries((r.results || []).map((x) => [x.part_no, x.ratio]));
+  lines.forEach((l) => { if (l.kind === 'part' && l.cost_cents == null && ratio[l.part_no]) l.cost_cents = Math.round(l.unit_cents * ratio[l.part_no]); });
+  return lines;
 }
 // Only these fields change the price (and so the version the customer approves).
 export const priceKey = (lines) => JSON.stringify(lines.map((l) => [l.desc, l.qty, l.unit_cents, l.kind, l.taxable]));
@@ -107,7 +118,7 @@ export async function publicTicket(env, t) {
   return {
     id: t.id, number: ticketNo(t.number), kind: t.kind, title: t.title, status: t.status, status_label: LABEL[t.status] || t.status,
     created_at: t.created_at, updated_at: t.updated_at, spec: JSON.parse(t.spec || '{}'), customer_note: t.customer_note,
-    shop_note: t.shop_note, eta: t.eta, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents, refunded_cents: t.refunded_cents || 0,
+    shop_note: t.shop_note, eta: t.eta, pickup_at: t.pickup_at || null, status_at: t.status_at || t.updated_at, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents, refunded_cents: t.refunded_cents || 0,
     due_cents: Math.max(0, t.total_cents - t.paid_cents), version: t.version, approved_version: t.approved_version,
     can_pay: ['awaiting_approval', 'approved'].includes(t.status) && t.total_cents > t.paid_cents,
     lines: lines.map((l) => {

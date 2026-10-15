@@ -39,6 +39,26 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
 - The customer page shows money refunded.
 - The customer's page in the dashboard lists every payment across their tickets.
 
+**Photos:** customers and Jackson can add photos to a ticket.
+- Photos are shrunk in the browser (longest side 1600px, JPEG) and kept in D1 (`photos`, `photo_data`).
+- Only the ticket's customer and Jackson can view them.
+- To move them to R2 later, add an R2 binding and change `uploadPhoto` / `servePhoto` in `src/extras.js`.
+
+**Costs & reports (private):**
+- Each line has a private "cost $" field that customers never see.
+- Part costs fill in automatically from the `part_costs` table: GolfWorks trade prices loaded straight into D1, never in this public repo, scaled to the price charged.
+- **Reports** shows sales (before tax, net of refunds), parts cost, Square fees, GolfWorks shipping, gross profit and margin, plus top items by section and month by month. Results can be downloaded as CSV.
+
+**Cash & other payments:** "Record cash / Venmo / other payment" on a ticket counts toward paid, so parts go on the order list. Entries made by mistake can be removed.
+
+**Hourly jobs** (cron in `wrangler.jsonc`, code in `src/extras.js`), emails only 8am–8pm Central:
+- **Approve / pay reminder:** every 24 hours while a price waits, up to 5.
+- **Pickup reminder:** every 12 hours while a ticket is Ready with no pickup scheduled, up to 10. Customers schedule pickup on their ticket.
+- **Thank-you email:** sent a day after "Picked up". It adds `THANKS_CREDIT_CENTS` credit to the customer for their next service (not tied to leaving a review) and includes the `GOOGLE_REVIEW_URL` link when it's set. Jackson applies the credit from the ticket.
+- **FedEx auto-tracking:** for shipped orders, once the `FEDEX_API_KEY` and `FEDEX_SECRET_KEY` secrets exist. It updates the expected date and marks orders delivered.
+
+**Bench ticket:** `/admin/print/?t=…` is a 4×6 label (Jadens 668BT) with a QR code back to the ticket.
+
 If the price goes up after payment, the ticket returns to "waiting on customer". The customer then pays only the balance, and the new parts stay off the order list until that payment clears.
 
 ## Cloudflare resources

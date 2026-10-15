@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bench Ticket · Rocket City ClubWorks</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+/* 4 x 6 in thermal label (Jadens 668BT and other shipping-label printers). Black only, big type. */
+@page{size:4in 6in;margin:0.12in}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:#000;font:13px/1.25 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.label{width:3.76in;min-height:5.76in;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #000;padding-bottom:6px}
+.num{font:900 34px/1 Arial Black,Arial,sans-serif;letter-spacing:-1px}
+.shop{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+#qr{width:0.95in;height:0.95in}
+#qr img,#qr svg{width:100%;height:100%;display:block}
+.who{font-size:17px;font-weight:800}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.row b{font-weight:800}
+.box{border:2px solid #000;border-radius:4px;padding:5px 6px}
+h2{margin:0 0 3px;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+ul{margin:0;padding:0;list-style:none}
+li{margin:1px 0}
+li .pn{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
+.chk{display:inline-block;width:10px;height:10px;border:1.5px solid #000;margin-right:4px;vertical-align:-1px}
+.note{font-size:11px;white-space:pre-wrap}
+.foot{margin-top:auto;border-top:2px solid #000;padding-top:4px;font-size:10px;display:flex;justify-content:space-between}
+.tools{max-width:3.76in;margin:10px auto;font:14px -apple-system,Arial,sans-serif;display:grid;gap:8px}
+.tools button{min-height:44px;font-size:16px;font-weight:700;border-radius:8px;border:2px solid #000;background:#000;color:#fff}
+.tools p{margin:0;color:#444}
+@media print{.tools{display:none}}
+</style>
+</head>
+<body>
+<div class="tools"><button type="button" onclick="window.print()">Print 4×6 bench ticket</button>
+  <p>iPhone: Print → choose your printer, or Share → Save to Files and open it in the Jadens app. Paper size 4 × 6 in, scale 100%.</p></div>
+<div class="label" id="label">Loading…</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  var id = new URLSearchParams(location.search).get('t'), L = document.getElementById('label');
+  function el(tag, text, cls){ var e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; }
+  function day(ymd){ if (!ymd) return '—'; var p = ymd.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
+  fetch('/api/admin/tickets/' + encodeURIComponent(id), { credentials: 'same-origin' }).then(function(r){ if (r.status === 401) throw new Error('Sign in to the dashboard first.'); return r.json(); }).then(function(t){
+    L.textContent = '';
+    var top = el('div', null, 'top'), left = el('div');
+    left.appendChild(el('div', 'Rocket City ClubWorks', 'shop')); left.appendChild(el('div', t.number, 'num'));
+    left.appendChild(el('div', (t.title || 'Service ticket'), ''));
+    top.appendChild(left); var q = el('div'); q.id = 'qr'; top.appendChild(q); L.appendChild(top);
+    try { var qr = qrcode(0, 'M'); qr.addData(location.origin + '/admin/?t=' + t.id); qr.make(); q.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); } catch (e) {}
+    var c = t.customer || {};
+    L.appendChild(el('div', c.name || '', 'who'));
+    var r1 = el('div', null, 'row'); r1.appendChild(el('span', c.phone_fmt || '')); r1.appendChild(el('span', 'In: ' + new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))); L.appendChild(r1);
+    var r2 = el('div', null, 'row'); var due = el('span'); due.appendChild(document.createTextNode('Ready by: ')); due.appendChild(el('b', day(t.eta))); r2.appendChild(due);
+    r2.appendChild(el('b', t.paid_cents >= t.total_cents && t.total_cents > 0 ? 'PAID' : 'NOT PAID')); L.appendChild(r2);
+    if (t.pickup_at) L.appendChild(el('div', 'Pickup: ' + t.pickup_at, 'row'));
+    var work = el('div', null, 'box'); work.appendChild(el('h2', 'Work'));
+    var ul = el('ul'); t.lines.filter(function(l){ return l.kind === 'labor'; }).forEach(function(l){ var li = el('li'); li.appendChild(el('span', null, 'chk')); li.appendChild(document.createTextNode((l.qty > 1 ? l.qty + ' × ' : '') + l.desc)); ul.appendChild(li); });
+    if (!ul.children.length) ul.appendChild(el('li', 'See ticket'));
+    work.appendChild(ul); L.appendChild(work);
+    var parts = t.lines.filter(function(l){ return l.kind === 'part'; });
+    if (parts.length) { var pb = el('div', null, 'box'); pb.appendChild(el('h2', 'Parts')); var pu = el('ul');
+      parts.forEach(function(l){ var li = el('li'); li.appendChild(el('span', null, 'chk')); if (l.part_no) { li.appendChild(el('span', l.part_no, 'pn')); li.appendChild(document.createTextNode(' ')); } li.appendChild(document.createTextNode((l.qty > 1 ? l.qty + ' × ' : '') + l.desc)); pu.appendChild(li); });
+      pb.appendChild(pu); L.appendChild(pb); }
+    var notes = [t.kind === 'request' && t.spec && t.spec.summary ? t.spec.summary.join('\n') : '', t.customer_note, t.shop_note].filter(Boolean).join('\n');
+    if (notes) { var nb = el('div', null, 'box'); nb.appendChild(el('h2', 'Notes')); nb.appendChild(el('div', notes.slice(0, 400), 'note')); L.appendChild(nb); }
+    var f = el('div', null, 'foot'); f.appendChild(el('span', 'rocketcityclubworks.com')); f.appendChild(el('span', 'Printed ' + new Date().toLocaleDateString())); L.appendChild(f);
+  }).catch(function(e){ L.textContent = e.message || 'Could not load the ticket.'; });
+})();
+</script>
+</body>
+</html>

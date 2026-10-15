@@ -1,9 +1,9 @@
 // Jackson's dashboard API: tickets, parts orders, customers.
 import { ticketPayments, refundPayment } from './square.js';
 import { json, err, now, newId, clip, cleanEmail, okEmail, cleanPhone, fmtPhone, readJson, cleanLines, priceKey, totals, getTicket, getCustomer,
-  addEvent, events, publicTicket, ordersFor, trackingUrl, isPaid, notifyCustomer, sendEmail, siteUrl, ticketNo, money, STATUSES, LABEL, TRACK } from './lib.js';
+  addEvent, events, publicTicket, fillCosts, ordersFor, trackingUrl, isPaid, notifyCustomer, sendEmail, siteUrl, ticketNo, money, STATUSES, LABEL, TRACK } from './lib.js';
 
-const custOut = (c) => c && { id: c.id, name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone), created_at: c.created_at, last_login_at: c.last_login_at, created_by: c.created_by, shop_notes: c.shop_notes };
+const custOut = (c) => c && { id: c.id, name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone), created_at: c.created_at, last_login_at: c.last_login_at, created_by: c.created_by, shop_notes: c.shop_notes, credit_cents: c.credit_cents || 0 };
 
 async function fullTicket(env, t) {
   const c = await getCustomer(env, t.customer_id);
@@ -54,7 +54,7 @@ export async function updateTicket(request, env, id, ctx) {
   const changes = [], mail = [];
   if (b.lines || b.tax_rate != null) {
     taxRate = b.tax_rate != null ? Math.max(0, Math.min(0.2, Number(b.tax_rate) || 0)) : taxRate;
-    lines = b.lines ? cleanLines(b.lines, oldLines) : oldLines;
+    lines = b.lines ? await fillCosts(env, cleanLines(b.lines, oldLines, true)) : oldLines;
     if (priceKey(lines) !== priceKey(oldLines) || taxRate !== t.tax_rate) {
       total_cents = totals(lines, taxRate).total_cents; version += 1;
       changes.push(`Price updated to ${money(total_cents)}.`);
@@ -70,6 +70,8 @@ export async function updateTicket(request, env, id, ctx) {
   const eta = b.eta !== undefined ? (b.eta && /^\d{4}-\d{2}-\d{2}$/.test(b.eta) ? b.eta : null) : t.eta;
   if (eta !== t.eta) changes.push(eta ? `Estimated ready: ${eta}.` : 'Ready date cleared.');
   const title = b.title != null ? clip(b.title, 120) : t.title;
+  const pickup = b.pickup_at !== undefined ? clip((b.pickup_at || '').trim(), 80) || null : t.pickup_at;
+  if (pickup !== t.pickup_at) changes.push(pickup ? `Pickup scheduled: ${pickup}.` : 'Pickup time cleared.');
 
   if (b.send_for_approval) {
     if (total_cents - t.paid_cents <= 0) return err('Nothing is due, so there is nothing to approve.');
@@ -78,12 +80,12 @@ export async function updateTicket(request, env, id, ctx) {
   } else if (b.status && b.status !== status) {
     if (!STATUSES.includes(b.status)) return err('Unknown status.');
     status = b.status;
-    if (status === 'ready') mail.push(['ready for pickup', 'Your clubs are ready! Reply or message Jackson on your ticket to set a pickup time.']);
+    if (status === 'ready') mail.push(['ready for pickup', 'Your clubs are ready! Open your ticket and tap "Schedule pickup" to pick a time, or reply to this email.']);
     if (status === 'in_progress') mail.push(['on the bench', 'Your parts are in and Jackson is working on your clubs now.']);
   }
 
-  await env.DB.prepare('UPDATE tickets SET status = ?, version = ?, lines = ?, tax_rate = ?, total_cents = ?, shop_note = ?, eta = ?, title = ?, updated_at = ? WHERE id = ?')
-    .bind(status, version, JSON.stringify(lines), taxRate, total_cents, shopNote, eta, title, now(), t.id).run();
+  await env.DB.prepare('UPDATE tickets SET status = ?, version = ?, lines = ?, tax_rate = ?, total_cents = ?, shop_note = ?, eta = ?, title = ?, pickup_at = ?, updated_at = ? WHERE id = ?')
+    .bind(status, version, JSON.stringify(lines), taxRate, total_cents, shopNote, eta, title, pickup, now(), t.id).run();
   if (changes.length) await addEvent(env, t.id, 'shop', 'priced', changes.join(' '));
   if (status !== t.status) await addEvent(env, t.id, 'shop', 'status', LABEL[status] || status);
   const msg = clip((b.message || '').trim(), 1500);
@@ -161,8 +163,9 @@ export async function createOrder(request, env) {
   const items = (Array.isArray(b.items) ? b.items : []).slice(0, 200);
   if (!items.length) return err('Pick the parts on this order.');
   const t = now();
-  const ins = await env.DB.prepare("INSERT INTO orders (vendor, order_no, status, eta, note, placed_at, updated_at) VALUES (?, ?, 'placed', ?, ?, ?, ?)")
-    .bind(clip(b.vendor || 'GolfWorks', 40), clip(b.order_no, 60), b.eta && /^\d{4}-\d{2}-\d{2}$/.test(b.eta) ? b.eta : null, clip(b.note, 500), t, t).run();
+  const ship = b.shipping_cents === '' || b.shipping_cents == null ? null : Math.max(0, Math.round(Number(b.shipping_cents) || 0));
+  const ins = await env.DB.prepare("INSERT INTO orders (vendor, order_no, status, eta, note, shipping_cents, placed_at, updated_at) VALUES (?, ?, 'placed', ?, ?, ?, ?, ?)")
+    .bind(clip(b.vendor || 'GolfWorks', 40), clip(b.order_no, 60), b.eta && /^\d{4}-\d{2}-\d{2}$/.test(b.eta) ? b.eta : null, clip(b.note, 500), ship, t, t).run();
   const orderId = ins.meta.last_row_id;
   const want = new Set(items.map((i) => i.ticket_id + '|' + i.line_id));
   const touched = await setLines(env, (tk, l) => want.has(tk.id + '|' + l.id), 'ordered', orderId);
@@ -181,22 +184,27 @@ export async function updateOrder(request, env, id, ctx) {
     tracking: b.tracking !== undefined ? clip((b.tracking || '').replace(/\s/g, ''), 60) : o.tracking,
     eta: b.eta !== undefined ? (b.eta && /^\d{4}-\d{2}-\d{2}$/.test(b.eta) ? b.eta : null) : o.eta,
     note: b.note !== undefined ? clip(b.note, 500) : o.note,
+    shipping_cents: b.shipping_cents !== undefined ? (b.shipping_cents === '' || b.shipping_cents == null ? null : Math.max(0, Math.round(Number(b.shipping_cents) || 0))) : o.shipping_cents,
     status: ['placed', 'shipped', 'delivered'].includes(b.status) ? b.status : o.status,
   };
   if (v.tracking && v.status === 'placed') v.status = 'shipped';
-  await env.DB.prepare('UPDATE orders SET order_no = ?, carrier = ?, tracking = ?, eta = ?, note = ?, status = ?, updated_at = ? WHERE id = ?')
-    .bind(v.order_no, v.carrier, v.tracking, v.eta, v.note, v.status, now(), o.id).run();
-  if (v.status !== o.status && v.status !== 'placed') {
-    const track = v.status === 'shipped' ? 'shipped' : 'received';
-    const touched = await setLines(env, (tk, l) => l.order_id === o.id && TRACK.indexOf(l.track) < TRACK.indexOf(track), track);
-    const url = trackingUrl(v.carrier, v.tracking);
-    for (const tk of touched) {
-      await addEvent(env, tk.id, 'system', 'parts', v.status === 'shipped' ? `Parts shipped${v.carrier ? ' via ' + v.carrier : ''}${v.tracking ? ' (tracking ' + v.tracking + ')' : ''}.` : 'Parts arrived at the shop.');
-      if (v.status === 'shipped') ctx.waitUntil(notifyCustomer(env, tk, 'your parts shipped', `Your parts are on the way to the shop${v.carrier ? ' via ' + v.carrier : ''}.${url ? '\nTrack them: ' + url : ''}${v.eta ? '\nExpected: ' + v.eta : ''}`));
-      if (v.status === 'delivered') ctx.waitUntil(notifyCustomer(env, tk, 'your parts arrived', 'Your parts arrived at the shop. Jackson will get your clubs on the bench next.'));
-    }
-  }
+  await env.DB.prepare('UPDATE orders SET order_no = ?, carrier = ?, tracking = ?, eta = ?, note = ?, shipping_cents = ?, status = ?, updated_at = ? WHERE id = ?')
+    .bind(v.order_no, v.carrier, v.tracking, v.eta, v.note, v.shipping_cents, v.status, now(), o.id).run();
+  await applyOrderStatus(env, o, v, ctx);
   return json({ ok: true });
+}
+
+// After an order's status changes: move its parts along and tell each customer. Also used by FedEx auto-tracking.
+export async function applyOrderStatus(env, o, v, ctx) {
+  if (v.status === o.status || v.status === 'placed') return;
+  const track = v.status === 'shipped' ? 'shipped' : 'received';
+  const touched = await setLines(env, (tk, l) => l.order_id === o.id && TRACK.indexOf(l.track) < TRACK.indexOf(track), track);
+  const url = trackingUrl(v.carrier, v.tracking);
+  for (const tk of touched) {
+    await addEvent(env, tk.id, 'system', 'parts', v.status === 'shipped' ? `Parts shipped${v.carrier ? ' via ' + v.carrier : ''}${v.tracking ? ' (tracking ' + v.tracking + ')' : ''}.` : 'Parts arrived at the shop.');
+    if (v.status === 'shipped') ctx.waitUntil(notifyCustomer(env, tk, 'your parts shipped', `Your parts are on the way to the shop${v.carrier ? ' via ' + v.carrier : ''}.${url ? '\nTrack them: ' + url : ''}${v.eta ? '\nExpected: ' + v.eta : ''}`));
+    if (v.status === 'delivered') ctx.waitUntil(notifyCustomer(env, tk, 'your parts arrived', 'Your parts arrived at the shop. Jackson will get your clubs on the bench next.'));
+  }
 }
 
 // ---------- customers ----------

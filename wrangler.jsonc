@@ -20,7 +20,11 @@
     "MAIL_FROM": "Rocket City ClubWorks <shop@rocketcityclubworks.com>",
     "TAX_RATE": "0",
     "SQUARE_ENV": "production",
-    "SQUARE_WEBHOOK_URL": "https://rocketcityclubworks.com/api/square/webhook"
+    "SQUARE_WEBHOOK_URL": "https://rocketcityclubworks.com/api/square/webhook",
+    "THANKS_CREDIT_CENTS": "500",
+    "GOOGLE_REVIEW_URL": ""
   },
+  // Hourly: approval/payment and pickup reminders, thank-you emails, FedEx tracking (src/extras.js)
+  "triggers": { "crons": ["7 * * * *"] },
   "observability": { "enabled": true }
 }
