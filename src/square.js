@@ -17,7 +17,8 @@ export async function createPaymentLink(env, { idempotencyKey, reference, lines,
       location_id: env.SQUARE_LOCATION_ID, reference_id: reference,
       line_items: lines.map((l) => ({ name: l.name.slice(0, 500), quantity: '1', base_price_money: { amount: l.cents, currency: 'USD' } })),
     },
-    checkout_options: { redirect_url: redirectUrl, ask_for_shipping_address: false, allow_tipping: false },
+    checkout_options: { redirect_url: redirectUrl, ask_for_shipping_address: false, allow_tipping: false,
+      accepted_payment_methods: { apple_pay: true, google_pay: true, cash_app_pay: true } },
     pre_populated_data: {},
   };
   if (email) body.pre_populated_data.buyer_email = email;
