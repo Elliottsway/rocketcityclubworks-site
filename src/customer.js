@@ -1,5 +1,5 @@
 // Customer-facing API: account, tickets, messages, approve & pay.
-import { json, err, now, newId, clip, cleanPhone, fmtPhone, readJson, cleanLines, totals, getTicket, addEvent, publicTicket,
+import { fillCosts, json, err, now, newId, clip, cleanPhone, fmtPhone, readJson, cleanLines, totals, getTicket, addEvent, publicTicket,
   limited, notifyShop, notifyCustomer, siteUrl, ticketNo, money, LABEL } from './lib.js';
 import { createPaymentLink, squareReady, syncOrder } from './square.js';
 
@@ -37,7 +37,7 @@ export async function createTicket(request, env, c, ctx) {
     title = cat;
     spec = { summary: [`Request: ${cat}`, b.clubs ? `Clubs: ${clip(b.clubs, 300)}` : null, `Details: ${desc}`, b.timing ? `Timing: ${clip(b.timing, 200)}` : null].filter(Boolean) };
   } else {
-    lines = cleanLines(b.lines);
+    lines = await fillCosts(env, cleanLines(b.lines));
     if (!lines.length) return err('Your quote is empty.');
     spec = { summary: (Array.isArray(b.summary) ? b.summary : []).slice(0, 40).map((s) => clip(s, 400)) };
     title = 'Instant price quote';
@@ -77,12 +77,12 @@ export async function postMessage(request, env, c, id, ctx) {
   const t = await ownTicket(env, c, id);
   if (!t) return err('Ticket not found.', 404);
   let b; try { b = await readJson(request); } catch { return err('Bad request'); }
-  const text = clip((b.text || '').trim(), 1500);
-  if (!text) return err('Type a message first.');
+  const text = clip((b.text || '').trim(), 1500), photos = Math.max(0, Math.min(30, Number(b.photos) || 0));
+  if (!text && !photos) return err('Type a message first.');
   if (await limited(env, 'msg:' + c.id, 15, 3600)) return err('Too many messages. Please wait a bit.', 429);
-  await addEvent(env, t.id, 'customer', 'message', text);
+  if (text) await addEvent(env, t.id, 'customer', 'message', text);
   await env.DB.prepare('UPDATE tickets SET updated_at = ? WHERE id = ?').bind(now(), t.id).run();
-  ctx.waitUntil(notifyShop(env, `Message on ${ticketNo(t.number)} from ${c.name}`, `${text}\n\nReply: ${siteUrl(env, '/admin/?t=' + t.id)}`));
+  ctx.waitUntil(notifyShop(env, `${text ? 'Message' : 'Photos'} on ${ticketNo(t.number)} from ${c.name}`, `${text || ''}${photos ? `\n(${photos} photo${photos > 1 ? 's' : ''} added)` : ''}\n\nReply: ${siteUrl(env, '/admin/?t=' + t.id)}`));
   return json(await publicTicket(env, await getTicket(env, t.id)));
 }
 

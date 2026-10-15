@@ -35,6 +35,8 @@ const cardLabel = (p) => {
   return p.wallet_details ? 'Digital wallet' : p.source_type || null;
 };
 
+const feeOf = (p) => (p.processing_fee || []).reduce((s, f) => s + ((f.amount_money && f.amount_money.amount) || 0), 0) || null;
+
 async function getPayment(env, id) {
   const r = await fetch(base(env) + '/v2/payments/' + encodeURIComponent(id), { headers: headers(env) });
   if (!r.ok) return null;
@@ -48,8 +50,8 @@ export async function confirmPayment(env, paymentId, ctx) {
   const t = await env.DB.prepare('SELECT * FROM tickets WHERE square_order_id = ?').bind(p.order_id).first();
   if (!t) return false;
   const amount = (p.amount_money && p.amount_money.currency === 'USD' && p.amount_money.amount) || 0;
-  const ins = await env.DB.prepare('INSERT OR IGNORE INTO payments (square_payment_id, ticket_id, amount_cents, at, card, receipt_url, receipt_number) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .bind(p.id, t.id, amount, now(), cardLabel(p), p.receipt_url || null, p.receipt_number || null).run();
+  const ins = await env.DB.prepare("INSERT OR IGNORE INTO payments (square_payment_id, ticket_id, amount_cents, at, card, receipt_url, receipt_number, fee_cents, method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'square')")
+    .bind(p.id, t.id, amount, now(), cardLabel(p), p.receipt_url || null, p.receipt_number || null, feeOf(p)).run();
   if (!ins.meta || !ins.meta.changes) return true; // already recorded
   const paid = t.paid_cents + amount;
   const full = paid >= t.total_cents;
@@ -103,19 +105,20 @@ export async function ticketPayments(env, t) {
   const out = [];
   let refundedTotal = 0;
   for (const r of rows) {
-    const p = squareReady(env) ? await getPayment(env, r.square_payment_id) : null;
+    const manual = r.method && r.method !== 'square';
+    const p = !manual && squareReady(env) ? await getPayment(env, r.square_payment_id) : null;
     const refunded = p ? ((p.refunded_money && p.refunded_money.amount) || 0) : r.refunded_cents;
     refundedTotal += refunded;
-    if (p && (refunded !== r.refunded_cents || (!r.card && cardLabel(p)))) {
-      await env.DB.prepare('UPDATE payments SET refunded_cents = ?, card = COALESCE(card, ?), receipt_url = COALESCE(receipt_url, ?), receipt_number = COALESCE(receipt_number, ?) WHERE square_payment_id = ?')
-        .bind(refunded, cardLabel(p), p.receipt_url || null, p.receipt_number || null, r.square_payment_id).run();
+    const fee = p ? feeOf(p) : r.fee_cents;
+    if (p && (refunded !== r.refunded_cents || (!r.card && cardLabel(p)) || fee !== r.fee_cents)) {
+      await env.DB.prepare('UPDATE payments SET refunded_cents = ?, fee_cents = ?, card = COALESCE(card, ?), receipt_url = COALESCE(receipt_url, ?), receipt_number = COALESCE(receipt_number, ?) WHERE square_payment_id = ?')
+        .bind(refunded, fee, cardLabel(p), p.receipt_url || null, p.receipt_number || null, r.square_payment_id).run();
     }
-    const fee = p && (p.processing_fee || []).reduce((s, f) => s + ((f.amount_money && f.amount_money.amount) || 0), 0);
     out.push({
       id: r.square_payment_id, amount_cents: r.amount_cents, refunded_cents: refunded, at: (p && p.created_at) || r.at,
-      status: p ? p.status : 'COMPLETED', card: (p && cardLabel(p)) || r.card, receipt_url: (p && p.receipt_url) || r.receipt_url,
+      status: p ? p.status : manual ? 'RECORDED' : 'COMPLETED', card: manual ? r.method.replace(/^\w/, (x) => x.toUpperCase()) : (p && cardLabel(p)) || r.card, receipt_url: (p && p.receipt_url) || r.receipt_url,
       receipt_number: (p && p.receipt_number) || r.receipt_number, fee_cents: fee || null,
-      refundable_cents: Math.max(0, r.amount_cents - refunded),
+      refundable_cents: manual ? 0 : Math.max(0, r.amount_cents - refunded), method: r.method || 'square', note: r.note || null,
     });
   }
   if (refundedTotal !== (t.refunded_cents || 0)) await env.DB.prepare('UPDATE tickets SET refunded_cents = ? WHERE id = ?').bind(refundedTotal, t.id).run();

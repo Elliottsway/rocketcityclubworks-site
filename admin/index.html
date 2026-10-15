@@ -45,7 +45,11 @@
 .lrow select{padding-right:22px;background-position:right 6px center}
 .lrow .tx{display:flex;justify-content:center}.lrow .tx input{width:20px;min-height:0}
 .lrow .x{background:none;border:0;color:#FF9B8F;font-size:1.3rem;cursor:pointer;min-height:40px}
-.lrow .pp{grid-column:1/-1;display:grid;grid-template-columns:110px 1fr;gap:6px}
+.lrow .pp{grid-column:1/-1;display:grid;grid-template-columns:110px 1fr 120px;gap:6px}
+.lrow .pp.nopart{grid-template-columns:1fr 120px}.lrow .pp.nopart .pn,.lrow .pp.nopart .trk{display:none}
+.lrow .pp .cost{position:relative}.lrow .pp .cost:before{content:"cost $";position:absolute;left:8px;top:50%;transform:translateY(-50%);font:600 .62rem var(--mono);color:#FFD66B;pointer-events:none}
+.lrow .pp .cost input{padding-left:48px;color:#FFD66B}
+.totals .priv{color:#FFD66B}
 .lrow .pp small{grid-column:1/-1;color:var(--muted);font-size:.8rem}
 @media (max-width:640px){.lhead{display:none}.lrow{grid-template-columns:54px 1fr 1fr 30px 30px}.lrow .d{grid-column:1/-1}}
 .addrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
@@ -80,13 +84,30 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
 .pay1 a{color:var(--accent)}
 .refund{display:grid;grid-template-columns:110px 1fr auto;gap:6px;align-items:end}
 @media (max-width:520px){.refund{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0}
+.kpi{padding:12px 14px}
+.kpi span{display:block;font:600 .66rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi b{display:block;font:800 1.5rem var(--display);margin-top:4px}
+.kpi small{color:var(--muted);font-size:.78rem}
+.rtab{width:100%;border-collapse:collapse;font-size:.88rem}
+.rtab th,.rtab td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.rtab th:first-child,.rtab td:first-child{text-align:left;white-space:normal}
+.rtab th{font:600 .66rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.rtab th[aria-sort]{color:var(--accent)}
+.rtab td{font-family:var(--mono)}
+.rtab td:first-child{font-family:var(--body)}
+.rtab td small{display:block;color:var(--muted);font-family:var(--mono);font-size:.7rem}
+.rsec{padding:14px;margin-bottom:12px;overflow-x:auto}
+.rsec h2{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:1.4rem;color:var(--accent);margin:0 0 8px}
+.rsec h2 small{font:500 .78rem var(--body);color:var(--muted)}
+.hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-bottom:12px}
 #signout{min-height:40px;padding:0 15px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);background:none;color:inherit;font:700 .9rem var(--body);cursor:pointer}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <a class="mark" href="/admin/" aria-label="Dashboard home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
-  <nav aria-label="Main"><a href="/admin/">Tickets</a><a href="/admin/?v=orders">Orders</a><a href="/admin/?v=customers">Customers</a><a href="/">Site</a></nav>
+  <nav aria-label="Main"><a href="/admin/">Tickets</a><a href="/admin/?v=orders">Orders</a><a href="/admin/?v=customers">Customers</a><a href="/admin/?v=reports">Reports</a><a href="/">Site</a></nav>
   <div class="cta"><button id="signout" type="button" hidden>Sign out</button></div>
 </div></header>
 <main class="wrap adm">
@@ -98,7 +119,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
   </form>
 
   <div id="app" hidden>
-    <nav class="views" aria-label="Dashboard"><a href="/admin/" id="nv-t">Tickets</a><a href="/admin/?v=orders" id="nv-o">Parts orders</a><a href="/admin/?v=customers" id="nv-c">Customers</a></nav>
+    <nav class="views" aria-label="Dashboard"><a href="/admin/" id="nv-t">Tickets</a><a href="/admin/?v=orders" id="nv-o">Parts orders</a><a href="/admin/?v=customers" id="nv-c">Customers</a><a href="/admin/?v=reports" id="nv-r">Reports</a></nav>
 
     <!-- tickets list -->
     <section id="v-list" hidden>
@@ -114,13 +135,22 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       <div class="det">
         <div class="stack">
           <div id="d-pay" class="banner"></div>
-          <div class="card box" id="d-paybox" hidden><h2>Payments</h2><div class="pays" id="d-pays"></div>
+          <div class="banner good" id="d-credit" hidden></div>
+          <div class="card box" id="d-paybox"><h2>Payments</h2><div class="pays" id="d-pays"></div>
+            <details style="margin-top:10px"><summary class="linkbtn" style="display:inline">Record cash / Venmo / other payment</summary>
+              <div class="refund" style="margin-top:8px"><input id="mp-amt" type="number" step="0.01" aria-label="Amount received" placeholder="Amount">
+                <select id="mp-method" aria-label="Payment method"><option value="cash">Cash</option><option value="venmo">Venmo</option><option value="cash app">Cash App</option><option value="apple cash">Apple Cash</option><option value="zelle">Zelle</option><option value="check">Check</option><option value="card in person">Card in person (Square app)</option><option value="other">Other</option></select>
+                <button class="small" type="button" id="mp-go">Record</button></div>
+              <input id="mp-note" placeholder="Note (optional)" style="margin-top:6px"><p id="mp-out" role="status"></p>
+            </details>
             <p class="hint" style="margin:10px 0 0">Everything here comes live from Square. <a href="https://app.squareup.com/dashboard/sales/transactions" target="_blank" rel="noopener" style="color:var(--accent)">Open Square transactions</a> (search by receipt #).</p></div>
           <div class="card box"><h2>Customer</h2><div class="kv" id="d-cust"></div>
-            <div class="acts" style="margin-top:10px"><button class="small" type="button" id="d-copy">Copy ticket link</button><a class="small" id="d-cuslink" style="display:inline-flex;align-items:center;text-decoration:none">Customer history</a></div>
+            <div class="acts" style="margin-top:10px"><button class="small" type="button" id="d-copy">Copy ticket link</button><a class="small" id="d-print" target="_blank" style="display:inline-flex;align-items:center;text-decoration:none">🖨 Bench ticket (4×6)</a><a class="small" id="d-cuslink" style="display:inline-flex;align-items:center;text-decoration:none">Customer history</a></div>
           </div>
           <div class="card box"><h2>What they asked for</h2><ul class="spec" id="d-spec"></ul><p class="note" id="d-cnote" hidden style="margin-top:10px"></p></div>
-          <div class="card box"><h2>History</h2><ul class="hist" id="d-hist"></ul></div>
+          <div class="card box"><h2>History</h2>
+            <label class="filebtn" for="d-photos" style="margin-bottom:10px">📷 Add photos to this ticket<input id="d-photos" type="file" accept="image/*" multiple></label><p id="d-phout" role="status"></p>
+            <ul class="hist" id="d-hist"></ul></div>
         </div>
         <div class="stack">
           <div class="card box">
@@ -149,7 +179,8 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
             <div><label for="d-note">Note to the customer (stays on their ticket)</label><textarea id="d-note"></textarea></div>
             <div><label for="d-msg">Send a message (emails them)</label><textarea id="d-msg" placeholder="Optional"></textarea>
               <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:.85rem"><input type="checkbox" id="d-int" style="width:20px;min-height:0"> Private note for me only (not emailed)</label></div>
-            <div><label for="d-status">Status</label><select id="d-status"></select></div>
+            <div class="row2"><div><label for="d-status">Status</label><select id="d-status"></select></div>
+              <div><label for="d-pick">Pickup scheduled</label><input id="d-pick" placeholder="e.g. Sat, Oct 18, morning"></div></div>
             <div class="acts">
               <button class="btn" id="d-send" type="button">Save &amp; send price to customer</button>
               <button class="btn out" id="d-save" type="button">Save</button>
@@ -171,6 +202,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
           <button class="small" type="button" id="o-copy">Copy list</button>
           <div class="row2"><div><label for="o-no">GolfWorks order #</label><input id="o-no" placeholder="e.g. 1234567"></div>
             <div><label for="o-eta">Expected delivery</label><input id="o-eta" type="date"></div></div>
+          <div><label for="o-ship">GolfWorks shipping charged $ (private, for your reports)</label><input id="o-ship" type="number" step="0.01" min="0"></div>
           <button class="btn" type="button" id="o-rec">Record order for checked parts</button>
           <p id="o-out" role="status"></p>
         </div>
@@ -196,6 +228,20 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       <div class="list" id="c-list"></div>
     </section>
 
+    <!-- reports -->
+    <section id="v-rep" hidden>
+      <div class="acts" style="align-items:end">
+        <div><label for="r-range">Period</label><select id="r-range"><option value="month">This month</option><option value="last">Last month</option><option value="ytd">This year</option><option value="30">Last 30 days</option><option value="all">All time</option><option value="custom">Custom…</option></select></div>
+        <div id="r-custom" hidden class="row2" style="flex:1 1 260px"><div><label for="r-from">From</label><input id="r-from" type="date"></div><div><label for="r-to">To</label><input id="r-to" type="date"></div></div>
+        <button class="small" type="button" id="r-csv">Download CSV</button>
+      </div>
+      <p class="hint" id="r-note"></p>
+      <div class="kpis" id="r-kpis"></div>
+      <div class="hl" id="r-hl"></div>
+      <div id="r-secs"></div>
+      <div class="card rsec"><h2>By month <small>all time · by first payment date</small></h2><table class="rtab" id="r-months"></table></div>
+    </section>
+
     <!-- customer detail -->
     <section id="v-cdet" hidden>
       <a href="/admin/?v=customers" class="linkbtn">← All customers</a>
@@ -205,6 +251,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
           <div class="row2"><div><label for="cd-n">Name</label><input id="cd-n"></div><div><label for="cd-p">Phone</label><input id="cd-p" type="tel"></div></div>
           <div><label for="cd-e">Email</label><input id="cd-e" type="email"></div>
           <div><label for="cd-notes">Private notes (only you see these)</label><textarea id="cd-notes"></textarea></div>
+          <div><label for="cd-credit">Thank-you credit $ (comes off their next ticket when you apply it)</label><input id="cd-credit" type="number" step="0.01" min="0"></div>
           <div class="kv" id="cd-meta"></div>
           <div class="acts"><button class="btn out" type="submit">Save</button><button class="small" type="button" id="cd-invite">Email them a sign-in invite</button></div>
           <p id="cd-out" role="status"></p>
@@ -245,8 +292,8 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     A.api('/api/admin-login', { method: 'POST', body: { password: $('pw').value }, noRedirect: true }).then(function(){ location.reload(); }).catch(function(x){ $('pwmsg').textContent = x.message; });
   });
   $('signout').onclick = function(){ A.api('/api/admin-login', { method: 'POST', body: { logout: true }, noRedirect: true }).then(function(){ location.href = '/admin/'; }); };
-  function show(id){ ['v-list', 'v-det', 'v-orders', 'v-cust', 'v-cdet'].forEach(function(v){ $(v).hidden = v !== id; }); $('app').hidden = false; $('signout').hidden = false; }
-  function nav(which){ ['nv-t', 'nv-o', 'nv-c'].forEach(function(n){ if (n === which) $(n).setAttribute('aria-current', 'page'); else $(n).removeAttribute('aria-current'); }); }
+  function show(id){ ['v-list', 'v-det', 'v-orders', 'v-cust', 'v-cdet', 'v-rep'].forEach(function(v){ $(v).hidden = v !== id; }); $('app').hidden = false; $('signout').hidden = false; }
+  function nav(which){ ['nv-t', 'nv-o', 'nv-c', 'nv-r'].forEach(function(n){ if (n === which) $(n).setAttribute('aria-current', 'page'); else $(n).removeAttribute('aria-current'); }); }
 
   // ---------- tickets ----------
   var qTimer;
@@ -287,16 +334,19 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     var kw = el('div'); kw.appendChild(k); r.appendChild(kw);
     var tw = el('div', null, 'tx'), tx = el('input'); tx.type = 'checkbox'; tx.checked = !!l.taxable; tx.setAttribute('aria-label', 'Taxable'); tw.appendChild(tx); r.appendChild(tw);
     var x = el('button', '×', 'x'); x.type = 'button'; x.setAttribute('aria-label', 'Remove line'); x.onclick = function(){ r.remove(); totals(); }; r.appendChild(x);
-    var pp = el('div', null, 'pp'); var pn = el('input'); pn.placeholder = 'Part #'; pn.value = l.part_no || ''; pn.setAttribute('aria-label', 'Part number');
-    var tr = el('select'); TRACKS.forEach(function(t){ tr.appendChild(new Option(t[1], t[0])); }); tr.value = l.track || 'to_order'; tr.setAttribute('aria-label', 'Part status');
-    pp.appendChild(pn); pp.appendChild(tr);
+    var pp = el('div', null, 'pp'); var pn = el('input', null, 'pn'); pn.placeholder = 'Part #'; pn.value = l.part_no || ''; pn.setAttribute('aria-label', 'Part number');
+    var tr = el('select', null, 'trk'); TRACKS.forEach(function(t){ tr.appendChild(new Option(t[1], t[0])); }); tr.value = l.track || 'to_order'; tr.setAttribute('aria-label', 'Part status');
+    var cw = el('div', null, 'cost'), co = el('input'); co.type = 'number'; co.step = '0.01'; co.min = 0; co.value = l.cost_cents != null ? (l.cost_cents / 100).toFixed(2) : ''; co.setAttribute('aria-label', 'My cost each (private)'); co.title = 'Your cost per unit. Only you see this.';
+    cw.appendChild(co); co.addEventListener('input', totals);
+    pp.appendChild(pn); pp.appendChild(tr); pp.appendChild(cw);
     if (l.order) pp.appendChild(el('small', 'Order ' + (l.order.order_no || '#' + l.order.id) + ' · ' + l.order.status + (l.order.tracking ? ' · ' + (l.order.carrier || '') + ' ' + l.order.tracking : '')));
     r.appendChild(pp);
-    function sync(){ pp.hidden = k.value !== 'part'; }
+    function sync(){ pp.classList.toggle('nopart', k.value !== 'part'); }
     k.onchange = function(){ if (k.value === 'part') tx.checked = true; if (k.value === 'discount' && Number(u.value) > 0) u.value = (-Number(u.value)).toFixed(2); sync(); totals(); };
     [q, u, tx].forEach(function(i){ i.addEventListener('input', totals); });
     sync();
-    r.read = function(){ return { id: l.id, desc: d.value, qty: Number(q.value) || 1, unit_cents: Math.round(Number(u.value) * 100), kind: k.value, taxable: tx.checked, part_no: pn.value, track: tr.value, order_id: l.order_id }; };
+    r.read = function(){ return { id: l.id, desc: d.value, qty: Number(q.value) || 1, unit_cents: Math.round(Number(u.value) * 100), kind: k.value, taxable: tx.checked, part_no: pn.value, track: tr.value, order_id: l.order_id,
+      cost_cents: co.value === '' ? null : Math.round(Number(co.value) * 100) }; };
     return r;
   }
   function readLines(){ return [].map.call($('d-lines').children, function(r){ return r.read(); }); }
@@ -305,19 +355,28 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     ls.forEach(function(l){ var t = l.qty * l.unit_cents; sub += t; if (l.taxable) txb += t; });
     var rate = (Number($('d-tax').value) || 0) / 100, tax = Math.round(Math.max(0, txb) * rate), tot = Math.max(0, sub + tax);
     var T = $('d-tot'); T.textContent = '';
-    [['Subtotal', sub], ['Tax', tax], ['Total', tot, 'big']].concat(cur && cur.paid_cents ? [['Paid', -cur.paid_cents], ['Due', Math.max(0, tot - cur.paid_cents), 'big']] : []).forEach(function(p){
+    var cost = 0, unknown = 0;
+    ls.forEach(function(l){ if (l.cost_cents != null) cost += l.cost_cents * l.qty; else if (l.kind === 'part') unknown++; });
+    var gp = sub - cost, mg = sub > 0 ? Math.round(gp / sub * 100) : 0;
+    [['Subtotal', sub], ['Tax', tax], ['Total', tot, 'big']].concat(cur && cur.paid_cents ? [['Paid', -cur.paid_cents], ['Due', Math.max(0, tot - cur.paid_cents), 'big']] : [])
+      .concat([['Your cost' + (unknown ? ' (' + unknown + ' part' + (unknown > 1 ? 's' : '') + ' missing cost)' : ''), cost, 'priv'], ['Gross profit · ' + mg + '% margin', gp, 'priv']]).forEach(function(p){
       var d = el('div', null, p[2] || ''); d.appendChild(el('span', p[0])); d.appendChild(el('span', money(p[1]))); T.appendChild(d);
     });
   }
   document.querySelectorAll('[data-add]').forEach(function(b){
     b.onclick = function(){ var k = b.dataset.add; $('d-lines').appendChild(lineRow({ desc: k === 'labor' ? 'Labor' : k === 'part' ? 'Part' : k === 'fee' ? 'Parts fee' : 'Discount', qty: 1, unit_cents: k === 'fee' ? 1000 : 0, kind: k, taxable: k === 'part', track: 'to_order' })); totals(); };
   });
+  function renderHist(t){
+    var H = $('d-hist'); H.textContent = '';
+    t.all_events.slice().reverse().forEach(function(e){ var li = el('li', null, e.kind === 'internal' ? 'internal' : e.who === 'shop' ? 'shop' : ''); li.appendChild(el('small', A.when(e.at) + ' · ' + e.who + (e.kind === 'internal' ? ' · private' : '')));
+      if (e.kind === 'photo') li.appendChild(A.photo('/api/admin/photos/' + encodeURIComponent(e.text))); else li.appendChild(document.createTextNode(e.text || '')); H.appendChild(li); });
+  }
   function showTicket(t){
     cur = t; show('v-det'); nav('nv-t');
     $('d-title').textContent = t.number + ' · ' + (t.customer ? t.customer.name : '');
     var paid = t.total_cents > 0 && t.paid_cents >= t.total_cents;
     $('d-pay').className = 'banner ' + (paid ? 'good' : 'warn');
-    $('d-pay').textContent = (t.refunded_cents ? 'Refunded ' + money(t.refunded_cents) + '. ' : '') + (paid ? '✓ Paid in full: ' + money(t.paid_cents) + ' (confirmed with Square). OK to order parts.'
+    $('d-pay').textContent = (t.refunded_cents ? 'Refunded ' + money(t.refunded_cents) + '. ' : '') + (paid ? '✓ Paid in full: ' + money(t.paid_cents) + '. OK to order parts.'
       : t.paid_cents ? 'Partly paid: ' + money(t.paid_cents) + ' of ' + money(t.total_cents) + '. Don\'t order the new parts yet.'
       : t.status === 'submitted' ? 'Not priced yet. Set the price, then "Save & send price to customer".' : 'Not paid yet: don\'t order parts.');
     var c = t.customer || {}, K = $('d-cust'); K.textContent = '';
@@ -326,8 +385,11 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     $('d-cuslink').href = '/admin/?c=' + encodeURIComponent(c.id);
     var S = $('d-spec'); S.textContent = ''; ((t.spec && t.spec.summary) || []).forEach(function(s){ S.appendChild(el('li', s)); });
     $('d-cnote').hidden = !t.customer_note; $('d-cnote').textContent = 'Their note: ' + (t.customer_note || '');
-    var H = $('d-hist'); H.textContent = '';
-    t.all_events.slice().reverse().forEach(function(e){ var li = el('li', null, e.kind === 'internal' ? 'internal' : e.who === 'shop' ? 'shop' : ''); li.appendChild(el('small', A.when(e.at) + ' · ' + e.who + (e.kind === 'internal' ? ' · private' : ''))); li.appendChild(document.createTextNode(e.text || '')); H.appendChild(li); });
+    renderHist(t);
+    var cr = t.customer && t.customer.credit_cents; $('d-credit').hidden = !cr; $('d-credit').textContent = '';
+    if (cr) { $('d-credit').appendChild(document.createTextNode(t.customer.name.split(' ')[0] + ' has ' + money(cr) + ' thank-you credit. ')); var ab = el('button', 'Apply to this ticket', 'small'); ab.type = 'button';
+      ab.onclick = function(){ api('/tickets/' + encodeURIComponent(t.id) + '/apply-credit', { method: 'POST', body: {} }).then(function(){ return api('/tickets/' + encodeURIComponent(t.id)); }).then(showTicket).catch(function(x){ alert(x.message); }); }; $('d-credit').appendChild(ab); }
+    $('d-print').href = '/admin/print/?t=' + encodeURIComponent(t.id); $('d-pick').value = t.pickup_at || '';
     $('d-ttl').value = t.title || '';
     var L = $('d-lines'); L.textContent = ''; t.lines.forEach(function(l){ L.appendChild(lineRow(l)); });
     $('d-tax').value = +(t.tax_rate * 100).toFixed(3); $('d-eta').value = t.eta || ''; $('d-note').value = t.shop_note || ''; $('d-msg').value = ''; $('d-int').checked = false;
@@ -402,8 +464,12 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     add.type = cancel.type = 'button';
     add.onclick = function(){
       var extra = Object.keys(sel).map(function(k){ return sel[k]; }).filter(function(v){ return v && v !== 'Right-handed'; }).join(', ');
-      $('d-lines').appendChild(lineRow({ desc: it.name + (extra ? ' (' + extra + ')' : ''), qty: Math.max(1, Number(qn.value) || 1), unit_cents: Math.round(Number(pr.value) * 100), kind: it.kind, taxable: it.kind === 'part', part_no: it.part_no || '', track: 'to_order' }));
-      totals(); B.hidden = true; $('pk-q').value = ''; $('pk-q').focus();
+      var unit = Math.round(Number(pr.value) * 100);
+      var line = { desc: it.name + (extra ? ' (' + extra + ')' : ''), qty: Math.max(1, Number(qn.value) || 1), unit_cents: unit, kind: it.kind, taxable: it.kind === 'part', part_no: it.part_no || '', track: 'to_order', cost_cents: it.kind === 'part' ? null : 0 };
+      var row = lineRow(line); $('d-lines').appendChild(row); totals(); B.hidden = true; $('pk-q').value = ''; $('pk-q').focus();
+      if (it.part_no) api('/costs?part_no=' + encodeURIComponent(it.part_no)).then(function(c){
+        var x = c[it.part_no]; if (!x) return; var ci = row.querySelector('.cost input'); if (ci && ci.value === '') { ci.value = (Math.round(unit * x.ratio) / 100).toFixed(2); totals(); }
+      }).catch(function(){});
     };
     cancel.onclick = function(){ B.hidden = true; pkSearch(); };
     acts.appendChild(add); acts.appendChild(cancel); B.appendChild(acts); B.hidden = false; qn.focus();
@@ -419,6 +485,11 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     d.appendChild(el('small', A.when(p.at) + (p.status ? ' · ' + p.status.toLowerCase() : '') + (p.receipt_number ? ' · receipt #' + p.receipt_number : '') + (p.fee_cents ? ' · Square fee ' + money(p.fee_cents) : '') + (p.refunded_cents ? ' · refunded ' + money(p.refunded_cents) : '')));
     var links = el('div', null, 'acts');
     if (p.receipt_url) { var a = el('a', 'Square receipt'); a.href = p.receipt_url; a.target = '_blank'; a.rel = 'noopener'; links.appendChild(a); }
+    if (ticketView && p.method && p.method !== 'square') { var del = el('button', 'Remove (entered by mistake)', 'linkbtn'); del.type = 'button';
+      del.onclick = function(){ if (!confirm('Remove this ' + p.method + ' payment of ' + money(p.amount_cents) + '?')) return;
+        api('/tickets/' + encodeURIComponent(cur.id) + '/manual-payment/' + encodeURIComponent(p.id) + '/delete', { method: 'POST', body: {} }).then(function(){ return api('/tickets/' + encodeURIComponent(cur.id)); }).then(showTicket); };
+      links.appendChild(del); }
+    if (p.note) d.appendChild(el('small', p.note));
     if (p.ticket_id) { var t2 = el('a', 'Open ticket'); t2.href = '/admin/?t=' + encodeURIComponent(p.ticket_id); links.appendChild(t2); }
     d.appendChild(links);
     if (ticketView && p.refundable_cents > 0) {
@@ -444,14 +515,27 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     (j.refunds || []).forEach(function(r){ P2.appendChild(el('small', 'Refund ' + money(r.amount_cents) + ' · ' + A.when(r.at) + ' · ' + (r.status || '').toLowerCase() + (r.reason ? ' · ' + r.reason : ''))); });
   }
   function loadPays(t){
-    $('d-paybox').hidden = !t.paid_cents;
-    if (!t.paid_cents) return;
+    if (!t.paid_cents) { $('d-pays').textContent = ''; $('d-pays').appendChild(el('p', 'No payments yet.', 'empty')); return; }
     $('d-pays').textContent = 'Loading from Square…';
     api('/tickets/' + encodeURIComponent(t.id) + '/payments').then(renderPays).catch(function(x){ $('d-pays').textContent = x.message; });
   }
 
+  $('mp-go').onclick = function(){
+    var c = Math.round(Number($('mp-amt').value) * 100); if (!c) { $('mp-out').className = 'err'; $('mp-out').textContent = 'Enter the amount.'; return; }
+    if (!confirm('Record ' + money(c) + ' paid by ' + $('mp-method').value + '?')) return;
+    api('/tickets/' + encodeURIComponent(cur.id) + '/manual-payment', { method: 'POST', body: { amount_cents: c, method: $('mp-method').value, note: $('mp-note').value } })
+      .then(function(){ $('mp-amt').value = ''; $('mp-note').value = ''; $('mp-out').textContent = ''; return api('/tickets/' + encodeURIComponent(cur.id)); }).then(showTicket)
+      .catch(function(x){ $('mp-out').className = 'err'; $('mp-out').textContent = x.message; });
+  };
+  $('d-photos').onchange = function(){
+    var f = this.files; if (!f.length) return;
+    A.uploadPhotos('/api/admin/tickets/' + encodeURIComponent(cur.id) + '/photos', f, function(m){ $('d-phout').textContent = m; })
+      .then(function(){ $('d-photos').value = ''; $('d-phout').className = 'ok'; $('d-phout').textContent = 'Photos added. The customer sees them on their ticket.'; return api('/tickets/' + encodeURIComponent(cur.id)); })
+      .then(function(t){ cur.version = t.version; renderHist(t); })
+      .catch(function(x){ $('d-phout').className = 'err'; $('d-phout').textContent = x.message; });
+  };
   function save(send){
-    var body = { version: cur.version, lines: readLines(), tax_rate: (Number($('d-tax').value) || 0) / 100, shop_note: $('d-note').value, eta: $('d-eta').value || null, title: $('d-ttl').value, message: $('d-msg').value, internal: $('d-int').checked };
+    var body = { version: cur.version, lines: readLines(), tax_rate: (Number($('d-tax').value) || 0) / 100, shop_note: $('d-note').value, eta: $('d-eta').value || null, title: $('d-ttl').value, message: $('d-msg').value, internal: $('d-int').checked, pickup_at: $('d-pick').value };
     if (send) body.send_for_approval = true; else if ($('d-status').value !== cur.status) body.status = $('d-status').value;
     $('d-out').className = ''; $('d-out').textContent = 'Saving…';
     api('/tickets/' + encodeURIComponent(cur.id), { method: 'PUT', body: body }).then(function(t){
@@ -489,8 +573,8 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
   $('o-copy').onclick = function(){ try { navigator.clipboard.writeText($('o-copytext').textContent); this.textContent = 'Copied'; } catch (e) {} };
   $('o-rec').onclick = function(){
     var items = checked().map(function(p){ return { ticket_id: p.ticket_id, line_id: p.line_id }; });
-    api('/orders', { method: 'POST', body: { order_no: $('o-no').value, eta: $('o-eta').value || null, items: items } })
-      .then(function(){ $('o-no').value = ''; loadOrders(); }).catch(function(x){ $('o-out').className = 'err'; $('o-out').textContent = x.message; });
+    api('/orders', { method: 'POST', body: { order_no: $('o-no').value, eta: $('o-eta').value || null, shipping_cents: $('o-ship').value === '' ? null : Math.round(Number($('o-ship').value) * 100), items: items } })
+      .then(function(){ $('o-no').value = ''; $('o-ship').value = ''; loadOrders(); }).catch(function(x){ $('o-out').className = 'err'; $('o-out').textContent = x.message; });
   };
   function orderCard(o){
     var c = el('div', null, 'card ocard');
@@ -502,10 +586,11 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     var ca = f('Carrier', el('select')); ['', 'UPS', 'FedEx', 'USPS', 'Other'].forEach(function(x){ ca.appendChild(new Option(x || 'Choose…', x)); }); ca.value = o.carrier || '';
     var tr = f('Tracking #', el('input')); tr.value = o.tracking || '';
     var et = f('Expected', el('input')); et.type = 'date'; et.value = o.eta || '';
+    var sh = f('Shipping $ (private)', el('input')); sh.type = 'number'; sh.step = '0.01'; sh.value = o.shipping_cents != null ? (o.shipping_cents / 100).toFixed(2) : '';
     c.appendChild(g);
     var ul = el('ul'); o.items.forEach(function(i){ ul.appendChild(el('li', i.number + ' · ' + (i.qty > 1 ? i.qty + ' × ' : '') + i.desc + (i.part_no ? ' (' + i.part_no + ')' : '') + ' · ' + i.track)); }); c.appendChild(ul);
     var acts = el('div', null, 'acts'), out = el('p');
-    function put(extra){ var b = { order_no: no.value, carrier: ca.value, tracking: tr.value, eta: et.value || null }; for (var k in extra) b[k] = extra[k];
+    function put(extra){ var b = { order_no: no.value, carrier: ca.value, tracking: tr.value, eta: et.value || null, shipping_cents: sh.value === '' ? null : Math.round(Number(sh.value) * 100) }; for (var k in extra) b[k] = extra[k];
       api('/orders/' + o.id, { method: 'PUT', body: b }).then(loadOrders).catch(function(x){ out.className = 'err'; out.textContent = x.message; }); }
     var s = el('button', 'Save' + (o.status === 'placed' ? ' (adding tracking marks it shipped)' : ''), 'small'); s.type = 'button'; s.onclick = function(){ put({}); }; acts.appendChild(s);
     if (o.status !== 'delivered') { var d = el('button', 'Mark delivered to shop', 'small'); d.type = 'button'; d.onclick = function(){ put({ status: 'delivered' }); }; acts.appendChild(d); }
@@ -541,7 +626,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     api('/customers/' + encodeURIComponent(cid)).then(function(j){
       show('v-cdet'); nav('nv-c');
       var c = j.customer; $('cd-name').textContent = c.name;
-      $('cd-n').value = c.name; $('cd-p').value = c.phone_fmt || ''; $('cd-e').value = c.email; $('cd-notes').value = c.shop_notes || '';
+      $('cd-n').value = c.name; $('cd-p').value = c.phone_fmt || ''; $('cd-e').value = c.email; $('cd-notes').value = c.shop_notes || ''; $('cd-credit').value = ((c.credit_cents || 0) / 100).toFixed(2);
       var M = $('cd-meta'); M.textContent = '';
       [['Customer since', A.date(c.created_at)], ['Account', c.created_by === 'shop' ? 'Added by you' + (c.last_login_at ? ', has signed in' : ', not signed in yet') : 'Signed up online'], ['Last sign-in', c.last_login_at ? A.when(c.last_login_at) : 'never']].forEach(function(p){ M.appendChild(el('span', p[0])); M.appendChild(el('b', p[1])); });
       $('cd-spent').textContent = money(j.spent_cents) + ' paid';
@@ -563,6 +648,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
   $('cd-form').addEventListener('submit', function(e){
     e.preventDefault();
     api('/customers/' + encodeURIComponent(cid), { method: 'PUT', body: { name: $('cd-n').value, phone: $('cd-p').value, email: $('cd-e').value, shop_notes: $('cd-notes').value } })
+      .then(function(){ return api('/customers/' + encodeURIComponent(cid) + '/credit', { method: 'PUT', body: { credit_cents: Math.round(Number($('cd-credit').value || 0) * 100) } }); })
       .then(function(){ $('cd-out').className = 'ok'; $('cd-out').textContent = 'Saved.'; }).catch(function(x){ $('cd-out').className = 'err'; $('cd-out').textContent = x.message; });
   });
   $('cd-invite').onclick = function(){
@@ -574,10 +660,95 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       .then(function(j){ location.href = '/admin/?t=' + encodeURIComponent(j.id); }).catch(function(x){ $('nt-out').className = 'err'; $('nt-out').textContent = x.message; });
   };
 
+  // ---------- reports ----------
+  var REP = null, repSort = {};
+  function ymd(d){ return d.toISOString().slice(0, 10); }
+  function range(){
+    var v = $('r-range').value, n = new Date(), y = n.getFullYear(), m = n.getMonth();
+    if (v === 'month') return [ymd(new Date(Date.UTC(y, m, 1))), ymd(n)];
+    if (v === 'last') return [ymd(new Date(Date.UTC(y, m - 1, 1))), ymd(new Date(Date.UTC(y, m, 0)))];
+    if (v === 'ytd') return [y + '-01-01', ymd(n)];
+    if (v === '30') return [ymd(new Date(Date.now() - 30 * 864e5)), ymd(n)];
+    if (v === 'custom') return [$('r-from').value || '2000-01-01', $('r-to').value || ymd(n)];
+    return ['2000-01-01', '2999-12-31'];
+  }
+  function category(it){
+    if (it.kind === 'labor') return 'services';
+    if (it.kind === 'fee') return 'fees';
+    if (it.part_no && CAT) {
+      var g = CAT.grips.filter(function(x){ return x.id === it.part_no; })[0]; if (g) return g.putter ? 'putter' : 'grips';
+      if (CAT.shafts.some(function(x){ return x.id === it.part_no; })) return 'shafts';
+    }
+    if (it.part_no && PARTS.ADAPTERS.some(function(a){ return a.id === it.part_no; })) return 'adapters';
+    return 'other';
+  }
+  var SECS = [['services', 'Services (labor)'], ['grips', 'Grips'], ['putter', 'Putter grips'], ['shafts', 'Shafts'], ['adapters', 'Adapters'], ['other', 'Other parts'], ['fees', 'Fees']];
+  var COLS = [['name', 'Item'], ['qty', 'Qty'], ['revenue_cents', 'Sales'], ['cost_cents', 'Cost'], ['gp', 'Gross profit'], ['margin', 'Margin']];
+  function pct(x){ return x == null ? '—' : Math.round(x * 100) + '%'; }
+  function loadReports(){
+    var r = range();
+    $('r-custom').hidden = $('r-range').value !== 'custom';
+    Promise.all([api('/reports?from=' + r[0] + '&to=' + r[1]), CAT ? Promise.resolve() : fetch('/assets/catalog.json').then(function(x){ return x.json(); }).then(function(c){ CAT = c; })]).then(function(res){
+      REP = res[0]; show('v-rep'); nav('nv-r'); drawReports();
+    }).catch(function(){});
+  }
+  function drawReports(){
+    var s = REP.summary, K = $('r-kpis'); K.textContent = '';
+    var net = s.net_cents, gpm = net > 0 ? s.gross_profit_cents / net : null;
+    [['Sales (net of refunds)', money(net), s.refunds_cents ? money(s.refunds_cents) + ' refunded' : ''], ['Gross profit', money(s.gross_profit_cents), pct(gpm) + ' margin'],
+     ['Parts cost', money(s.parts_cost_cents), ''], ['Square fees', money(s.square_fees_cents), ''], ['GolfWorks shipping', money(s.shipping_cents), ''],
+     ['Paid tickets', String(s.tickets), s.completed + ' picked up'], ['Average ticket', money(s.avg_ticket_cents), ''], ['New customers', String(s.new_customers), ''], ['Discounts given', money(s.discounts_cents), '']].forEach(function(k){
+      var d = el('div', null, 'card kpi'); d.appendChild(el('span', k[0])); d.appendChild(el('b', k[1])); if (k[2]) d.appendChild(el('small', k[2])); K.appendChild(d);
+    });
+    $('r-note').textContent = 'Sales count from the first payment date, before sales tax. Gross profit = sales − parts cost − Square fees − GolfWorks shipping.' + (s.revenue_missing_cost_cents ? ' ' + money(s.revenue_missing_cost_cents) + ' of part sales have no cost entered yet, so profit is overstated until you add it on those tickets.' : '');
+    var items = REP.items.map(function(it){ var x = Object.assign({}, it); x.cat = category(it); x.gp = it.revenue_cents - it.cost_cents; x.margin = it.revenue_cents > 0 ? x.gp / it.revenue_cents : null;
+      if (it.part_no && CAT) { var f = CAT.grips.concat(CAT.shafts).filter(function(c){ return c.id === it.part_no; })[0]; if (f) x.name = f.name; } return x; });
+    // highlights
+    var H = $('r-hl'); H.textContent = '';
+    function best(label, list, key, fmt){ var top = list.slice().sort(function(a, b){ return (b[key] || 0) - (a[key] || 0); })[0]; if (!top) return; var d = el('div', null, 'card kpi'); d.appendChild(el('span', label)); d.appendChild(el('b', top.name)); d.appendChild(el('small', fmt(top))); H.appendChild(d); }
+    var sold = items.filter(function(i){ return i.revenue_cents > 0; });
+    best('Top seller', sold, 'revenue_cents', function(i){ return money(i.revenue_cents) + ' · ' + i.qty + ' sold'; });
+    best('Most gross profit', sold, 'gp', function(i){ return money(i.gp) + ' profit'; });
+    best('Best margin (sales $50+)', sold.filter(function(i){ return i.revenue_cents >= 5000 && i.cost_known; }), 'margin', function(i){ return pct(i.margin) + ' on ' + money(i.revenue_cents); });
+    best('Most popular', sold, 'qty', function(i){ return i.qty + ' sold'; });
+    var W = $('r-secs'); W.textContent = '';
+    SECS.forEach(function(sec){
+      var list = items.filter(function(i){ return i.cat === sec[0]; }); if (!list.length) return;
+      var st = repSort[sec[0]] || { k: 'revenue_cents', d: -1 };
+      list.sort(function(a, b){ var x = a[st.k], y = b[st.k]; if (st.k === 'name') return st.d * String(x).localeCompare(String(y)); return st.d * ((x == null ? -1e12 : x) - (y == null ? -1e12 : y)); });
+      var tot = list.reduce(function(a, i){ a.r += i.revenue_cents; a.c += i.cost_cents; return a; }, { r: 0, c: 0 });
+      var box = el('div', null, 'card rsec'), h = el('h2', sec[1]); h.appendChild(el('small', money(tot.r) + ' sales · ' + money(tot.r - tot.c) + ' profit · ' + pct(tot.r ? (tot.r - tot.c) / tot.r : null))); box.appendChild(h);
+      var tb = el('table', null, 'rtab'), hr = el('tr');
+      COLS.forEach(function(c){ var th = el('th', c[1]); th.scope = 'col'; if (st.k === c[0]) th.setAttribute('aria-sort', st.d < 0 ? 'descending' : 'ascending');
+        th.onclick = function(){ repSort[sec[0]] = { k: c[0], d: st.k === c[0] ? -st.d : (c[0] === 'name' ? 1 : -1) }; drawReports(); }; hr.appendChild(th); });
+      tb.appendChild(hr);
+      list.slice(0, 25).forEach(function(i){
+        var tr = el('tr'), n = el('td', i.name); if (i.part_no) n.appendChild(el('small', i.part_no)); tr.appendChild(n);
+        tr.appendChild(el('td', String(i.qty))); tr.appendChild(el('td', money(i.revenue_cents)));
+        tr.appendChild(el('td', i.cat === 'services' || i.cat === 'fees' ? '—' : i.cost_known ? money(i.cost_cents) : 'missing'));
+        tr.appendChild(el('td', money(i.gp))); tr.appendChild(el('td', pct(i.cost_known ? i.margin : null))); tb.appendChild(tr);
+      });
+      box.appendChild(tb); if (list.length > 25) box.appendChild(el('p', (list.length - 25) + ' more in the CSV.', 'empty')); W.appendChild(box);
+    });
+    if (!items.length) W.appendChild(el('p', 'No paid tickets in this period yet.', 'empty'));
+    var M = $('r-months'); M.textContent = ''; var mh = el('tr'); ['Month', 'Paid tickets', 'Sales', 'Parts cost', 'Profit before fees'].forEach(function(h){ mh.appendChild(el('th', h)); }); M.appendChild(mh);
+    REP.months.slice().reverse().forEach(function(m){ var tr = el('tr'); [m.month, String(m.tickets), money(m.revenue_cents), money(m.cost_cents), money(m.revenue_cents - m.cost_cents)].forEach(function(v){ tr.appendChild(el('td', v)); }); M.appendChild(tr); });
+    REP.rows = items;
+  }
+  $('r-range').onchange = loadReports; $('r-from').onchange = loadReports; $('r-to').onchange = loadReports;
+  $('r-csv').onclick = function(){
+    if (!REP) return;
+    var q = function(v){ v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var rows = [['category', 'item', 'part_no', 'qty', 'sales', 'cost', 'gross_profit', 'margin_pct']].concat(REP.rows.map(function(i){ return [i.cat, i.name, i.part_no || '', i.qty, (i.revenue_cents / 100).toFixed(2), i.cost_known ? (i.cost_cents / 100).toFixed(2) : '', (i.gp / 100).toFixed(2), i.margin == null ? '' : Math.round(i.margin * 100)]; }));
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.map(function(r){ return r.map(q).join(','); }).join('\n')], { type: 'text/csv' }));
+    var r = range(); a.download = 'clubworks-report-' + r[0] + '-to-' + r[1] + '.csv'; a.click();
+  };
+
   if (tid) api('/tickets/' + encodeURIComponent(tid)).then(showTicket).catch(function(x){ if (x.status !== 401) { loadList(); } });
   else if (cid) loadCustomer();
   else if (view === 'orders') loadOrders();
   else if (view === 'customers') loadCustomers();
+  else if (view === 'reports') loadReports();
   else loadList();
 })();
 </script>
