@@ -413,10 +413,13 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     { name: 'Launch full-bag price', price: -(R.regripOursBag - D.bundles.launchBag.price), kind: 'discount' },
     { name: 'Season tune-up bundle', price: -D.bundles.tuneUpOff, kind: 'discount' }, { name: 'Trade-in credit', price: 0, kind: 'discount' }, { name: 'Discount', price: 0, kind: 'discount' }
   ].map(function(x){ x.cat = 'fees'; return x; });
-  var CATS = [['all', 'All'], ['labor', 'Labor'], ['grips', 'Grips'], ['putter', 'Putter grips'], ['shafts', 'Shafts'], ['adapters', 'Adapters'], ['fees', 'Fees & discounts']];
+  var CATS = [['all', 'All'], ['labor', 'Labor'], ['heads', 'Heads'], ['grips', 'Grips'], ['putter', 'Putter grips'], ['shafts', 'Shafts'], ['adapters', 'Adapters'], ['fees', 'Fees & discounts']];
+  var HEADS = [];
   var squash = function(x){ return String(x).toLowerCase().replace(/[^a-z0-9]+/g, ''); };
   function items(){
     var out = LABOR.concat(FEES);
+    HEADS.forEach(function(h){ var o = Object.assign({}, h.opts || {}); if (h.clubs) o.Club = h.clubs; o.Hand = (h.hands || ['RH']).map(function(x){ return x === 'LH' ? 'Left-handed' : 'Right-handed'; });
+      out.push({ cat: 'heads', name: h.brand + ' ' + h.model, price: h.price, kind: 'part', part_no: h.id, note: h.type + (h.basis === 'oem' ? ' · OEM list price' : ' · component') + (h.lead ? ' · ' + h.lead[0] + '–' + h.lead[1] + ' days' : ''), opts: o }); });
     PARTS.ADAPTERS.forEach(function(a){ out.push({ cat: 'adapters', name: a.name, price: a.price, kind: 'part', part_no: a.id, note: 'Fits ' + a.fits, opts: { Hand: ['Right-handed', 'Left-handed'] } }); });
     if (CAT) {
       CAT.grips.forEach(function(g){ out.push({ cat: g.putter ? 'putter' : 'grips', name: g.name, price: g.price, kind: 'part', part_no: g.id, note: g.brand, opts: g.opts, src: g }); });
@@ -424,7 +427,10 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     }
     return out;
   }
-  function loadCat(){ if (CAT) return; fetch('/assets/catalog.json').then(function(r){ return r.json(); }).then(function(c){ CAT = c; pkSearch(); }); }
+  function loadCat(){
+    if (!HEADS.length) fetch('/assets/heads.json').then(function(r){ return r.json(); }).then(function(j){ HEADS = j.heads; if (CAT) pkSearch(); }).catch(function(){});
+    if (CAT) return; fetch('/assets/catalog.json').then(function(r){ return r.json(); }).then(function(c){ CAT = c; pkSearch(); });
+  }
   function pkChips(){
     var C = $('pk-cats'); C.textContent = '';
     CATS.forEach(function(c){ var b = el('button', c[1]); b.type = 'button'; b.setAttribute('aria-pressed', String(c[0] === pkCat)); b.onclick = function(){ pkCat = c[0]; pkChips(); pkSearch(); $('pk-q').focus(); }; C.appendChild(b); });
@@ -680,15 +686,17 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       if (CAT.shafts.some(function(x){ return x.id === it.part_no; })) return 'shafts';
     }
     if (it.part_no && PARTS.ADAPTERS.some(function(a){ return a.id === it.part_no; })) return 'adapters';
+    if (it.part_no && HEADS.some(function(h){ return h.id === it.part_no; })) return 'heads';
     return 'other';
   }
-  var SECS = [['services', 'Services (labor)'], ['grips', 'Grips'], ['putter', 'Putter grips'], ['shafts', 'Shafts'], ['adapters', 'Adapters'], ['other', 'Other parts'], ['fees', 'Fees']];
+  var SECS = [['services', 'Services (labor)'], ['heads', 'Club heads'], ['grips', 'Grips'], ['putter', 'Putter grips'], ['shafts', 'Shafts'], ['adapters', 'Adapters'], ['other', 'Other parts'], ['fees', 'Fees']];
   var COLS = [['name', 'Item'], ['qty', 'Qty'], ['revenue_cents', 'Sales'], ['cost_cents', 'Cost'], ['gp', 'Gross profit'], ['margin', 'Margin']];
   function pct(x){ return x == null ? '—' : Math.round(x * 100) + '%'; }
   function loadReports(){
     var r = range();
     $('r-custom').hidden = $('r-range').value !== 'custom';
-    Promise.all([api('/reports?from=' + r[0] + '&to=' + r[1]), CAT ? Promise.resolve() : fetch('/assets/catalog.json').then(function(x){ return x.json(); }).then(function(c){ CAT = c; })]).then(function(res){
+    Promise.all([api('/reports?from=' + r[0] + '&to=' + r[1]), CAT ? Promise.resolve() : fetch('/assets/catalog.json').then(function(x){ return x.json(); }).then(function(c){ CAT = c; }),
+      HEADS.length ? Promise.resolve() : fetch('/assets/heads.json').then(function(x){ return x.json(); }).then(function(j){ HEADS = j.heads; }).catch(function(){})]).then(function(res){
       REP = res[0]; show('v-rep'); nav('nv-r'); drawReports();
     }).catch(function(){});
   }

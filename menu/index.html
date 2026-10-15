@@ -80,6 +80,11 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
 @media (max-width:420px){.head2{grid-template-columns:1fr}}
 .ln.tbd span:last-child{font-family:var(--body);font-weight:600;font-size:.85rem}
 .srow{padding:12px;display:grid;gap:10px;background:var(--surface-2)}
+.clubs{display:flex;flex-wrap:wrap;gap:6px}
+.clubs label{display:inline-flex;align-items:center;gap:4px;min-height:38px;padding:0 10px;border-radius:999px;border:1px solid var(--dots);background:var(--surface);font:600 .85rem var(--body);cursor:pointer}
+.clubs input{width:auto;min-height:0;margin:0}
+.clubs label:has(input:checked){background:var(--tint);border-color:var(--accent);color:var(--accent)}
+.lead{font-size:.8rem;color:var(--muted);margin:0}
 .srow-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
 .srow-top select{width:100%}
 @media (max-width:480px){.srow-top{grid-template-columns:1fr}}
@@ -189,6 +194,12 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
             <div id="q-shafts" style="display:grid;gap:10px"></div>
             <button type="button" class="btn out" id="q-addshaft" style="min-height:44px">+ Add shafts</button>
             <p class="nudge" id="n-rs" hidden></p>
+          </div>
+          <div class="grp" id="q-buildgrp" hidden>
+            <b>Custom build</b>
+            <p class="fine" style="margin:0;color:var(--muted)">New clubs built to your specs: pick the head, then the shaft and grip. Jackson confirms fit and specs before anything is ordered.</p>
+            <div id="q-builds" style="display:grid;gap:10px"></div>
+            <button type="button" class="btn out" id="q-addbuild" style="min-height:44px">+ Build a club</button>
           </div>
           <div class="grp">
             <b>Paint fill</b>
