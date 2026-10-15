@@ -46,7 +46,7 @@
     function item(it){
       var b = el('button', 'pk-item'); b.type = 'button'; b.setAttribute('role', 'option');
       var sum = optSummary(it);
-      b.appendChild(el('span', null, it.name)); b.appendChild(el('small', null, [it.brand, (it.rows && it.rows.length > 1 ? 'from ' : '') + $(it.price), sum].filter(Boolean).join(' · ')));
+      b.appendChild(el('span', null, it.name)); b.appendChild(el('small', null, [it.brand, it.priceLabel || (it.rows && it.rows.length > 1 ? 'from ' : '') + $(it.price), sum].filter(Boolean).join(' · ')));
       b.onclick = function(){ self.pick(it); }; return b;
     }
     function run(){
@@ -98,7 +98,7 @@
   Picker.prototype.pick = function(it, typed){
     var self = this; this.sel = it; this.choice = {}; this.req = it.request ? (typed || '') : '';
     this.chosen.textContent = '';
-    this.chosen.appendChild(el('b', null, it.name)); this.chosen.appendChild(el('span', null, it.own ? '' : it.request ? 'Price TBD' : $(it.price)));
+    this.chosen.appendChild(el('b', null, it.name)); this.chosen.appendChild(el('span', null, it.own ? '' : it.request ? 'Price TBD' : it.priceLabel || $(it.price)));
     var ch = el('button', 'pk-change', 'Change'); ch.type = 'button'; ch.onclick = function(){ self.openSearch(); }; this.chosen.appendChild(ch);
     this.optsBox.textContent = '';
     if (it.request) {
@@ -165,7 +165,9 @@
         clubsBox.appendChild(cw); row.clubs = h.clubs.filter(function(c){ return DEFAULT_SET.indexOf(c) >= 0; });
       }
       if (h && h.hands) { [].forEach.call(hs.options, function(o){ o.disabled = h.hands.indexOf(o.value) < 0; }); if (h.hands.indexOf(hs.value) < 0) { hs.value = h.hands[0]; row.hand = hs.value; } }
-      lead.textContent = h && !h.request ? leadText(h.lead) + (h.note ? ' · ' + h.note : '') : '';
+      lead.textContent = !h || h.request ? '' : h.basis === 'oem'
+        ? 'Jackson finds a new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. Usually about 1–2 weeks.'
+        : leadText(h.lead) + (h.note ? ' · ' + h.note : '');
       calc();
     }
     row.head = new Picker(headHost, { label: 'Head', placeholder: 'Search heads: brand or model (e.g. Ping G440, Titleist T150)', noun: 'club head', reqHint: 'loft and anything else', reqExample: 'e.g. Titleist GT3 driver 9°, TSR3 SureFit', onChange: function(){ onHead(); },
@@ -304,9 +306,9 @@
       var label = BTYPES.filter(function(t){ return t[0] === r.type; })[0][1], hand = r.hand === 'LH' ? ', left-handed' : '';
       var clubs = r.type === 'irons' && r.clubs.length ? ' (' + r.clubs.join(', ') + ')' : '';
       if (h) {
-        var hp = h.request ? 0 : r.head.price();
-        add(r.head.desc() + (h.type === 'irons' && !h.request ? clubs : '') + hand, n, hp, 'part', true, false, h.request, h.request ? null : h.id);
-        if (!h.request) parts += hp * n; else tbd = true;
+        var quoteHead = h.request || h.basis === 'oem', hp = quoteHead ? 0 : r.head.price();
+        add(r.head.desc() + (h.type === 'irons' && !h.request ? clubs : '') + hand + (h.basis === 'oem' ? ' · head sourced new/like-new (new retail ' + $(h.ref) + (n > 1 ? '/club' : '') + ')' : ''), n, hp, 'part', true, false, quoteHead, h.request ? null : h.id);
+        if (!quoteHead) parts += hp * n; else tbd = true;
         if (h.lead && h.lead[1] > buildLead) buildLead = h.lead[1];
       }
       var s = r.shaft.sel;
@@ -404,7 +406,7 @@
     ['q-loft', 'q-putter', 'q-paint', 'q-rush', 'pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id){ g(id).addEventListener('change', calc); });
     ['pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id, i){ var s = g(id); PAINT.forEach(function(c){ s.appendChild(new Option(c, c)); }); s.value = i === 2 ? 'None' : 'White'; });
     g('q-addshaft').onclick = addShaftRow;
-    fetch('/assets/heads.json').then(function(r){ return r.json(); }).then(function(j){ HEADS = j.heads.map(function(h){ h.name = h.brand + ' ' + h.model; return h; }); g('q-buildgrp').hidden = false; g('q-addbuild').onclick = addBuildRow; }).catch(function(){});
+    fetch('/assets/heads.json').then(function(r){ return r.json(); }).then(function(j){ HEADS = j.heads.map(function(h){ h.name = h.brand + ' ' + h.model; if (h.basis === 'oem') { h.ref = h.price; h.priceLabel = 'New ' + $(h.price) + (h.type === 'irons' ? '/club' : '') + ' · we quote'; } return h; }); g('q-buildgrp').hidden = false; g('q-addbuild').onclick = addBuildRow; }).catch(function(){});
     g('q-submit').onclick = openSubmit;
     g('q-form').addEventListener('submit', submit);
     g('q-copy').onclick = function(){ var b = this; try { navigator.clipboard.writeText(last.text).then(function(){ b.textContent = 'Copied'; }); } catch (e) {} };

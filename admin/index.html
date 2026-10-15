@@ -175,6 +175,24 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
             </div>
             <div class="totals" id="d-tot"></div>
           </div>
+          <details class="card box" id="bp">
+            <summary style="cursor:pointer"><b style="font-size:1.3rem;color:var(--accent)">Build pricer</b> <small class="hint">price a sourced head so the build beats buying new and still pays you</small></summary>
+            <div class="form" style="margin-top:12px">
+              <div class="row2"><div><label for="bp-line">Head line on this ticket</label><select id="bp-line"></select></div>
+                <div><label for="bp-n">Clubs</label><input id="bp-n" type="number" min="1" value="1"></div></div>
+              <div class="row2"><div><label for="bp-ref">New retail for this club, per club $</label><input id="bp-ref" type="number" step="0.01"></div>
+                <div><label for="bp-up">+ brand's upcharge for this shaft, per club $</label><input id="bp-up" type="number" step="0.01" value="0"></div></div>
+              <div class="row2"><div><label for="bp-cost">Your head cost each, with shipping $</label><input id="bp-cost" type="number" step="0.01"></div>
+                <div><label for="bp-price">Head price each (suggested, editable) $</label><input id="bp-price" type="number" step="0.01"></div></div>
+              <div class="row2"><div><label for="bp-m">Target head margin %</label><input id="bp-m" type="number" value="25"></div>
+                <div><label for="bp-s">Customer saves at least %</label><input id="bp-s" type="number" value="10"></div></div>
+              <div><label for="bp-min">Minimum head profit each $</label><input id="bp-min" type="number" step="1" value="20"></div>
+              <p class="hint" id="bp-others"></p>
+              <div class="totals" id="bp-out"></div>
+              <p id="bp-flag" style="font-weight:700;margin:0"></p>
+              <button class="btn out" type="button" id="bp-apply">Use this price &amp; cost on the head line</button>
+            </div>
+          </details>
           <div class="card box form">
             <div><label for="d-note">Note to the customer (stays on their ticket)</label><textarea id="d-note"></textarea></div>
             <div><label for="d-msg">Send a message (emails them)</label><textarea id="d-msg" placeholder="Optional"></textarea>
@@ -395,7 +413,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     var L = $('d-lines'); L.textContent = ''; t.lines.forEach(function(l){ L.appendChild(lineRow(l)); });
     $('d-tax').value = +(t.tax_rate * 100).toFixed(3); $('d-eta').value = t.eta || ''; $('d-note').value = t.shop_note || ''; $('d-msg').value = ''; $('d-int').checked = false;
     var sel = $('d-status'); sel.textContent = ''; Object.keys(LABEL).forEach(function(s){ sel.appendChild(new Option(LABEL[s], s)); }); sel.value = t.status;
-    totals(); loadPays(t); $('pk-cfg').hidden = true; $('pk-q').value = ''; $('pk-res').hidden = true;
+    totals(); loadPays(t); if ($('bp').open) bpFill(); $('pk-cfg').hidden = true; $('pk-q').value = ''; $('pk-res').hidden = true;
   }
   // ---------- add from price list / catalog ----------
   var D = window.RCCW, R = D.rules, PARTS = window.RCCWparts, CAT = null, pkCat = 'all';
@@ -429,7 +447,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     return out;
   }
   function loadCat(){
-    if (!HEADS.length) fetch('/assets/heads.json').then(function(r){ return r.json(); }).then(function(j){ HEADS = j.heads; if (CAT) pkSearch(); }).catch(function(){});
+    if (!HEADS.length) fetch('/assets/heads.json').then(function(r){ return r.json(); }).then(function(j){ HEADS = j.heads; if (CAT) pkSearch(); if ($('bp').open) bpFill(); }).catch(function(){});
     if (CAT) return; fetch('/assets/catalog.json').then(function(r){ return r.json(); }).then(function(c){ CAT = c; pkSearch(); });
   }
   function pkChips(){
@@ -541,6 +559,68 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       .then(function(t){ cur.version = t.version; renderHist(t); })
       .catch(function(x){ $('d-phout').className = 'err'; $('d-phout').textContent = x.message; });
   };
+  // ---------- build pricer ----------
+  // Head price each = enough to hit the target margin and minimum profit, but capped so the whole build
+  // (head + shaft + grip + adapter + labor per club) stays at least X% under buying the club new.
+  var BP_KEYS = ['bp-m', 'bp-s', 'bp-min'];
+  BP_KEYS.forEach(function(k){ try { var v = localStorage.getItem('rccw_' + k); if (v) $(k).value = v; } catch (e) {} });
+  function bpHeadRows(){ return [].filter.call($('d-lines').children, function(r){ var l = r.read(); return l.kind === 'part' && (HEADS.some(function(h){ return h.id === l.part_no; }) || /\bhead\b|driver|wood|hybrid|iron|wedge/i.test(l.desc) && !/shaft|grip|adapter|ferrule/i.test(l.desc)); }); }
+  function bpFill(){
+    var rows = bpHeadRows(), sel = $('bp-line'), keep = sel.value; sel.textContent = '';
+    rows.forEach(function(r, i){ var l = r.read(); sel.appendChild(new Option((l.qty > 1 ? l.qty + ' × ' : '') + l.desc.slice(0, 70), String(i))); });
+    if (!rows.length) sel.appendChild(new Option('Add the head as a part line first', ''));
+    if (keep && sel.querySelector('option[value="' + keep + '"]')) sel.value = keep;
+    bpPick(true);
+  }
+  function bpPick(fromFill){
+    var r = bpHeadRows()[Number($('bp-line').value)]; if (!r) { $('bp-out').textContent = ''; return; }
+    var l = r.read(), h = HEADS.filter(function(x){ return x.id === l.part_no; })[0];
+    $('bp-n').value = l.qty;
+    if (h && h.basis === 'oem' && (!fromFill || !$('bp-ref').value)) $('bp-ref').value = h.price.toFixed(2);
+    if (l.cost_cents != null && (!fromFill || !$('bp-cost').value)) $('bp-cost').value = (l.cost_cents / 100).toFixed(2);
+    $('bp-price').dataset.touched = ''; bpCalc();
+  }
+  function bpCalc(){
+    var rows = bpHeadRows(), r = rows[Number($('bp-line').value)], O = $('bp-out'); O.textContent = '';
+    if (!r) return;
+    var head = r.read(), n = Math.max(1, Number($('bp-n').value) || 1);
+    // everything else on the ticket built on the same clubs (same quantity), per club
+    var others = [].map.call($('d-lines').children, function(x){ return x; }).filter(function(x){ return x !== r; }).map(function(x){ return x.read(); })
+      .filter(function(l){ return l.qty === head.qty && (l.kind === 'part' || l.kind === 'labor'); });
+    var oPrice = others.reduce(function(a, l){ return a + l.unit_cents; }, 0), oCost = others.reduce(function(a, l){ return a + (l.cost_cents || 0); }, 0);
+    $('bp-others').textContent = others.length ? 'Counted with the head, per club: ' + others.map(function(l){ return l.desc.replace(/\s*\(Jackson to price\)/, '').slice(0, 40) + ' ' + money(l.unit_cents); }).join(' · ') : 'No shaft/grip/labor lines with the same quantity yet.';
+    var ref = Math.round((Number($('bp-ref').value) || 0) * 100) + Math.round((Number($('bp-up').value) || 0) * 100);
+    var cost = Math.round((Number($('bp-cost').value) || 0) * 100), m = (Number($('bp-m').value) || 0) / 100, sv = (Number($('bp-s').value) || 0) / 100, minp = Math.round((Number($('bp-min').value) || 0) * 100);
+    var want = cost ? Math.max(Math.round(cost / Math.max(0.05, 1 - m)), cost + minp) : 0;
+    var cap = ref ? Math.floor(ref * (1 - sv)) - oPrice : Infinity;
+    var sugg = Math.min(want, cap);
+    if (!$('bp-price').dataset.touched) $('bp-price').value = cost ? (Math.max(sugg, 0) / 100).toFixed(2) : '';
+    var price = Math.round((Number($('bp-price').value) || 0) * 100);
+    var build = price + oPrice, profitHead = price - cost, profitBuild = build - cost - oCost;
+    var rowsOut = [['Your build, per club', build, 'big'], ['New from the brand, per club', ref]];
+    if (ref) rowsOut.push(['Customer saves per club (' + Math.round((ref - build) / ref * 100) + '%)', ref - build]);
+    rowsOut = rowsOut.concat([['Head profit each (' + (price ? Math.round(profitHead / price * 100) : 0) + '% margin)', profitHead, 'priv'], ['Whole build profit per club', profitBuild, 'priv'], ['Whole build profit, ' + n + ' club' + (n > 1 ? 's' : ''), profitBuild * n, 'priv']]);
+    rowsOut.forEach(function(p){ var d = el('div', null, p[2] || ''); d.appendChild(el('span', p[0])); d.appendChild(el('span', money(p[1]))); O.appendChild(d); });
+    var F = $('bp-flag'); F.style.color = '';
+    if (!cost) { F.className = 'hint'; F.textContent = 'Enter what the head costs you (with shipping) to get a suggested price.'; }
+    else if (ref && cap < cost) { F.className = 'err'; F.textContent = 'Not worth it: to beat buying new by ' + Math.round(sv * 100) + '% you\'d sell the head below what it costs you. Find a cheaper head or shaft, or suggest they buy it new and you fit/adjust it.'; }
+    else if (ref && cap < cost + minp) { F.className = 'err'; F.style.color = '#FFD66B'; F.textContent = 'Thin: the head only makes ' + money(cap - cost) + ' (under your ' + money(minp) + ' minimum). The whole build still makes ' + money(profitBuild) + ' per club with shaft, grip and labor. Your call.'; }
+    else if (want > cap) { F.className = 'err'; F.textContent = 'Capped to keep the customer ' + Math.round(sv * 100) + '% under new: head margin is below your ' + Math.round(m * 100) + '% target but still above ' + money(minp) + ' profit.'; F.style.color = '#FFD66B'; }
+    else { F.className = 'ok'; F.style.color = ''; F.textContent = '✓ Hits your margin and the customer still saves ' + (ref ? money(ref - build) + ' per club vs new.' : 'money.'); }
+  }
+  ['bp-n', 'bp-ref', 'bp-up', 'bp-cost', 'bp-m', 'bp-s', 'bp-min'].forEach(function(k){ $(k).addEventListener('input', function(){ if (BP_KEYS.indexOf(k) >= 0) { try { localStorage.setItem('rccw_' + k, $(k).value); } catch (e) {} } $('bp-price').dataset.touched = ''; bpCalc(); }); });
+  $('bp-price').addEventListener('input', function(){ this.dataset.touched = '1'; bpCalc(); });
+  $('bp-line').onchange = function(){ $('bp-ref').value = ''; $('bp-cost').value = ''; bpPick(false); };
+  $('bp').addEventListener('toggle', function(){ if (this.open) { loadCat(); bpFill(); } });
+  $('bp-apply').onclick = function(){
+    var r = bpHeadRows()[Number($('bp-line').value)]; if (!r) return;
+    var ins = r.querySelectorAll('input'), price = Number($('bp-price').value), cost = Number($('bp-cost').value);
+    if (!price) return;
+    ins[0].value = ins[0].value.replace(/\s*\(Jackson to price\)/, ''); ins[2].value = price.toFixed(2);
+    var co = r.querySelector('.cost input'); if (co && cost) co.value = cost.toFixed(2);
+    totals(); bpCalc(); $('d-out').className = 'ok'; $('d-out').textContent = 'Head price set. Save & send when you\'re ready.';
+  };
+
   function save(send){
     var body = { version: cur.version, lines: readLines(), tax_rate: (Number($('d-tax').value) || 0) / 100, shop_note: $('d-note').value, eta: $('d-eta').value || null, title: $('d-ttl').value, message: $('d-msg').value, internal: $('d-int').checked, pickup_at: $('d-pick').value };
     if (send) body.send_for_approval = true; else if ($('d-status').value !== cur.status) body.status = $('d-status').value;

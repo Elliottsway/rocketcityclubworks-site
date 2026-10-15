@@ -57,6 +57,12 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
 - **Thank-you email:** sent a day after "Picked up". It adds `THANKS_CREDIT_CENTS` credit to the customer for their next service (not tied to leaving a review) and includes the `GOOGLE_REVIEW_URL` link when it's set. Jackson applies the credit from the ticket.
 - **FedEx auto-tracking:** for shipped orders, once the `FEDEX_API_KEY` and `FEDEX_SECRET_KEY` secrets exist. It updates the expected date and marks orders delivered.
 
+**Custom builds:** the instant price has "+ Build a club": head (`assets/heads.json`), shaft, grip and build labor.
+- Maltby component heads price instantly from the GolfWorks booklet retail.
+- Brand heads (researched list prices) come in as "Jackson to price", with the new retail shown for comparison.
+- In the ticket, the **Build pricer** takes your head cost (with shipping), the brand's new price for the same build, a target margin, a minimum profit and a minimum customer saving. It suggests the head price, flags builds that can't beat buying new, and writes the price and cost onto the head line.
+- To refresh heads, rerun the research and `build_heads.py` (kept outside the repo; they use the private booklet).
+
 **Bench ticket:** `/admin/print/?t=…` is a 4×6 label (Jadens 668BT) with a QR code back to the ticket.
 
 If the price goes up after payment, the ticket returns to "waiting on customer". The customer then pays only the balance, and the new parts stay off the order list until that payment clears.
