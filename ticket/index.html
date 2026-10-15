@@ -19,6 +19,7 @@
 @media (min-width:900px){.tk{grid-template-columns:1.2fr 1fr;align-items:start}}
 .eta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line)}
 .eta b{font-family:var(--mono)}
+.depbox ul{margin:8px 0 12px;padding-left:20px}.depbox li{margin:4px 0}
 </style>
 </head>
 <body>
@@ -40,6 +41,19 @@
     <div class="steps" id="t-steps" aria-hidden="true"></div>
     <div class="stepl" id="t-stepl"></div>
     <div class="eta" id="t-eta" hidden><span>Estimated ready</span><b id="t-etad"></b></div>
+    <div class="card box depbox" id="depbox" hidden style="margin-top:12px;border-color:var(--accent)">
+      <h2 style="margin:0 0 6px" id="dep-h">Start your head search</h2>
+      <p style="margin:0" id="dep-lede"></p>
+      <ul>
+        <li><b>It counts toward your build.</b> It is not an extra charge.</li>
+        <li>Jackson reports back <b>within 48 hours</b> with the head he found: photos, serial and where it came from, plus your final price.</li>
+        <li><b>Full refund</b> if he can't find a genuine head at the quoted price, or if you don't want the one he finds.</li>
+        <li>Once you approve a head and it's bought for your build, the deposit is no longer refundable.</li>
+      </ul>
+      <button class="btn" type="button" id="dep-pay" hidden></button>
+      <p class="fine" id="dep-fine" style="margin:8px 0 0"></p>
+      <p class="err" id="dep-err" role="alert"></p>
+    </div>
     <div class="card box pickupbox" id="pickbox" hidden style="margin-top:12px;border-color:var(--accent)">
       <h2 style="margin:0 0 6px">Schedule pickup</h2>
       <p id="pick-now" class="ok" hidden style="margin:0 0 8px"></p>
@@ -99,7 +113,18 @@
     $('t-status').textContent = t.status_label; $('t-status').className = 'pill ' + (A.STATUS_CLASS[t.status] || '');
     var at = FLOW.indexOf(t.status === 'approved' ? 'awaiting_approval' : t.status), st = $('t-steps'); st.textContent = '';
     FLOW.forEach(function(s, i){ st.appendChild(el('span', null, i <= at ? 'on' : '')); });
-    $('t-stepl').textContent = STEPL[t.status] || '';
+    var dep = t.deposit && t.status === 'submitted' ? t.deposit.state : null;
+    $('t-stepl').textContent = dep === 'requested' ? 'Jackson is ready to search for your head once the sourcing deposit is in.'
+      : dep === 'paid' ? 'Jackson is searching for your head. You will hear back by ' + A.when(t.deposit.due_by) + '.' : STEPL[t.status] || '';
+    $('depbox').hidden = !dep;
+    if (dep) {
+      $('dep-h').textContent = dep === 'paid' ? 'Deposit paid: your head search is on' : 'Start your head search';
+      $('dep-lede').textContent = dep === 'paid'
+        ? 'Thanks! Your ' + money(t.deposit.cents) + ' sourcing deposit is in. You will hear back by ' + A.when(t.deposit.due_by) + '.'
+        : 'Brand heads aren\u2019t sold to the public, so Jackson tracks down a new or like-new head and checks that it\u2019s genuine before you pay for anything else. To start the search, he asks for a ' + money(t.deposit.cents) + ' sourcing deposit (10% of your build estimate).';
+      $('dep-pay').hidden = dep !== 'requested'; $('dep-pay').textContent = 'Pay deposit & start search · ' + money(t.deposit.cents);
+      $('dep-fine').textContent = dep === 'requested' ? 'Secure payment by Square. Questions first? Message Jackson below.' : '';
+    }
     var canPick = ['ready', 'in_progress'].indexOf(t.status) >= 0;
     $('pickbox').hidden = !canPick && !(t.pickup_at && t.status === 'ready');
     $('pick-now').hidden = !t.pickup_at; $('pick-now').textContent = t.pickup_at ? 'Pickup requested: ' + t.pickup_at + '. Jackson will confirm.' : '';
@@ -138,11 +163,12 @@
     $('p-taxl').hidden = !t.tax_cents; $('p-tax').textContent = money(t.tax_cents);
     $('p-totl').textContent = priced ? 'Total' : 'Estimate'; $('p-total').textContent = money(t.total_cents);
     $('p-ver').textContent = priced ? 'Version ' + t.version : 'Not final yet';
-    $('p-paidl').hidden = !t.paid_cents; $('p-paid').textContent = '−' + money(t.paid_cents);
+    $('p-paidl').hidden = !t.paid_cents; $('p-paidl').firstChild.textContent = dep === 'paid' ? 'Sourcing deposit paid' : 'Paid'; $('p-paid').textContent = '−' + money(t.paid_cents);
     $('p-refl').hidden = !t.refunded_cents; $('p-ref').textContent = money(t.refunded_cents || 0);
-    $('p-duel').hidden = !(t.paid_cents && t.due_cents); $('p-due').textContent = money(t.due_cents);
+    $('p-duel').hidden = !(t.paid_cents && t.due_cents) || !!dep; $('p-due').textContent = money(t.due_cents);
     $('p-pay').hidden = !t.can_pay; $('p-pay').textContent = 'Approve & pay · ' + money(t.due_cents);
     $('p-fine').textContent = t.can_pay ? 'Secure card payment by Square. Your parts are ordered as soon as the payment clears.'
+      : dep === 'paid' ? 'Your deposit already comes off your final price. Jackson sends that price for you to approve once your head is lined up.'
       : t.status === 'submitted' ? 'This is an estimate. Jackson confirms parts, fit and the final price, then you approve it here. Nothing is charged until then.'
       : t.paid_cents >= t.total_cents && t.total_cents > 0 ? 'Paid in full. Thank you!' : '';
 
@@ -161,6 +187,11 @@
   function sync(){
     A.api('/api/tickets/' + encodeURIComponent(id) + '/sync', { method: 'POST', body: {} }).then(function(t){
       render(t);
+      if (t.deposit && t.status === 'submitted') {
+        if (t.deposit.state === 'requested' && ++polls < 8) setTimeout(sync, 3000);
+        else if (t.deposit.state === 'paid') { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b class="ok">Deposit received.</b> Jackson is searching for your head and will report back within 48 hours.'; }
+        return;
+      }
       if (t.paid_cents < t.total_cents && ++polls < 8) setTimeout(sync, 3000);
       else if (t.paid_cents >= t.total_cents) { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b class="ok">Payment received.</b> Thanks! Jackson will order your parts and keep this ticket updated.'; }
     }).catch(function(){});
@@ -170,6 +201,12 @@
     A.api('/api/tickets/' + encodeURIComponent(id) + '/approve', { method: 'POST', body: { version: T.version } })
       .then(function(j){ location.href = j.url; })
       .catch(function(x){ $('p-err').textContent = x.message; b.disabled = false; if (x.status === 409) load(); });
+  };
+  $('dep-pay').onclick = function(){
+    var b = this; b.disabled = true; $('dep-err').textContent = '';
+    A.api('/api/tickets/' + encodeURIComponent(id) + '/deposit', { method: 'POST', body: {} })
+      .then(function(j){ location.href = j.url; })
+      .catch(function(x){ $('dep-err').textContent = x.message; b.disabled = false; if (x.status === 409) load(); });
   };
   $('m-photos').onchange = function(){ var n = this.files.length; $('m-pcount').textContent = n ? n + ' photo' + (n > 1 ? 's' : '') + ' ready to send' : ''; };
   $('f-msg').addEventListener('submit', function(e){

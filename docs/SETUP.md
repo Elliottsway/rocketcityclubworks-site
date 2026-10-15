@@ -61,6 +61,12 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
 - Maltby component heads price instantly from the GolfWorks booklet retail.
 - Brand heads (researched list prices) come in as "Jackson to price", with the new retail shown for comparison.
 - In the ticket, the **Build pricer** takes your head cost (with shipping), the brand's new price for the same build, a target margin, a minimum profit and a minimum customer saving. It suggests the head price, flags builds that can't beat buying new, and writes the price and cost onto the head line.
+- **Head sourcing deposit:** for brand heads, ask for a deposit before you search.
+  - Use **Head sourcing deposit** on the ticket. It suggests 10% of the build estimate (brand heads counted at new retail), $25 minimum, $75 maximum. The customer is emailed and sees "Pay deposit & start search" on their ticket (Square checkout). Unpaid requests get a reminder every 24 hours, up to 3.
+  - Once it's paid (online, or recorded as cash), you have **48 hours** to report back. The ticket shows "Sourcing your head" and you get an email 12 hours before the deadline and again if it passes.
+  - Found the head: price the build and **Save & send price**. The deposit is already in "Paid", so the customer pays only the balance.
+  - No approved head: **Refund deposit & close ticket** refunds it in full through Square and cancels the ticket. (A cash deposit is handed back in person.)
+  - Once the customer approves a head and it is bought, the deposit is no longer refundable (the customer sees this before paying).
 - To refresh heads, rerun the research and `build_heads.py` (kept outside the repo; they use the private booklet).
 
 **Bench ticket:** `/admin/print/?t=…` is a 4×6 label (Jadens 668BT) with a QR code back to the ticket.

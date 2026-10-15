@@ -1,16 +1,17 @@
 // Customer-facing API: account, tickets, messages, approve & pay.
 import { fillCosts, json, err, now, newId, clip, cleanPhone, fmtPhone, readJson, cleanLines, totals, getTicket, addEvent, publicTicket,
-  limited, notifyShop, notifyCustomer, siteUrl, ticketNo, money, LABEL } from './lib.js';
+  limited, notifyShop, notifyCustomer, siteUrl, ticketNo, money, statusLabel, depositState } from './lib.js';
 import { createPaymentLink, squareReady, syncOrder } from './square.js';
 
 const CATEGORIES = ['Regrip', 'Reshaft', 'Loft & lie', 'Broken club repair', 'Find a part', 'Something else'];
 
 // GET /api/me
 export async function me(request, env, c) {
-  const r = await env.DB.prepare('SELECT id, number, kind, title, status, created_at, updated_at, total_cents, paid_cents, eta FROM tickets WHERE customer_id = ? ORDER BY created_at DESC LIMIT 100').bind(c.id).all();
+  const r = await env.DB.prepare('SELECT id, number, kind, title, status, created_at, updated_at, total_cents, paid_cents, eta, deposit_cents, deposit_paid_at FROM tickets WHERE customer_id = ? ORDER BY created_at DESC LIMIT 100').bind(c.id).all();
   return json({
     customer: { name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone) },
-    tickets: (r.results || []).map((t) => ({ ...t, number: ticketNo(t.number), status_label: LABEL[t.status] || t.status, due_cents: Math.max(0, t.total_cents - t.paid_cents) })),
+    tickets: (r.results || []).map(({ deposit_cents, deposit_paid_at, ...t }) => ({ ...t, number: ticketNo(t.number), status_label: statusLabel({ ...t, deposit_cents, deposit_paid_at }),
+      due_cents: depositState({ ...t, deposit_cents, deposit_paid_at }) === 'requested' ? deposit_cents : Math.max(0, t.total_cents - t.paid_cents) })),
     categories: CATEGORIES,
   });
 }
@@ -120,6 +121,29 @@ export async function approve(request, env, c, id, ctx) {
     .bind(t.version, link.orderId, link.url, now(), t.id).run();
   await addEvent(env, t.id, 'customer', 'approved', `Approved ${money(due)} and went to payment.`);
   ctx.waitUntil(notifyShop(env, `${ticketNo(t.number)} approved by ${c.name}`, `${money(due)} approved; waiting on Square to confirm payment.\n${siteUrl(env, '/admin/?t=' + t.id)}`));
+  return json({ url: link.url });
+}
+
+// POST /api/tickets/:id/deposit  → Square checkout URL for the head sourcing deposit Jackson asked for
+export async function payDeposit(request, env, c, id, ctx) {
+  const t = await ownTicket(env, c, id);
+  if (!t) return err('Ticket not found.', 404);
+  if (depositState(t) !== 'requested') return err('There is no deposit waiting on this ticket.', 409);
+  if (t.deposit_link_url && t.deposit_order_id) return json({ url: t.deposit_link_url });
+  if (!squareReady(env)) return err('Online payment is not switched on yet. Jackson will send you a payment link.', 503);
+  let link;
+  try {
+    link = await createPaymentLink(env, {
+      idempotencyKey: `${t.id}-dep-${t.deposit_cents}-${t.deposit_requested_at}`, reference: ticketNo(t.number),
+      lines: [{ name: `${ticketNo(t.number)} head sourcing deposit (counts toward your build, refundable)`, cents: t.deposit_cents }],
+      redirectUrl: siteUrl(env, '/ticket/?t=' + t.id + '&paid=1'), email: c.email, phone: c.phone,
+    });
+  } catch (e) {
+    console.log(e.message);
+    return err('Square could not start the payment. Please try again in a minute.', 502);
+  }
+  await env.DB.prepare('UPDATE tickets SET deposit_order_id = ?, deposit_link_url = ?, updated_at = ? WHERE id = ?').bind(link.orderId, link.url, now(), t.id).run();
+  await addEvent(env, t.id, 'customer', 'approved', `Went to pay the ${money(t.deposit_cents)} sourcing deposit.`);
   return json({ url: link.url });
 }
 

@@ -1,7 +1,7 @@
 // Rocket City ClubWorks: static site (served from assets) + the service-ticket API under /api/.
 import { json, err } from './lib.js';
 import { currentCustomer, authStart, authVerify, authLogout, isAdmin, adminLogin } from './auth.js';
-import { me, updateMe, createTicket, getOwnTicket, postMessage, approve, syncPayment } from './customer.js';
+import { me, updateMe, createTicket, getOwnTicket, postMessage, approve, syncPayment, payDeposit } from './customer.js';
 import { squareWebhook, squareReady } from './square.js';
 import * as A from './admin.js';
 import * as X from './extras.js';
@@ -27,6 +27,8 @@ async function api(request, env, ctx) {
       if (p[2] === 'payments' && m === 'GET') return A.ticketPaymentsAdmin(request, env, p[1]);
       if (p[2] === 'refund' && m === 'POST') return A.refundTicket(request, env, p[1], ctx);
       if (p[2] === 'manual-payment' && m === 'POST') return p[4] === 'delete' ? X.deleteManualPayment(request, env, p[1], p[3]) : X.manualPayment(request, env, p[1], ctx);
+      if (p[2] === 'deposit' && m === 'POST') return A.requestDeposit(request, env, p[1], ctx);
+      if (p[2] === 'deposit-refund' && m === 'POST') return A.refundDeposit(request, env, p[1], ctx);
       if (p[2] === 'apply-credit' && m === 'POST') return X.applyCredit(request, env, p[1]);
       if (p[2] === 'photos' && m === 'POST') { const t = await getTicket(env, p[1]); return t ? X.uploadPhoto(request, env, t, 'shop') : err('Ticket not found.', 404); }
       if (!p[2] && m === 'GET') return A.getTicketAdmin(request, env, p[1]);
@@ -60,11 +62,12 @@ async function api(request, env, ctx) {
     const photo = await X.getPhoto(env, ph[1]), pt = photo && await getTicket(env, photo.ticket_id);
     return pt && pt.customer_id === c.id ? X.servePhoto(env, photo) : err('Not found.', 404);
   }
-  const t = path.match(/^\/api\/tickets\/([\w-]{8,40})(?:\/(message|approve|sync|photos|pickup))?$/);
+  const t = path.match(/^\/api\/tickets\/([\w-]{8,40})(?:\/(message|approve|sync|photos|pickup|deposit))?$/);
   if (t) {
     if (!t[2] && m === 'GET') return getOwnTicket(request, env, c, t[1]);
     if (t[2] === 'message' && m === 'POST') return postMessage(request, env, c, t[1], ctx);
     if (t[2] === 'approve' && m === 'POST') return approve(request, env, c, t[1], ctx);
+    if (t[2] === 'deposit' && m === 'POST') return payDeposit(request, env, c, t[1], ctx);
     if (t[2] === 'sync' && m === 'POST') return syncPayment(request, env, c, t[1], ctx);
     if (t[2] === 'photos' || t[2] === 'pickup') {
       const tk = await getTicket(env, t[1]);
