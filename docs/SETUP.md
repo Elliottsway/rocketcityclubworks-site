@@ -28,6 +28,17 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
    - **Mark delivered** marks them received.
 6. **On the bench → Ready → Picked up:** set from the ticket's status menu. "Ready" emails the customer.
 
+**Building a ticket by hand:** in a ticket, use **Add from your price list or the GolfWorks catalog**.
+- **Labor and fees** come from `assets/prices.js`.
+- **Grips, putter grips and shafts** come from `assets/catalog.json`, with their options.
+- **Adapters** come from `assets/parts.js`.
+- Picking an item fills in the full name, the GolfWorks part number and the retail price. The **+ Labor / Part / Fee / Discount** buttons still add custom lines.
+
+**Payments & refunds:** a paid ticket shows each Square payment (card, receipt link, receipt #, Square fee, refunds) live from Square, with a **Refund** button for part or all of each payment.
+- Refunds made in Square's own dashboard show up the next time the ticket is opened.
+- The customer page shows money refunded.
+- The customer's page in the dashboard lists every payment across their tickets.
+
 If the price goes up after payment, the ticket returns to "waiting on customer". The customer then pays only the balance, and the new parts stay off the order list until that payment clears.
 
 ## Cloudflare resources
@@ -35,7 +46,7 @@ If the price goes up after payment, the ticket returns to "waiting on customer".
 | What | Name |
 |---|---|
 | Worker | `rocketcityclubworks-site` (custom domain rocketcityclubworks.com) |
-| D1 database | `rccw` (binding `DB`), schema in `db/schema.sql` |
+| D1 database | `rccw` (binding `DB`), schema in `db/schema.sql`, changes in `db/migrations/` (apply each new one with `wrangler d1 execute rccw --remote --file=…` before merging the code that needs it) |
 | Plain vars | in `wrangler.jsonc` (`SITE_URL`, `NOTIFY_TO`, `MAIL_FROM`, `TAX_RATE`, `SQUARE_ENV`, `SQUARE_WEBHOOK_URL`) |
 | Secrets | `ADMIN_PASSWORD`, `RESEND_API_KEY`, `SQUARE_ACCESS_TOKEN`, `SQUARE_LOCATION_ID`, `SQUARE_WEBHOOK_SIGNATURE_KEY` (set with `wrangler secret put`, never in the repo) |
 

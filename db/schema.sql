@@ -1,5 +1,6 @@
 -- Rocket City ClubWorks service tickets (Cloudflare D1, database "rccw").
--- Apply with: npx wrangler d1 execute rccw --remote --file=db/schema.sql
+-- Fresh database: npx wrangler d1 execute rccw --remote --file=db/schema.sql
+-- Existing database: apply the files in db/migrations/ in order.
 
 -- Customer accounts. Customers sign in with a 6-digit code emailed to them (no passwords).
 CREATE TABLE IF NOT EXISTS customers (
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS tickets (
   tax_rate      REAL NOT NULL DEFAULT 0,
   total_cents   INTEGER NOT NULL DEFAULT 0,
   paid_cents    INTEGER NOT NULL DEFAULT 0, -- only ever raised by payments Square has confirmed
+  refunded_cents INTEGER NOT NULL DEFAULT 0,
   version       INTEGER NOT NULL DEFAULT 1, -- bumps every time the price changes
   approved_version INTEGER,
   square_order_id TEXT,
@@ -74,8 +76,25 @@ CREATE TABLE IF NOT EXISTS payments (
   square_payment_id TEXT PRIMARY KEY,
   ticket_id    TEXT NOT NULL,
   amount_cents INTEGER NOT NULL,
-  at           TEXT NOT NULL
+  at           TEXT NOT NULL,
+  card         TEXT,                        -- e.g. "VISA •••• 4242"
+  receipt_url  TEXT,
+  receipt_number TEXT,
+  refunded_cents INTEGER NOT NULL DEFAULT 0
 );
+CREATE INDEX IF NOT EXISTS payments_ticket ON payments(ticket_id);
+
+-- Refunds issued from the dashboard (refunds made in Square's own dashboard are picked up when the ticket's payments are viewed).
+CREATE TABLE IF NOT EXISTS refunds (
+  square_refund_id  TEXT PRIMARY KEY,
+  ticket_id         TEXT NOT NULL,
+  square_payment_id TEXT NOT NULL,
+  amount_cents      INTEGER NOT NULL,
+  reason            TEXT,
+  status            TEXT,
+  at                TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS refunds_ticket ON refunds(ticket_id);
 
 -- Parts orders placed with suppliers (GolfWorks). Ticket lines point at these by order_id.
 CREATE TABLE IF NOT EXISTS orders (

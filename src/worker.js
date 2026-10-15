@@ -22,8 +22,10 @@ async function api(request, env, ctx) {
     const p = path.slice('/api/admin/'.length).split('/');
     if (p[0] === 'tickets') {
       if (!p[1]) return m === 'POST' ? A.createTicketAdmin(request, env) : A.listTickets(request, env);
-      if (m === 'GET') return A.getTicketAdmin(request, env, p[1]);
-      if (m === 'PUT') return A.updateTicket(request, env, p[1], ctx);
+      if (p[2] === 'payments' && m === 'GET') return A.ticketPaymentsAdmin(request, env, p[1]);
+      if (p[2] === 'refund' && m === 'POST') return A.refundTicket(request, env, p[1], ctx);
+      if (!p[2] && m === 'GET') return A.getTicketAdmin(request, env, p[1]);
+      if (!p[2] && m === 'PUT') return A.updateTicket(request, env, p[1], ctx);
     }
     if (p[0] === 'orders') {
       if (!p[1]) return m === 'POST' ? A.createOrder(request, env) : A.listOrders(request, env);
@@ -32,8 +34,9 @@ async function api(request, env, ctx) {
     if (p[0] === 'customers') {
       if (!p[1]) return m === 'POST' ? A.createCustomer(request, env) : A.listCustomers(request, env);
       if (p[2] === 'invite' && m === 'POST') return A.inviteCustomer(request, env, p[1]);
-      if (m === 'GET') return A.getCustomerAdmin(request, env, p[1]);
-      if (m === 'PUT') return A.updateCustomer(request, env, p[1]);
+      if (p[2] === 'payments' && m === 'GET') return A.customerPayments(request, env, p[1]);
+      if (!p[2] && m === 'GET') return A.getCustomerAdmin(request, env, p[1]);
+      if (!p[2] && m === 'PUT') return A.updateCustomer(request, env, p[1]);
     }
     return err('Not found.', 404);
   }
