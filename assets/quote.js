@@ -46,7 +46,7 @@
     function item(it){
       var b = el('button', 'pk-item'); b.type = 'button'; b.setAttribute('role', 'option');
       var sum = optSummary(it);
-      b.appendChild(el('span', null, it.name)); b.appendChild(el('small', null, [it.brand, (it.rows && it.rows.length > 1 ? 'from ' : '') + $(it.price), sum].filter(Boolean).join(' · ')));
+      b.appendChild(el('span', null, it.name)); b.appendChild(el('small', null, [it.brand, it.priceLabel || (it.rows && it.rows.length > 1 ? 'from ' : '') + $(it.price), sum].filter(Boolean).join(' · ')));
       b.onclick = function(){ self.pick(it); }; return b;
     }
     function run(){
@@ -98,7 +98,7 @@
   Picker.prototype.pick = function(it, typed){
     var self = this; this.sel = it; this.choice = {}; this.req = it.request ? (typed || '') : '';
     this.chosen.textContent = '';
-    this.chosen.appendChild(el('b', null, it.name)); this.chosen.appendChild(el('span', null, it.own ? '' : it.request ? 'Price TBD' : $(it.price)));
+    this.chosen.appendChild(el('b', null, it.name)); this.chosen.appendChild(el('span', null, it.own ? '' : it.request ? 'Price TBD' : it.priceLabel || $(it.price)));
     var ch = el('button', 'pk-change', 'Change'); ch.type = 'button'; ch.onclick = function(){ self.openSearch(); }; this.chosen.appendChild(ch);
     this.optsBox.textContent = '';
     if (it.request) {
@@ -136,6 +136,52 @@
     var out = st.querySelector('output'), b = st.querySelectorAll('button');
     function set(n){ q[k] = Math.max(0, Math.min(max, n)); out.textContent = q[k]; calc(); }
     b[0].onclick = function(){ set(q[k] - 1); }; b[1].onclick = function(){ set(q[k] + 1); };
+  }
+
+  // ---------- custom builds: head + shaft + grip + build labor ----------
+  var HEADS = [], buildRows = [];
+  var BTYPES = [['driver', 'Driver'], ['fairway', 'Fairway wood'], ['hybrid', 'Hybrid'], ['utility', 'Utility / driving iron'], ['irons', 'Iron set'], ['wedge', 'Wedge'], ['putter', 'Putter']];
+  var SHAFT_USE = { driver: 'driver', fairway: 'fairway', hybrid: 'hybrid', utility: 'iron', irons: 'iron', wedge: 'wedge', putter: 'putter' };
+  var DEFAULT_SET = ['5', '6', '7', '8', '9', 'PW'];
+  function leadText(l){ return l ? (l[0] === l[1] ? l[0] : l[0] + '–' + l[1]) + ' business days for the head' : ''; }
+  function addBuildRow(){
+    var row = { type: 'driver', clubs: [], hand: 'RH' }, box = el('div', 'srow card');
+    var top = el('div', 'srow-top'), tl = el('label', null, 'Club'), ts = el('select'); var tid = 'bt' + Math.random().toString(36).slice(2, 7); tl.htmlFor = tid; ts.id = tid;
+    BTYPES.forEach(function(t){ ts.appendChild(new Option(t[1], t[0])); });
+    var tw = el('div'); tw.appendChild(tl); tw.appendChild(ts); top.appendChild(tw);
+    var hw = el('div'), hl = el('label', null, 'Hand'), hs = el('select'); var hid = 'bh' + Math.random().toString(36).slice(2, 7); hl.htmlFor = hid; hs.id = hid;
+    hs.appendChild(new Option('Right-handed', 'RH')); hs.appendChild(new Option('Left-handed', 'LH')); hw.appendChild(hl); hw.appendChild(hs); top.appendChild(hw);
+    box.appendChild(top);
+    var headHost = el('div'), clubsBox = el('div'), lead = el('p', 'lead'), shaftHost = el('div'), gripHost = el('div');
+    box.appendChild(headHost); box.appendChild(clubsBox); box.appendChild(lead); box.appendChild(shaftHost); box.appendChild(gripHost);
+    var rm = el('button', 'pk-change', 'Remove'); rm.type = 'button'; box.appendChild(rm);
+    function onHead(){
+      var h = row.head.sel; clubsBox.textContent = ''; row.clubs = [];
+      if (h && !h.request && h.type === 'irons' && h.clubs) {
+        clubsBox.appendChild(el('label', null, 'Which clubs?')); var cw = el('div', 'clubs');
+        h.clubs.forEach(function(c){ var l = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.value = c; cb.checked = DEFAULT_SET.indexOf(c) >= 0;
+          cb.onchange = function(){ row.clubs = [].filter.call(cw.querySelectorAll('input'), function(x){ return x.checked; }).map(function(x){ return x.value; }); calc(); };
+          l.appendChild(cb); l.appendChild(document.createTextNode(c)); cw.appendChild(l); });
+        clubsBox.appendChild(cw); row.clubs = h.clubs.filter(function(c){ return DEFAULT_SET.indexOf(c) >= 0; });
+      }
+      if (h && h.hands) { [].forEach.call(hs.options, function(o){ o.disabled = h.hands.indexOf(o.value) < 0; }); if (h.hands.indexOf(hs.value) < 0) { hs.value = h.hands[0]; row.hand = hs.value; } }
+      lead.textContent = !h || h.request ? '' : h.basis === 'oem'
+        ? 'Jackson finds a new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. Usually about 1–2 weeks.'
+        : leadText(h.lead) + (h.note ? ' · ' + h.note : '');
+      calc();
+    }
+    row.head = new Picker(headHost, { label: 'Head', placeholder: 'Search heads: brand or model (e.g. Ping G440, Titleist T150)', noun: 'club head', reqHint: 'loft and anything else', reqExample: 'e.g. Titleist GT3 driver 9°, TSR3 SureFit', onChange: function(){ onHead(); },
+      items: function(){ return HEADS.filter(function(h){ return h.type === row.type; }); } });
+    row.shaft = new Picker(shaftHost, { label: 'Shaft', placeholder: 'Type a brand or model (e.g. Ventus, Dynamic Gold)', noun: 'shaft', reqHint: 'flex and weight', reqExample: 'e.g. Fujikura Ventus TR Blue 6-S', popular: POP_SHAFTS, onChange: calc,
+      items: function(){ var u = SHAFT_USE[row.type]; return CAT.shafts.filter(function(x){ return !x.use.length || x.use.indexOf(u) >= 0 || (u === 'wedge' && x.use.indexOf('iron') >= 0); }); } });
+    row.grip = new Picker(gripHost, { label: 'Grip', placeholder: 'Type a brand, model or color (e.g. Tour Velvet, MCC)', noun: 'grip', reqHint: 'size and color', reqExample: 'e.g. Golf Pride MCC, midsize', popular: row.type === 'putter' ? POP_PUTTER : POP_GRIPS, onChange: calc,
+      items: function(){ return CAT.grips.filter(function(x){ return row.type === 'putter' ? x.putter : !x.putter; }); } });
+    var tv = CAT.grips.filter(function(x){ return x.id === 'VT'; })[0]; if (tv) row.grip.pick(tv);
+    ts.onchange = function(){ row.type = ts.value; row.head.sel = null; row.head.openSearch(); row.shaft.sel = null; row.shaft.chosen.hidden = true; row.shaft.optsBox.textContent = ''; row.shaft.search.hidden = false; clubsBox.textContent = ''; lead.textContent = '';
+      var g2 = CAT.grips.filter(function(x){ return row.type === 'putter' ? x.putter : x.id === 'VT'; })[0]; if (g2) row.grip.pick(g2); calc(); };
+    hs.onchange = function(){ row.hand = hs.value; calc(); };
+    rm.onclick = function(){ buildRows.splice(buildRows.indexOf(row), 1); box.remove(); calc(); };
+    buildRows.push(row); g('q-builds').appendChild(box); calc();
   }
 
   function addShaftRow(){
@@ -251,6 +297,30 @@
     });
     var rs = g('n-rs'), need6 = R.ironSetMin - irons;
     rs.hidden = !(irons > 0 && need6 > 0 && need6 <= 3); rs.textContent = rs.hidden ? '' : 'Add ' + need6 + ' more iron' + (need6 > 1 ? 's' : '') + ' for set pricing: ' + $(R.ironSetSteel) + ' steel, ' + $(R.ironSetGraphite) + ' graphite per club.';
+    // Custom builds
+    var buildLead = 0, buildClubs = 0, buildIrons = 0;
+    buildRows.forEach(function(r){ if (r.type === 'irons' || r.type === 'wedge') buildIrons += r.type === 'irons' ? r.clubs.length || 1 : 1; });
+    buildRows.forEach(function(r){
+      var h = r.head.sel, n = r.type === 'irons' ? (h && !h.request && h.clubs ? r.clubs.length : 7) : 1;
+      if (!n) return;
+      var label = BTYPES.filter(function(t){ return t[0] === r.type; })[0][1], hand = r.hand === 'LH' ? ', left-handed' : '';
+      var clubs = r.type === 'irons' && r.clubs.length ? ' (' + r.clubs.join(', ') + ')' : '';
+      if (h) {
+        var quoteHead = h.request || h.basis === 'oem', hp = quoteHead ? 0 : r.head.price();
+        add(r.head.desc() + (h.type === 'irons' && !h.request ? clubs : '') + hand + (h.basis === 'oem' ? ' · head sourced new/like-new (new retail ' + $(h.ref) + (n > 1 ? '/club' : '') + ')' : ''), n, hp, 'part', true, false, quoteHead, h.request ? null : h.id);
+        if (!quoteHead) parts += hp * n; else tbd = true;
+        if (h.lead && h.lead[1] > buildLead) buildLead = h.lead[1];
+      }
+      var s = r.shaft.sel;
+      if (s && !s.own) { var sp = r.shaft.price(); add(r.shaft.desc(), n, sp, 'part', true, false, r.shaft.isRequest(), s.id); parts += sp * n; if (r.shaft.isRequest()) tbd = true; }
+      var gsel = r.grip.sel;
+      if (gsel && !gsel.own) { var gp2 = r.grip.price(); add(r.grip.desc(), n, gp2, 'part', true, false, r.grip.isRequest(), gsel.id); parts += gp2 * n; if (r.grip.isRequest()) tbd = true; }
+      var wood = WOOD[r.type], graphite = s && s.material === 'graphite';
+      var each = wood ? R.reshaftWood : r.type === 'putter' ? R.reshaftSteel : buildIrons >= R.ironSetMin ? (graphite ? R.ironSetGraphite : R.ironSetSteel) : (graphite ? R.reshaftGraphite : R.reshaftSteel);
+      add('Custom build labor, ' + label.toLowerCase() + (buildIrons >= R.ironSetMin && !wood && r.type !== 'putter' ? ' (set price)' : ''), n, each, 'labor');
+      buildClubs += n;
+      msg.push('Build ' + n + ' ' + label.toLowerCase() + ': ' + (h ? r.head.desc() + clubs + hand : 'head not picked yet') + ' · shaft: ' + (s ? r.shaft.desc() : 'not picked') + ' · grip: ' + (gsel ? r.grip.desc() : 'not picked'));
+    });
     // Paint fill
     var paint = g('q-paint').checked; g('q-paintbox').hidden = !paint;
     if (paint && q.pf > 0) {
@@ -270,7 +340,7 @@
       else add('Parts fee', 1, R.partsFee, 'fee');
     }
     var anyWork = lines.length > 0;
-    var ready = !anyWork ? '—' : !partsOrdered ? 'Next day' : rush ? 'About ' + R.rushDays : irons >= R.ironSetMin ? '4–5 business days' : shaftCount ? '3–5 business days' : R.partsDays;
+    var ready = !anyWork ? '—' : buildClubs ? (buildLead > 4 ? 'About ' + (buildLead + 2) + ' business days (head lead time)' : '4–6 business days') : !partsOrdered ? 'Next day' : rush ? 'About ' + R.rushDays : irons >= R.ironSetMin ? '4–5 business days' : shaftCount ? '3–5 business days' : R.partsDays;
     var total = r2(lines.reduce(function(s, l){ return s + l.qty * l.unit_cents; }, 0) / 100);
 
     var box = g('q-lines'); box.textContent = '';
@@ -336,6 +406,7 @@
     ['q-loft', 'q-putter', 'q-paint', 'q-rush', 'pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id){ g(id).addEventListener('change', calc); });
     ['pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id, i){ var s = g(id); PAINT.forEach(function(c){ s.appendChild(new Option(c, c)); }); s.value = i === 2 ? 'None' : 'White'; });
     g('q-addshaft').onclick = addShaftRow;
+    fetch('/assets/heads.json').then(function(r){ return r.json(); }).then(function(j){ HEADS = j.heads.map(function(h){ h.name = h.brand + ' ' + h.model; if (h.basis === 'oem') { h.ref = h.price; h.priceLabel = 'New ' + $(h.price) + (h.type === 'irons' ? '/club' : '') + ' · we quote'; } return h; }); g('q-buildgrp').hidden = false; g('q-addbuild').onclick = addBuildRow; }).catch(function(){});
     g('q-submit').onclick = openSubmit;
     g('q-form').addEventListener('submit', submit);
     g('q-copy').onclick = function(){ var b = this; try { navigator.clipboard.writeText(last.text).then(function(){ b.textContent = 'Copied'; }); } catch (e) {} };
