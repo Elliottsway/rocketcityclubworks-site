@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your Account · Rocket City ClubWorks</title>
+<meta name="description" content="Sign in to request service, approve prices, pay and track your clubs at Rocket City ClubWorks.">
+<meta name="theme-color" content="#091E13">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Big+Shoulders+Display:wght@800;900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+.auth{max-width:440px}
+.home{display:grid;gap:14px}
+@media (min-width:900px){.home{grid-template-columns:1.3fr 1fr;align-items:start}}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quick .btn{min-height:56px}
+@media (max-width:420px){.quick{grid-template-columns:1fr}}
+.pending{border:1.5px dashed var(--accent)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
+    <nav aria-label="Main"><a href="/">Home</a><a href="/menu/">Prices</a><a href="/request/">Request service</a><a href="/account/" aria-current="page">My account</a></nav>
+    <div class="cta"><a class="ghost" href="/">Home</a><a class="solid" href="/menu/#quote">Instant price</a></div>
+  </div>
+</header>
+<main class="wrap app">
+  <p id="loading" class="empty">Loading…</p>
+
+  <!-- signed out -->
+  <section id="v-auth" class="auth" hidden>
+    <div class="eyebrow">Rocket City ClubWorks</div>
+    <h1 id="a-title">Your account</h1>
+    <p class="lede" id="a-lede">Request service, approve prices, pay and track your clubs in one place. No password: we email you a 6-digit code.</p>
+    <div class="tabs2" role="group" aria-label="Sign in or create an account">
+      <button type="button" id="t-in" aria-pressed="true">Sign in</button>
+      <button type="button" id="t-up" aria-pressed="false">Create account</button>
+    </div>
+    <form id="f-start" class="card box form" novalidate>
+      <div id="up-fields" hidden class="form">
+        <div><label for="a-name">Full name</label><input id="a-name" autocomplete="name"></div>
+        <div><label for="a-phone">Mobile number</label><input id="a-phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(256) 555-0123"></div>
+      </div>
+      <div><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
+      <div class="hp" aria-hidden="true"><label for="a-web">Website</label><input id="a-web" tabindex="-1" autocomplete="off"></div>
+      <button class="btn" type="submit" id="a-send">Email me a code</button>
+      <p class="err" id="a-err" role="alert"></p>
+    </form>
+    <form id="f-code" class="card box form" hidden novalidate>
+      <p style="margin:0">We sent a 6-digit code to <b id="c-email"></b>. It works for 15 minutes.</p>
+      <div><label for="c-code">Code</label><input id="c-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"></div>
+      <button class="btn" type="submit">Sign in</button>
+      <p class="err" id="c-err" role="alert"></p>
+      <p class="hint">Not there? Check spam, or <button type="button" class="linkbtn" id="c-back">use a different email</button>.</p>
+    </form>
+  </section>
+
+  <!-- signed in -->
+  <section id="v-home" hidden>
+    <div class="eyebrow">My account</div>
+    <h1 id="h-name">Hi</h1>
+    <div class="home">
+      <div class="stack">
+        <div id="pending" class="card box pending" hidden>
+          <h2>Your saved quote</h2>
+          <ul class="spec" id="p-sum"></ul>
+          <p style="margin:10px 0 0"><b>Estimate: <span id="p-total"></span></b></p>
+          <div class="form" style="margin-top:12px">
+            <div><label for="p-note">Anything else Jackson should know?</label><textarea id="p-note" placeholder="Current grip size, club models, timing…"></textarea></div>
+            <button class="btn" type="button" id="p-send">Submit for review</button>
+            <button class="linkbtn" type="button" id="p-drop">Discard this quote</button>
+            <p class="err" id="p-err" role="alert"></p>
+          </div>
+        </div>
+        <div class="quick">
+          <a class="btn" href="/request/">Request service</a>
+          <a class="btn out" href="/menu/#quote">Instant price</a>
+        </div>
+        <div class="card box">
+          <h2>My tickets</h2>
+          <div class="tlist" id="tickets"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <form class="card box form" id="f-prof" novalidate>
+          <h2>My details</h2>
+          <div><label for="m-name">Name</label><input id="m-name" autocomplete="name"></div>
+          <div><label for="m-phone">Mobile number</label><input id="m-phone" type="tel" autocomplete="tel"></div>
+          <div><label>Email</label><p style="margin:0" id="m-email"></p><p class="hint">To change your email, message Jackson on any ticket.</p></div>
+          <button class="btn out" type="submit">Save</button>
+          <p id="m-out" role="status"></p>
+        </form>
+        <div class="card box">
+          <h2>How it works</h2>
+          <ol class="spec">
+            <li>Send a request or an instant price quote.</li>
+            <li>Jackson confirms parts and fit, then sends you a final price.</li>
+            <li>Approve and pay securely by card (Square). Parts are ordered once payment clears.</li>
+            <li>Follow every part, shipment and step on your ticket until pickup.</li>
+          </ol>
+          <button class="linkbtn" type="button" id="logout" style="margin-top:10px">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="/assets/app.js"></script>
+<script>
+(function(){
+  var A = window.RCCWapp, $ = A.$, el = A.el, mode = 'signin', email = '';
+  var qs = new URLSearchParams(location.search), next = qs.get('next');
+  if (!next || next.charAt(0) !== '/' || next.charAt(1) === '/') next = null;
+  var PKEY = 'rccw_pending_quote';
+  function pending(){ try { return JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (e) { return null; } }
+
+  function setMode(m){
+    mode = m; $('t-in').setAttribute('aria-pressed', String(m === 'signin')); $('t-up').setAttribute('aria-pressed', String(m === 'signup'));
+    $('up-fields').hidden = m !== 'signup'; $('a-err').textContent = '';
+  }
+  $('t-in').onclick = function(){ setMode('signin'); };
+  $('t-up').onclick = function(){ setMode('signup'); };
+
+  $('f-start').addEventListener('submit', function(e){
+    e.preventDefault(); $('a-err').textContent = '';
+    email = $('a-email').value.trim();
+    var btn = $('a-send'); btn.disabled = true; btn.textContent = 'Sending…';
+    A.api('/api/auth/start', { method: 'POST', noRedirect: true, body: { mode: mode, email: email, name: $('a-name').value, phone: $('a-phone').value, website: $('a-web').value } })
+      .then(function(j){
+        $('f-start').hidden = true; $('f-code').hidden = false; $('c-email').textContent = email; $('c-code').focus();
+        if (j.dev_code) $('c-code').value = j.dev_code;
+      })
+      .catch(function(x){
+        $('a-err').textContent = x.message;
+        if (x.status === 404) setMode('signup'), $('a-err').textContent = x.message;
+      })
+      .then(function(){ btn.disabled = false; btn.textContent = 'Email me a code'; });
+  });
+  $('c-back').onclick = function(){ $('f-code').hidden = true; $('f-start').hidden = false; };
+  $('f-code').addEventListener('submit', function(e){
+    e.preventDefault(); $('c-err').textContent = '';
+    A.api('/api/auth/verify', { method: 'POST', noRedirect: true, body: { email: email, code: $('c-code').value } })
+      .then(function(){ if (next && !pending()) location.href = next; else load(); })
+      .catch(function(x){ $('c-err').textContent = x.message; });
+  });
+
+  function showPending(){
+    var p = pending(); $('pending').hidden = !p; if (!p) return;
+    var ul = $('p-sum'); ul.textContent = ''; (p.summary || []).forEach(function(s){ ul.appendChild(el('li', s)); });
+    $('p-total').textContent = p.total_label || '';
+    $('p-note').value = p.note || '';
+  }
+  $('p-drop').onclick = function(){ try { localStorage.removeItem(PKEY); } catch (e) {} showPending(); };
+  $('p-send').onclick = function(){
+    var p = pending(); if (!p) return; var b = this; b.disabled = true; b.textContent = 'Sending…';
+    A.api('/api/tickets', { method: 'POST', body: { kind: 'quote', lines: p.lines, summary: p.summary, note: $('p-note').value, ref: p.ref } })
+      .then(function(j){ try { localStorage.removeItem(PKEY); } catch (e) {} location.href = '/ticket/?t=' + encodeURIComponent(j.id) + '&new=1'; })
+      .catch(function(x){ $('p-err').textContent = x.message; b.disabled = false; b.textContent = 'Submit for review'; });
+  };
+
+  function load(){
+    A.api('/api/me', { noRedirect: true }).then(function(j){
+      $('loading').hidden = true; $('v-auth').hidden = true; $('v-home').hidden = false;
+      var c = j.customer; $('h-name').textContent = 'Hi, ' + c.name.split(' ')[0];
+      $('m-name').value = c.name; $('m-phone').value = c.phone_fmt; $('m-email').textContent = c.email;
+      var L = $('tickets'); L.textContent = '';
+      if (!j.tickets.length) L.appendChild(el('p', 'No tickets yet. Request service or build an instant price to get started.', 'empty'));
+      j.tickets.forEach(function(t){
+        var a = el('a', null, 'card trow'); a.href = '/ticket/?t=' + encodeURIComponent(t.id);
+        var l = el('div'); l.appendChild(el('b', t.number + ' ')); l.appendChild(document.createTextNode(t.title || ''));
+        a.appendChild(l); a.appendChild(el('span', t.status_label, 'pill ' + (A.STATUS_CLASS[t.status] || '')));
+        a.appendChild(el('small', 'Updated ' + A.date(t.updated_at) + (t.due_cents && ['awaiting_approval', 'approved'].indexOf(t.status) >= 0 ? ' · ' + A.money(t.due_cents) + ' to approve' : '') + (t.eta && ['completed', 'cancelled'].indexOf(t.status) < 0 ? ' · Est. ready ' + A.day(t.eta) : '')));
+        L.appendChild(a);
+      });
+      showPending();
+    }).catch(function(x){
+      $('loading').hidden = true; $('v-auth').hidden = false;
+      if (pending()) { $('a-title').textContent = 'Sign in to submit'; $('a-lede').textContent = 'Your quote is saved. Sign in or create an account (it takes a minute) and it will be ready to submit.'; setMode('signup'); }
+      else if (qs.get('new') === '1') setMode('signup');
+    });
+  }
+  $('f-prof').addEventListener('submit', function(e){
+    e.preventDefault();
+    A.api('/api/me', { method: 'PUT', body: { name: $('m-name').value, phone: $('m-phone').value } })
+      .then(function(){ $('m-out').className = 'ok'; $('m-out').textContent = 'Saved.'; })
+      .catch(function(x){ $('m-out').className = 'err'; $('m-out').textContent = x.message; });
+  });
+  $('logout').onclick = function(){ A.api('/api/auth/logout', { method: 'POST', body: {} }).then(function(){ location.href = '/'; }); };
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Not part of the public website
+.git
+.github
+.wrangler
+node_modules
+src
+db
+docs
+wrangler.jsonc
+.assetsignore
+README.md
+package.json
+package-lock.json
+.gitignore

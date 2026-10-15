@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Your Work Ticket · Rocket City ClubWorks</title>
+<title>Service Ticket · Rocket City ClubWorks</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#091E13">
 <meta name="color-scheme" content="dark">
@@ -13,167 +13,154 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Big+Shoulders+Display:wght@800;900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/app.css">
 <style>
-.tk{display:grid;gap:14px;padding:18px 0 40px}
+.tk{display:grid;gap:14px}
 @media (min-width:900px){.tk{grid-template-columns:1.2fr 1fr;align-items:start}}
-.hd h1{font-size:clamp(2.2rem,9vw,3.2rem)}
-.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:6px 10px;border-radius:999px;background:var(--tint);color:var(--accent);margin-top:10px}
-.steps{display:flex;gap:4px;margin:14px 0 4px}
-.steps span{flex:1;height:6px;border-radius:4px;background:var(--line)}
-.steps span.on{background:var(--accent)}
-.stepl{font-size:.8rem;color:var(--muted)}
-.box{padding:16px 18px}
-.box h2{font-size:1.4rem;color:var(--accent);margin:0 0 8px}
-.note{background:var(--tint);border-radius:10px;padding:12px 14px;white-space:pre-wrap}
-.spec{margin:0;padding-left:18px;color:var(--ink)}
-.spec li{margin:4px 0}
-.paper{background:var(--paper);color:var(--paper-ink);border-radius:var(--r);padding:16px}
-.paper .hd2{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px dashed #C8D4CB;padding-bottom:10px;margin-bottom:6px}
-.paper .hd2 b{font-family:var(--display);font-weight:900;font-size:1.3rem;text-transform:uppercase}
-.paper .hd2 span{font-family:var(--mono);font-size:.72rem;color:var(--paper-muted)}
-.ln{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:.92rem}
-.ln span:last-child{font-family:var(--mono);font-weight:600;white-space:nowrap}
-.ln.sub{color:var(--paper-muted)}
-.tot{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--paper-ink);margin-top:8px;padding-top:10px}
-.tot b{font-family:var(--display);font-weight:900;font-size:1.3rem;text-transform:uppercase}
-.tot span{font-family:var(--display);font-weight:900;font-size:2.3rem;color:var(--brand);line-height:1}
-.paper .btn{width:100%;margin-top:14px;background:var(--brand);border-color:var(--brand);color:#fff}
-.fine{font-size:.8rem;color:var(--paper-muted);margin:10px 0 0}
-.hist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.hist li{border-left:3px solid var(--line);padding-left:10px}
-.hist small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
-.msg textarea{min-height:80px}
-.err{color:#FF9B8F;font-weight:600}
-.ok{color:var(--accent);font-weight:600}
+.eta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line)}
+.eta b{font-family:var(--mono)}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap">
     <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
-    <nav aria-label="Main"><a href="/">Home</a><a href="/menu/">Prices</a></nav>
-    <div class="cta"><a class="solid js-text" href="sms:+12055889164">Text us</a></div>
+    <nav aria-label="Main"><a href="/">Home</a><a href="/menu/">Prices</a><a href="/request/">Request service</a><a href="/account/">My account</a></nav>
+    <div class="cta"><a class="ghost" href="/account/">My tickets</a></div>
   </div>
 </header>
-<main class="wrap">
-  <div id="loading" style="padding:40px 0;color:var(--muted)">Loading your work ticket…</div>
-  <div id="missing" hidden style="padding:40px 0"><h1 style="font-size:2.4rem">Ticket not found</h1><p class="lede">Check the link you were sent, or text (205) 588-9164.</p></div>
-  <div class="tk" id="tk" hidden>
-    <div style="display:grid;gap:14px">
-      <section class="hd">
-        <div class="eyebrow">Work ticket</div>
-        <h1 id="t-num">RC-</h1>
-        <span class="pill" id="t-status"></span>
-        <div class="steps" id="t-steps" aria-hidden="true"></div>
-        <div class="stepl" id="t-stepl"></div>
-      </section>
-      <section class="card box" id="t-shopnote-wrap" hidden><h2>Note from Jackson</h2><div class="note" id="t-shopnote"></div></section>
-      <section class="card box"><h2>What you asked for</h2><ul class="spec" id="t-spec"></ul><p id="t-cnote" style="color:var(--muted);margin:10px 0 0" hidden></p></section>
-      <section class="card box msg">
-        <h2>Questions or changes?</h2>
-        <label for="m-text" class="sr">Message</label>
-        <textarea id="m-text" placeholder="Ask a question or tell us what to change. We'll update the ticket and let you know."></textarea>
-        <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap"><button class="btn" id="m-send" type="button">Send message</button><span id="m-out" aria-live="polite"></span></div>
-      </section>
-      <section class="card box"><h2>History</h2><ul class="hist" id="t-hist"></ul></section>
-    </div>
-    <div>
-      <div class="paper" aria-live="polite">
-        <div class="hd2"><b>Your price</b><span id="t-ver"></span></div>
-        <div id="t-lines"></div>
-        <div class="tot"><b id="t-totlabel">Total</b><span id="t-total">$0</span></div>
-        <div id="t-paid"></div>
-        <button class="btn" id="t-pay" type="button" hidden>Approve &amp; pay</button>
-        <p class="fine" id="t-fine"></p>
-        <p id="t-payerr" class="err" hidden></p>
+<main class="wrap app">
+  <p id="loading" class="empty">Loading your ticket…</p>
+  <div id="missing" hidden><h1>Ticket not found</h1><p class="lede">It may belong to a different account. <a href="/account/" style="color:var(--accent)">See your tickets</a>.</p></div>
+  <div id="tk" hidden>
+    <div class="card box" id="newmsg" hidden style="margin-bottom:14px;border-color:var(--accent)"><b class="ok">Sent!</b> Jackson will review it and email you when your price is ready. You can follow everything right here.</div>
+    <div class="eyebrow" id="t-num"></div>
+    <h1 id="t-title"></h1>
+    <span class="pill" id="t-status"></span>
+    <div class="steps" id="t-steps" aria-hidden="true"></div>
+    <div class="stepl" id="t-stepl"></div>
+    <div class="eta" id="t-eta" hidden><span>Estimated ready</span><b id="t-etad"></b></div>
+    <div class="tk" style="margin-top:16px">
+      <div class="stack">
+        <div class="card box" id="shopbox" hidden><h2>Note from Jackson</h2><div class="note" id="t-shop"></div></div>
+        <div class="card box" id="partsbox" hidden><h2>Your parts</h2><div class="parts" id="t-parts"></div></div>
+        <div class="card box"><h2>What you asked for</h2><ul class="spec" id="t-spec"></ul><p id="t-cnote" class="note" hidden style="margin-top:10px"></p></div>
+        <div class="card box">
+          <h2>Messages &amp; updates</h2>
+          <ul class="hist" id="t-hist"></ul>
+          <form id="f-msg" class="form" style="margin-top:14px" novalidate>
+            <label for="m-text">Message Jackson</label>
+            <textarea id="m-text" placeholder="Questions, changes, pickup times…"></textarea>
+            <button class="btn out" type="submit">Send message</button>
+            <p id="m-out" role="status"></p>
+          </form>
+        </div>
+      </div>
+      <div class="paper" id="price">
+        <div class="hd2"><b>Price</b><span id="p-ver"></span></div>
+        <div id="p-lines"></div>
+        <div class="ln sub" id="p-taxl" hidden><span>Sales tax on parts</span><span id="p-tax"></span></div>
+        <div class="tot"><b id="p-totl">Total</b><span id="p-total"></span></div>
+        <div class="ln sub" id="p-paidl" hidden><span>Paid</span><span id="p-paid"></span></div>
+        <div class="ln" id="p-duel" hidden><span><b>Due now</b></span><span id="p-due"></span></div>
+        <button class="btn" type="button" id="p-pay" hidden>Approve &amp; pay</button>
+        <p class="fine" id="p-fine"></p>
+        <p class="err" id="p-err" role="alert"></p>
       </div>
     </div>
   </div>
 </main>
-<script src="/assets/prices.js"></script>
-<script src="/assets/site.js"></script>
+<script src="/assets/app.js"></script>
 <script>
 (function(){
-  var id = new URLSearchParams(location.search).get('t');
-  var LABEL = { submitted: 'Being reviewed', awaiting_approval: 'Ready for your approval', approved: 'Approved · finish payment', paid: 'Paid · ordering parts', parts_ordered: 'Parts ordered', in_progress: 'In the shop', ready: 'Ready for pickup', completed: 'Picked up', cancelled: 'Cancelled' };
-  var ORDER = ['submitted', 'awaiting_approval', 'paid', 'parts_ordered', 'in_progress', 'ready', 'completed'];
-  var STEP = { submitted: 'Jackson is reviewing your ticket and will price it within a day. Bookmark this page; we\'ll text you when it\'s ready.',
-    awaiting_approval: 'Check the price below. Approve it to pay online, or send a message if anything should change.',
-    approved: 'You approved the price. Finish payment to lock in your order.',
-    paid: 'Thanks! Payment received. Parts get ordered on the next business morning.', parts_ordered: 'Parts are on the way from GolfWorks (about 2 business days).',
-    in_progress: 'Your clubs are on the bench.', ready: 'Ready! Text us to set a pickup time.', completed: 'All done. Thanks for choosing ClubWorks.', cancelled: 'This ticket was cancelled.' };
-  var $ = function(i){ return document.getElementById(i); };
-  var money = function(c){ return (c < 0 ? '−$' : '$') + (Math.abs(c) / 100).toFixed(2); };
-  function el(tag, text, cls){ var e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; }
-  var cur = null;
+  var A = window.RCCWapp, $ = A.$, el = A.el, money = A.money;
+  var qs = new URLSearchParams(location.search), id = qs.get('t'), T = null, polls = 0;
+  var FLOW = ['submitted', 'awaiting_approval', 'paid', 'parts_ordered', 'in_progress', 'ready', 'completed'];
+  var STEPL = { submitted: 'Jackson is reviewing your ticket and confirming parts.', awaiting_approval: 'Your price is ready. Review it and tap Approve & pay.', approved: 'Waiting for your payment to finish.',
+    paid: 'Paid. Jackson is ordering your parts.', parts_ordered: 'Parts are ordered. Follow them below.', in_progress: 'Your clubs are on the bench.', ready: 'Ready for pickup! Message Jackson to pick a time.', completed: 'Picked up. Thanks for your business!', cancelled: 'This ticket was cancelled.' };
+  if (qs.get('new') === '1') $('newmsg').hidden = false;
 
   function render(t){
-    cur = t;
-    $('loading').hidden = true; $('tk').hidden = false;
-    document.title = t.number + ' · Rocket City ClubWorks';
-    $('t-num').textContent = t.number;
-    $('t-status').textContent = LABEL[t.status] || t.status;
-    var idx = ORDER.indexOf(t.status === 'approved' ? 'awaiting_approval' : t.status);
-    var st = $('t-steps'); st.textContent = '';
-    ORDER.forEach(function(s, i){ var x = el('span'); if (i <= idx) x.className = 'on'; st.appendChild(x); });
-    $('t-stepl').textContent = STEP[t.status] || '';
-    $('t-shopnote-wrap').hidden = !t.shop_note; $('t-shopnote').textContent = t.shop_note || '';
-    var sp = $('t-spec'); sp.textContent = '';
-    ((t.spec && t.spec.summary) || ['See the price list on the right.']).forEach(function(s){ sp.appendChild(el('li', s)); });
+    T = t; $('loading').hidden = true; $('tk').hidden = false;
+    $('t-num').textContent = t.number + ' · opened ' + A.date(t.created_at); $('t-title').textContent = t.title || 'Service ticket';
+    $('t-status').textContent = t.status_label; $('t-status').className = 'pill ' + (A.STATUS_CLASS[t.status] || '');
+    var at = FLOW.indexOf(t.status === 'approved' ? 'awaiting_approval' : t.status), st = $('t-steps'); st.textContent = '';
+    FLOW.forEach(function(s, i){ st.appendChild(el('span', null, i <= at ? 'on' : '')); });
+    $('t-stepl').textContent = STEPL[t.status] || '';
+    $('t-eta').hidden = !t.eta || ['completed', 'cancelled'].indexOf(t.status) >= 0; $('t-etad').textContent = A.day(t.eta);
+    $('shopbox').hidden = !t.shop_note; $('t-shop').textContent = t.shop_note || '';
+    var sp = $('t-spec'); sp.textContent = ''; ((t.spec && t.spec.summary) || []).forEach(function(s){ sp.appendChild(el('li', s)); });
     $('t-cnote').hidden = !t.customer_note; $('t-cnote').textContent = t.customer_note ? 'Your note: ' + t.customer_note : '';
 
-    var L = $('t-lines'); L.textContent = '';
-    t.lines.forEach(function(l){
-      var r = el('div', null, 'ln'); r.appendChild(el('span', l.qty > 1 ? l.desc + ' × ' + l.qty : l.desc)); r.appendChild(el('span', l.unit_cents === 0 ? 'Free' : money(l.qty * l.unit_cents))); L.appendChild(r);
+    // parts tracking
+    var parts = t.lines.filter(function(l){ return l.kind === 'part'; }), P = $('t-parts'); P.textContent = '';
+    $('partsbox').hidden = !parts.length || t.status === 'submitted';
+    parts.forEach(function(l){
+      var d = el('div', null, 'part'); d.appendChild(el('span', (l.qty > 1 ? l.qty + ' × ' : '') + l.desc));
+      var stt = l.track === 'to_order' && t.due_cents > 0 ? 'After payment' : (A.TRACK[l.track] || '');
+      d.appendChild(el('span', stt, 'pill ' + (l.track === 'installed' || l.track === 'received' ? 'good' : l.track === 'to_order' ? 'dim' : '')));
+      if (l.shipping && (l.shipping.tracking || l.shipping.eta) && l.track !== 'installed') {
+        var s = el('small'); s.appendChild(document.createTextNode((l.shipping.carrier ? l.shipping.carrier + ' ' : '') + (l.shipping.eta ? 'arriving ' + A.day(l.shipping.eta) + ' ' : '')));
+        if (l.shipping.url) { var a = el('a', 'Track package'); a.href = l.shipping.url; a.target = '_blank'; a.rel = 'noopener'; s.appendChild(a); }
+        else if (l.shipping.tracking) s.appendChild(document.createTextNode('Tracking ' + l.shipping.tracking));
+        d.appendChild(s);
+      }
+      P.appendChild(d);
     });
-    if (t.tax_cents) { var r2 = el('div', null, 'ln sub'); r2.appendChild(el('span', 'Alabama sales tax on parts')); r2.appendChild(el('span', money(t.tax_cents))); L.appendChild(r2); }
-    $('t-total').textContent = money(t.total_cents);
-    $('t-totlabel').textContent = t.status === 'submitted' ? 'Estimate' : 'Total';
-    $('t-ver').textContent = t.status === 'submitted' ? 'Estimate · not final' : 'Version ' + t.version;
-    var P = $('t-paid'); P.textContent = '';
-    if (t.paid_cents) {
-      var a = el('div', null, 'ln sub'); a.appendChild(el('span', 'Paid')); a.appendChild(el('span', money(t.paid_cents))); P.appendChild(a);
-      var b = el('div', null, 'ln'); b.appendChild(el('span', 'Balance due')); b.appendChild(el('span', money(t.due_cents))); P.appendChild(b);
-    }
-    var pay = $('t-pay'); pay.hidden = !t.can_pay && t.status !== 'approved';
-    pay.textContent = (t.status === 'approved' ? 'Finish payment · ' : 'Approve & pay · ') + money(t.due_cents);
-    $('t-fine').textContent = t.status === 'submitted' ? 'This is the instant-price estimate. The final price shows here once Jackson reviews the work.'
-      : (t.can_pay || t.status === 'approved') ? 'Approving accepts the work and price above. You pay securely through Square (card, Apple Pay or Google Pay). Need a change? Send a message instead.'
-      : t.due_cents === 0 && t.paid_cents ? 'Paid in full.' : '';
+
+    // price
+    var L = $('p-lines'); L.textContent = '';
+    var priced = t.status !== 'submitted';
+    if (!t.lines.length) L.appendChild(el('p', 'Jackson will add parts and labor here.', 'fine'));
+    t.lines.forEach(function(l){
+      var d = el('div', null, 'ln'), amt = l.qty * l.unit_cents;
+      d.appendChild(el('span', l.qty > 1 ? l.desc + ' × ' + l.qty : l.desc));
+      d.appendChild(el('span', /Jackson to price/.test(l.desc) && !amt ? 'TBD' : amt === 0 ? 'Free' : money(amt)));
+      L.appendChild(d);
+    });
+    $('p-taxl').hidden = !t.tax_cents; $('p-tax').textContent = money(t.tax_cents);
+    $('p-totl').textContent = priced ? 'Total' : 'Estimate'; $('p-total').textContent = money(t.total_cents);
+    $('p-ver').textContent = priced ? 'Version ' + t.version : 'Not final yet';
+    $('p-paidl').hidden = !t.paid_cents; $('p-paid').textContent = '−' + money(t.paid_cents);
+    $('p-duel').hidden = !(t.paid_cents && t.due_cents); $('p-due').textContent = money(t.due_cents);
+    $('p-pay').hidden = !t.can_pay; $('p-pay').textContent = 'Approve & pay · ' + money(t.due_cents);
+    $('p-fine').textContent = t.can_pay ? 'Secure card payment by Square. Your parts are ordered as soon as the payment clears.'
+      : t.status === 'submitted' ? 'This is an estimate. Jackson confirms parts, fit and the final price, then you approve it here. Nothing is charged until then.'
+      : t.paid_cents >= t.total_cents && t.total_cents > 0 ? 'Paid in full. Thank you!' : '';
 
     var H = $('t-hist'); H.textContent = '';
     t.events.slice().reverse().forEach(function(e){
-      var li = el('li'); li.appendChild(el('small', new Date(e.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + (e.who === 'shop' ? 'ClubWorks' : e.who === 'customer' ? 'You' : 'Payment')));
-      li.appendChild(el('span', e.kind === 'status' ? (LABEL[e.text] || e.text) : e.text)); H.appendChild(li);
+      var li = el('li', null, e.who === 'shop' ? 'shop' : ''); li.appendChild(el('small', A.when(e.at) + ' · ' + (e.who === 'shop' ? 'Jackson' : e.who === 'customer' ? 'You' : 'Update')));
+      li.appendChild(document.createTextNode(e.text || '')); H.appendChild(li);
     });
   }
-  function load(){
-    return fetch('/api/tickets/' + encodeURIComponent(id)).then(function(r){ if (!r.ok) throw 0; return r.json(); }).then(render)
-      .catch(function(){ $('loading').hidden = true; $('missing').hidden = false; });
-  }
-  if (!id) { $('loading').hidden = true; $('missing').hidden = false; return; }
-  load().then(function(){
-    // Back from Square: the payment notice can take a few seconds to arrive.
-    if (new URLSearchParams(location.search).get('paid') && cur && cur.due_cents > 0) {
-      $('t-stepl').textContent = 'Payment received by Square. Updating your ticket…';
-      var n = 0, iv = setInterval(function(){ n++; load().then(function(){ if (!cur.due_cents || n > 10) clearInterval(iv); }); }, 3000);
-    }
-  });
 
-  $('t-pay').addEventListener('click', function(){
-    var btn = this; btn.disabled = true; btn.textContent = 'Opening secure checkout…'; $('t-payerr').hidden = true;
-    fetch('/api/tickets/' + encodeURIComponent(id) + '/approve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ version: cur.version }) })
-      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
-      .then(function(x){ if (x.ok && x.j.url) location.href = x.j.url; else { $('t-payerr').textContent = x.j.error || 'Something went wrong.'; $('t-payerr').hidden = false; btn.disabled = false; load(); } })
-      .catch(function(){ $('t-payerr').textContent = 'Network problem. Try again.'; $('t-payerr').hidden = false; btn.disabled = false; });
+  function load(){
+    return A.api('/api/tickets/' + encodeURIComponent(id)).then(render).catch(function(x){ if (x.message !== 'auth') { $('loading').hidden = true; $('missing').hidden = false; } });
+  }
+  // back from Square: ask the server to confirm the payment with Square, a few times if needed
+  function sync(){
+    A.api('/api/tickets/' + encodeURIComponent(id) + '/sync', { method: 'POST', body: {} }).then(function(t){
+      render(t);
+      if (t.paid_cents < t.total_cents && ++polls < 8) setTimeout(sync, 3000);
+      else if (t.paid_cents >= t.total_cents) { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b class="ok">Payment received.</b> Thanks! Jackson will order your parts and keep this ticket updated.'; }
+    }).catch(function(){});
+  }
+  $('p-pay').onclick = function(){
+    var b = this; b.disabled = true; $('p-err').textContent = '';
+    A.api('/api/tickets/' + encodeURIComponent(id) + '/approve', { method: 'POST', body: { version: T.version } })
+      .then(function(j){ location.href = j.url; })
+      .catch(function(x){ $('p-err').textContent = x.message; b.disabled = false; if (x.status === 409) load(); });
+  };
+  $('f-msg').addEventListener('submit', function(e){
+    e.preventDefault(); var v = $('m-text').value.trim(); if (!v) return;
+    A.api('/api/tickets/' + encodeURIComponent(id) + '/message', { method: 'POST', body: { text: v } })
+      .then(function(t){ $('m-text').value = ''; $('m-out').className = 'ok'; $('m-out').textContent = 'Sent. Jackson gets an email right away.'; render(t); })
+      .catch(function(x){ $('m-out').className = 'err'; $('m-out').textContent = x.message; });
   });
-  $('m-send').addEventListener('click', function(){
-    var text = $('m-text').value.trim(); if (!text) return;
-    var out = $('m-out'); out.className = ''; out.textContent = 'Sending…';
-    fetch('/api/tickets/' + encodeURIComponent(id) + '/message', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text }) })
-      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
-      .then(function(x){ if (x.ok) { out.className = 'ok'; out.textContent = 'Sent. We\'ll get back to you soon.'; $('m-text').value = ''; load(); } else { out.className = 'err'; out.textContent = x.j.error; } });
-  });
+  if (!id) { $('loading').hidden = true; $('missing').hidden = false; }
+  else if (qs.get('paid') === '1') { load().then(sync); }
+  else load();
 })();
 </script>
 </body>

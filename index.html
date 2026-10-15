@@ -30,7 +30,7 @@
  "address":{"@type":"PostalAddress","addressLocality":"Huntsville","addressRegion":"AL","postalCode":"35806","addressCountry":"US"},
  "areaServed":["Huntsville, AL","Madison, AL"],
  "openingHours":"Mo-Su 08:00-17:00",
- "paymentAccepted":"Cash, Venmo, Cash App, Apple Cash"}
+ "paymentAccepted":"Credit card, Apple Pay, Google Pay"}
 </script>
 <style>
 /* Home page only */
@@ -106,10 +106,10 @@ form.req{padding:18px;display:grid;gap:14px}
   <div class="wrap">
     <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
     <nav aria-label="Main">
-      <a href="#prices">Prices</a><a href="#how">How it works</a><a href="#deals">Deals</a><a href="#faq">FAQ</a><a href="#contact">Contact</a>
+      <a href="#prices">Prices</a><a href="#how">How it works</a><a href="#deals">Deals</a><a href="#faq">FAQ</a><a href="/request/">Request service</a><a href="/account/">My account</a>
     </nav>
     <div class="cta">
-      <a class="ghost" href="/menu/">Full menu</a>
+      <a class="ghost" href="/account/">My account</a>
       <a class="solid js-text" href="sms:+12055889164"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Text us</a>
     </div>
   </div>
@@ -125,7 +125,7 @@ form.req{padding:18px;display:grid;gap:14px}
       <p>Regrips, reshafts, loft and lie, and repairs, done by hand by a local club builder. Bring your own grips and they're back in your bag tomorrow.</p>
       <div class="ctas">
         <a class="btn light" href="/menu/#quote">Instant price</a>
-        <a class="btn line js-text" href="sms:+12055889164">Text Jackson</a>
+        <a class="btn line" href="/request/">Request service</a>
       </div>
       <div class="facts">
         <div><b>Next day</b><span>Most regrips</span></div>
@@ -199,13 +199,13 @@ form.req{padding:18px;display:grid;gap:14px}
   <div class="wrap">
     <div class="head">
       <div class="eyebrow">How it works</div>
-      <h2>Three steps, no hassle</h2>
+      <h2>One ticket, start to finish</h2>
     </div>
     <div class="steps">
-      <article class="card step rv"><h3>Get a price</h3><p>Build a quote on the menu or text what you need. Send it any time; we reply every day, 8am–5pm.</p></article>
-      <article class="card step rv"><h3>Drop off</h3><p>Porch drop-off in northwest Huntsville by appointment, or we meet up around Huntsville and Madison. We send the spot when you book.</p></article>
-      <article class="card step rv"><h3>Pick up &amp; play</h3><p>Your own grips: ready next day. Grips and parts we order: 3–4 business days, or 2 with rush. We text you when they're done.</p>
-        <div class="pay" aria-label="Payment methods"><span>Cash</span><span>Venmo</span><span>Cash App</span><span>Apple Cash</span></div></article>
+      <article class="card step rv"><h3>Send a request</h3><p>Build an instant price or describe what you need. It opens a service ticket in your free account. Jackson replies every day, 8am–5pm.</p></article>
+      <article class="card step rv"><h3>Approve &amp; drop off</h3><p>Approve the final price and pay by card on your ticket. Porch drop-off in northwest Huntsville by appointment, or we meet up around Huntsville and Madison.</p></article>
+      <article class="card step rv"><h3>Track &amp; pick up</h3><p>Follow your parts, shipping and ready date on your ticket. Your own grips: ready next day. Parts we order: 3–4 business days, or 2 with rush. We email you when they're done.</p>
+        <div class="pay" aria-label="Payment methods"><span>Card</span><span>Apple Pay</span><span>Google Pay</span><span>via Square</span></div></article>
     </div>
   </div>
 </section>
@@ -240,7 +240,7 @@ form.req{padding:18px;display:grid;gap:14px}
       <details><summary>Can I bring my own grips?</summary><p>Yes, and they're ready the next day. Labor is the same either way: <span data-p="regripOwn">$5</span> per club or <span data-p="regripOwnBag">$50</span> for a full bag of up to 14. If we order grips for you, you pay the grip at regular retail plus a <span data-p="partsFee">$10</span> parts fee (free when parts total $100+).</p></details>
       <details><summary>Why is there a parts fee?</summary><p>We don't keep a warehouse of grips and shafts. Everything is ordered for your job from GolfWorks, and the <span data-p="partsFee">$10</span> fee covers the shipping. It's free when your parts total $100 or more, and you only pay it once per order.</p></details>
       <details><summary>Where do I drop off my clubs?</summary><p>Drop-off and pickup are by appointment at our shop in northwest Huntsville, or we can meet up around Huntsville and Madison. We send the address when you book.</p></details>
-      <details><summary>How do I pay?</summary><p>Cash, Venmo, Cash App or Apple Cash at pickup.</p></details>
+      <details><summary>How do I pay?</summary><p>When Jackson sends your final price, you approve it and pay by card right on your service ticket (secure checkout by Square). Parts are ordered as soon as your payment clears.</p></details>
       <details><summary>Do my irons need a loft and lie check?</summary><p>Lofts and lies drift with play, especially on forged irons, and a club a couple of degrees off can push shots offline. A check takes about 20 minutes, and we show you the numbers before bending anything.</p></details>
       <details><summary>What grip size should I get?</summary><p>Bring a current club and we'll check your hand size and how you hold it. Build-up wraps to fine-tune size are free.</p></details>
       <details><summary>How does trade-in credit work?</summary><p>Bring in shafts, adapters or heads you're not using. We check their condition and quote a credit toward any service.</p></details>
@@ -252,7 +252,7 @@ form.req{padding:18px;display:grid;gap:14px}
   <div class="wrap split">
     <div>
       <div class="eyebrow">Book a job</div>
-      <h2>Text, call or send a request</h2>
+      <h2>Request service online</h2>
       <div class="info">
         <div><span>Text or call</span><a class="js-text" href="sms:+12055889164">(205) 588-9164</a></div>
         <div><span>Email</span><a href="mailto:jackson@rocketcityclubworks.com">jackson@rocketcityclubworks.com</a></div>
@@ -260,25 +260,13 @@ form.req{padding:18px;display:grid;gap:14px}
         <div><span>Where</span><b>Northwest Huntsville · by appointment</b></div>
       </div>
     </div>
-    <form class="card req rv" id="req" novalidate>
-      <div><label for="r-name">Name</label><input id="r-name" autocomplete="name" placeholder="Your name"></div>
-      <div><label for="r-reach">Phone or email</label><input id="r-reach" autocomplete="tel" placeholder="(256) 555-0123"></div>
-      <div><label for="r-svc">Service</label>
-        <select id="r-svc">
-          <option>Regripping</option><option>Loft &amp; lie</option><option>Reshafting</option><option>Custom build</option>
-          <option>Repair (loose head, length, adapter)</option><option>Broken club repair</option><option>Paint fill or stamping</option><option>Buy grips or parts</option><option>Something else</option>
-        </select></div>
-      <div><label for="r-n">Number of clubs</label><input id="r-n" type="number" min="1" max="20" inputmode="numeric" placeholder="e.g. 13"></div>
-      <div class="full"><label for="r-notes">Details</label><textarea id="r-notes" placeholder="Grip or shaft you want, size, anything else"></textarea></div>
-      <div class="full acts"><button class="btn" type="submit">Send by text</button>
-        <a class="btn out" id="r-mail" href="mailto:jackson@rocketcityclubworks.com">Email instead</a></div>
-      <p class="full err" id="r-err" hidden></p>
-      <div class="full msg" id="r-out" hidden></div>
-      <div class="full acts" id="r-acts" hidden>
-        <button class="btn out" type="button" id="r-copy">Copy request</button>
-        <span class="note" id="r-copied" aria-live="polite">On a computer? Copy this and text it to (205) 588-9164.</span>
-      </div>
-    </form>
+    <div class="card req rv" style="display:grid;gap:12px;align-content:start">
+      <h3 style="margin:0;font-size:1.5rem">Start a service ticket</h3>
+      <p style="margin:0;color:var(--muted)">Send your request online and everything stays in one place: Jackson's questions, your final price, secure card payment, parts shipping and pickup. Free account, no password (we email you a code).</p>
+      <a class="btn" href="/request/">Request service</a>
+      <a class="btn out" href="/menu/#quote">Build an instant price</a>
+      <a class="btn out" href="/account/">My account &amp; tickets</a>
+    </div>
   </div>
 </section>
 </main>
@@ -297,7 +285,7 @@ form.req{padding:18px;display:grid;gap:14px}
 
 <div class="bar">
   <div class="in">
-    <a class="text js-text" href="sms:+12055889164"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Text Jackson</a>
+    <a class="text" href="/request/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>Request service</a>
     <a class="alt" href="/menu/#quote">Instant price</a>
   </div>
 </div>
@@ -308,25 +296,6 @@ form.req{padding:18px;display:grid;gap:14px}
 (function(){
   var D = window.RCCW, S = window.RCCWsite;
 
-  // Request form: builds a text message and opens Messages
-  var f = document.getElementById("req"), out = document.getElementById("r-out"), acts = document.getElementById("r-acts"),
-      err = document.getElementById("r-err"), copied = document.getElementById("r-copied");
-  function v(id){ return document.getElementById(id).value.trim(); }
-  f.addEventListener("submit", function(e){
-    e.preventDefault();
-    if (!v("r-name") || !v("r-reach")) { err.textContent = "Add your name and a phone number or email so we can reply."; err.hidden = false; return; }
-    err.hidden = true;
-    var lines = ["Rocket City ClubWorks request", "Name: " + v("r-name"), "Contact: " + v("r-reach"), "Service: " + v("r-svc"), "Clubs: " + (v("r-n") || "not sure")];
-    if (v("r-notes")) lines.push("Details: " + v("r-notes"));
-    var msg = lines.join("\n");
-    out.textContent = msg; out.hidden = false; acts.hidden = false;
-    document.getElementById("r-mail").href = "mailto:" + D.email + "?subject=" + encodeURIComponent("ClubWorks request: " + v("r-svc")) + "&body=" + encodeURIComponent(msg);
-    window.location.href = S.smsHref(msg + "\n(" + S.ref + ")");
-  });
-  document.getElementById("r-copy").addEventListener("click", function(){
-    function sel(){ var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); copied.textContent = "Text selected. Copy it, then paste into a text or email."; }
-    try { navigator.clipboard.writeText(out.textContent).then(function(){ copied.textContent = "Copied. Paste it into a text or email to us."; }, sel); } catch (x) { sel(); }
-  });
 })();
 </script>
 </body>

@@ -1,0 +1,64 @@
+/* Shared styles for the account, request and ticket pages (loaded after site.css). */
+.app{padding-top:18px;padding-bottom:110px}
+.app h1{font-size:clamp(2.2rem,9vw,3.2rem);margin:6px 0 6px}
+.app .lede{color:var(--muted);margin:0 0 16px}
+.box{padding:16px 18px}
+.box h2{font-size:1.4rem;color:var(--accent);margin:0 0 10px}
+.stack{display:grid;gap:14px}
+.form{display:grid;gap:12px}
+.form label{display:block;font-size:.9rem;margin-bottom:4px}
+.form .hint{font-size:.8rem;color:var(--muted);margin:4px 0 0}
+.form .btn{width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.row2{grid-template-columns:1fr}}
+.tabs2{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:14px}
+.tabs2 button{min-height:42px;border-radius:999px;border:0;background:none;color:var(--muted);font:700 .95rem var(--body);cursor:pointer}
+.tabs2 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.code{font:600 1.6rem var(--mono);letter-spacing:.4em;text-align:center}
+.err{color:#FF9B8F;font-weight:600;margin:0}
+.ok{color:var(--accent);font-weight:600;margin:0}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.pill{display:inline-block;font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:999px;background:var(--tint);color:var(--accent);white-space:nowrap}
+.pill.warn{background:#4A3B10;color:#FFD66B}
+.pill.good{background:#123E2A;color:#7CC795}
+.pill.dim{background:var(--surface-2);color:var(--muted)}
+.tlist{display:grid;gap:8px}
+.trow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:12px 14px;text-decoration:none;color:var(--ink)}
+.trow b{font-family:var(--mono)}
+.trow small{color:var(--muted);grid-column:1/-1}
+.empty{color:var(--muted)}
+.linkbtn{background:none;border:0;color:var(--accent);font:600 .9rem var(--body);text-decoration:underline;cursor:pointer;padding:0;min-height:36px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts .btn{flex:1 1 180px}
+/* ticket */
+.steps{display:flex;gap:4px;margin:14px 0 4px}
+.steps span{flex:1;height:6px;border-radius:4px;background:var(--line)}
+.steps span.on{background:var(--accent)}
+.stepl{font-size:.8rem;color:var(--muted)}
+.note{background:var(--tint);border-radius:10px;padding:12px 14px;white-space:pre-wrap}
+.spec{margin:0;padding-left:18px}
+.spec li{margin:4px 0}
+.paper{background:var(--paper);color:var(--paper-ink);border-radius:var(--r);padding:16px}
+.paper .hd2{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px dashed #C8D4CB;padding-bottom:10px;margin-bottom:6px}
+.paper .hd2 b{font-family:var(--display);font-weight:900;font-size:1.3rem;text-transform:uppercase}
+.paper .hd2 span{font-family:var(--mono);font-size:.72rem;color:var(--paper-muted)}
+.ln{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:.92rem}
+.ln span:last-child{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.ln.sub{color:var(--paper-muted)}
+.ln .tr{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--paper-muted);margin-top:2px}
+.ln .tr a{color:#0E4D2C}
+.tot{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--paper-ink);margin-top:8px;padding-top:10px}
+.tot b{font-family:var(--display);font-weight:900;font-size:1.3rem;text-transform:uppercase}
+.tot span{font-family:var(--display);font-weight:900;font-size:2.3rem;color:var(--brand);line-height:1}
+.paper .btn{width:100%;margin-top:14px;background:var(--brand);border-color:var(--brand);color:#fff}
+.paper .fine{font-size:.8rem;color:var(--paper-muted);margin:10px 0 0}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hist li{border-left:3px solid var(--line);padding-left:10px;white-space:pre-wrap}
+.hist li.shop{border-color:var(--accent)}
+.hist small{display:block;font-family:var(--mono);font-size:.66rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.parts{display:grid;gap:8px}
+.part{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.part small{grid-column:1/-1;color:var(--muted);font-size:.82rem}
+.part a{color:var(--accent)}
+.part .pill{white-space:normal;text-align:right;max-width:130px}
+@media (max-width:899px){.tk #price{order:-1}}
