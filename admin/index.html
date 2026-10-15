@@ -200,9 +200,10 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
           <label>Order list to paste into GolfWorks</label>
           <pre class="copy" id="o-copytext"></pre>
           <button class="small" type="button" id="o-copy">Copy list</button>
-          <div class="row2"><div><label for="o-no">GolfWorks order #</label><input id="o-no" placeholder="e.g. 1234567"></div>
+          <div><label for="o-vendor">Ordered from</label><select id="o-vendor"><option>GolfWorks</option><option>TaylorMade</option><option>Titleist</option><option>Callaway</option><option>PING</option><option>Cobra</option><option>Mizuno</option><option>Srixon / Cleveland</option><option>PXG</option><option>Tour Edge</option><option>Wilson</option><option>Other retailer</option></select></div>
+          <div class="row2"><div><label for="o-no">Order #</label><input id="o-no" placeholder="e.g. 1234567"></div>
             <div><label for="o-eta">Expected delivery</label><input id="o-eta" type="date"></div></div>
-          <div><label for="o-ship">GolfWorks shipping charged $ (private, for your reports)</label><input id="o-ship" type="number" step="0.01" min="0"></div>
+          <div><label for="o-ship">Shipping charged $ (private, for your reports)</label><input id="o-ship" type="number" step="0.01" min="0"></div>
           <button class="btn" type="button" id="o-rec">Record order for checked parts</button>
           <p id="o-out" role="status"></p>
         </div>
@@ -579,7 +580,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
   $('o-copy').onclick = function(){ try { navigator.clipboard.writeText($('o-copytext').textContent); this.textContent = 'Copied'; } catch (e) {} };
   $('o-rec').onclick = function(){
     var items = checked().map(function(p){ return { ticket_id: p.ticket_id, line_id: p.line_id }; });
-    api('/orders', { method: 'POST', body: { order_no: $('o-no').value, eta: $('o-eta').value || null, shipping_cents: $('o-ship').value === '' ? null : Math.round(Number($('o-ship').value) * 100), items: items } })
+    api('/orders', { method: 'POST', body: { vendor: $('o-vendor').value, order_no: $('o-no').value, eta: $('o-eta').value || null, shipping_cents: $('o-ship').value === '' ? null : Math.round(Number($('o-ship').value) * 100), items: items } })
       .then(function(){ $('o-no').value = ''; $('o-ship').value = ''; loadOrders(); }).catch(function(x){ $('o-out').className = 'err'; $('o-out').textContent = x.message; });
   };
   function orderCard(o){
