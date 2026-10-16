@@ -71,7 +71,7 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
 - To refresh heads, rerun the research and `build_heads.py` (kept outside the repo; they use the private booklet).
 
 **Drop-off:** once a ticket is paid, the customer sees **Schedule drop-off** on their ticket.
-- The payment email tells them what's next. If the `DROPOFF_NOTE` secret is set (for example the porch address and instructions), it's included. It's a secret so the address never appears in the public repo. Without it, the email says Jackson will send the address.
+- The payment email tells them what's next. If the `DROPOFF_NOTE` (or `DROPOFF_LOCATION`) secret is set (for example the porch address and instructions), it's included. It's a secret so the address never appears in the public repo. Without it, the email says Jackson will send the address.
 - Paid tickets with no drop-off planned get one reminder a day, up to 2.
 - In the dashboard, the ticket list shows "📦 drop-off …" or "no drop-off yet" until the clubs are in. On the ticket, the **Clubs received** box emails the customer that their clubs are checked in.
 
