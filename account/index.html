@@ -26,6 +26,7 @@
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap">
     <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
@@ -33,7 +34,7 @@
     <div class="cta"><a class="ghost" href="/">Home</a><a class="solid" href="/menu/#quote">Instant price</a></div>
   </div>
 </header>
-<main class="wrap app narrow">
+<main id="main" class="wrap app narrow">
   <p id="loading" class="empty">Loading…</p>
 
   <!-- signed out -->
@@ -49,6 +50,9 @@
       <div id="up-fields" hidden class="form">
         <div><label for="a-name">Full name</label><input id="a-name" autocomplete="name"></div>
         <div><label for="a-phone">Mobile number</label><input id="a-phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(256) 555-0123"></div>
+        <div><label for="a-src">How did you hear about us?</label><select id="a-src">
+          <option value="">Choose one (optional)</option><option>Google search</option><option>Google Maps</option><option>Friend or family</option><option>Golf course or pro shop</option><option>Driving range or golf simulator</option><option>Facebook or Instagram</option><option>TikTok or YouTube</option><option>Nextdoor</option><option>Saw a bag tag or flyer</option><option>Event or tournament</option><option>Other</option></select></div>
+        <div id="src-more-w" hidden><label for="a-src-more">Which one?</label><input id="a-src-more" placeholder="e.g. who referred you, or which course"></div>
       </div>
       <div><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
       <div class="hp" aria-hidden="true"><label for="a-web">Website</label><input id="a-web" tabindex="-1" autocomplete="off"></div>
@@ -68,6 +72,7 @@
   <section id="v-home" hidden>
     <div class="eyebrow">My account</div>
     <h1 id="h-name">Hi</h1>
+    <p id="h-credit" class="ok" hidden style="margin:0 0 12px;font-weight:600"></p>
     <div class="home">
       <div class="stack">
         <div id="pending" class="card box pending" hidden>
@@ -134,6 +139,7 @@
     $('up-fields').hidden = m !== 'signup'; $('a-err').textContent = '';
   }
   $('t-in').onclick = function(){ setMode('signin'); };
+  $('a-src').onchange = function(){ var v = this.value; $('src-more-w').hidden = !/Friend|course|range|Event|Other/.test(v); };
   $('t-up').onclick = function(){ setMode('signup'); };
 
   $('f-start').addEventListener('submit', function(e){
@@ -161,7 +167,9 @@
   };
   $('f-code').addEventListener('submit', function(e){
     e.preventDefault(); $('c-err').textContent = '';
-    A.api('/api/auth/verify', { method: 'POST', noRedirect: true, body: { email: email, code: $('c-code').value } })
+    var src = $('a-src').value, more = $('a-src-more').value.trim(), ref = '';
+    try { ref = sessionStorage.getItem('rccw-ref') || (JSON.parse(localStorage.getItem('rccw-ref') || 'null') || {}).ref || ''; } catch (e2) {}
+    A.api('/api/auth/verify', { method: 'POST', noRedirect: true, body: { email: email, code: $('c-code').value, source: src ? src + (more ? ': ' + more : '') : '', ref: ref } })
       .then(function(){ if (next && !pending()) location.href = next; else load(); })
       .catch(function(x){ $('c-err').textContent = x.message; });
   });
@@ -184,6 +192,7 @@
     A.api('/api/me', { noRedirect: true }).then(function(j){
       $('loading').hidden = true; $('v-auth').hidden = true; $('v-home').hidden = false;
       var c = j.customer; $('h-name').textContent = 'Hi, ' + c.name.split(' ')[0];
+      $('h-credit').hidden = !c.credit_cents; $('h-credit').textContent = c.credit_cents ? 'You have ' + A.money(c.credit_cents) + ' thank-you credit. It comes off your next service automatically.' : '';
       $('m-name').value = c.name; $('m-phone').value = c.phone_fmt; $('m-email').textContent = c.email;
       var L = $('tickets'); L.textContent = '';
       if (!j.tickets.length) L.appendChild(el('p', 'No tickets yet. Request service or build an instant price to get started.', 'empty'));

@@ -140,6 +140,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 
 <header class="top">
   <div class="wrap">
@@ -162,7 +163,7 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
   </div>
 </nav>
 
-<main class="wrap" style="padding-bottom:32px">
+<main id="main" class="wrap" style="padding-bottom:32px">
   <div class="menu">
     <section class="card quote wide" id="quote" aria-labelledby="q-h">
       <h2 id="q-h">Instant price</h2>
@@ -215,6 +216,18 @@ details.parts h3{font-size:1.05rem;color:var(--muted);margin:16px 0 2px}
                 <div><label for="pf-stamp">Stamped text color</label><select id="pf-stamp"></select></div>
               </div>
             </div>
+          </div>
+          <div class="grp">
+            <b>Repairs</b>
+            <div class="line"><span>Shorten<small><span data-p="shorten">$10</span> a club · grip saved when possible</small></span>
+              <div class="step" data-k="sh" data-max="14"><button type="button" aria-label="Fewer clubs to shorten">−</button><output>0</output><button type="button" aria-label="More clubs to shorten">+</button></div></div>
+            <div class="line"><span>Extend<small><span data-p="extend">$15</span> a club + extension · needs a new grip</small></span>
+              <div class="step" data-k="ex" data-max="14"><button type="button" aria-label="Fewer clubs to extend">−</button><output>0</output><button type="button" aria-label="More clubs to extend">+</button></div></div>
+            <div class="line"><span>Loose head or rattle<small><span data-p="looseHead">$20</span> a club · re-epoxied, new ferrule</small></span>
+              <div class="step" data-k="lh" data-max="14"><button type="button" aria-label="Fewer clubs with loose heads">−</button><output>0</output><button type="button" aria-label="More clubs with loose heads">+</button></div></div>
+            <label class="chk"><input type="checkbox" id="q-stamp"><span>Custom stamping<small>Initials, numbers or short text · from <span data-p="stampFrom">$20</span>, Jackson confirms the price</small></span></label>
+            <div id="q-stampbox" hidden><label for="q-stamptxt">What should we stamp, and on which clubs?</label><input id="q-stamptxt" placeholder="e.g. JS on both wedges"></div>
+            <p class="fine" style="margin:0;color:var(--muted)">Broken shaft or something else? <a href="/request/?service=Broken%20club%20repair" style="color:var(--accent)">Send a request with a photo</a>.</p>
           </div>
           <div class="grp" id="q-parts" hidden>
             <b>Parts &amp; timing</b>

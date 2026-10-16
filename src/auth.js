@@ -63,8 +63,9 @@ export async function authVerify(request, env) {
   if (!c) {
     if (!row.name) return err('Please start over and create your account.', 400);
     const id = newId(12);
-    await env.DB.prepare("INSERT INTO customers (id, email, name, phone, created_at, created_by) VALUES (?, ?, ?, ?, ?, 'self')")
-      .bind(id, email, row.name, row.phone, now()).run();
+    const src = String(b.source || '').trim().slice(0, 80) || null, ref = String(b.ref || '').replace(/[^\w.-]/g, '').toUpperCase().slice(0, 24) || null;
+    await env.DB.prepare("INSERT INTO customers (id, email, name, phone, created_at, created_by, source, ref) VALUES (?, ?, ?, ?, ?, 'self', ?, ?)")
+      .bind(id, email, row.name, row.phone, now(), src, ref).run();
     c = { id };
   }
   await env.DB.prepare('UPDATE customers SET last_login_at = ? WHERE id = ?').bind(now(), c.id).run();

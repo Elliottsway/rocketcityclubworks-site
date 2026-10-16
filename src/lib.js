@@ -147,7 +147,7 @@ export async function publicTicket(env, t) {
     shop_note: t.shop_note, eta: t.eta, pickup_at: t.pickup_at || null, dropoff_at: t.dropoff_at || null, clubs_in_at: t.clubs_in_at || null,
     can_dropoff: !t.clubs_in_at && t.paid_cents > 0 && ['approved', 'paid', 'parts_ordered'].includes(t.status), status_at: t.status_at || t.updated_at, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents, refunded_cents: t.refunded_cents || 0,
     due_cents: Math.max(0, t.total_cents - t.paid_cents), version: t.version, approved_version: t.approved_version,
-    can_pay: ['awaiting_approval', 'approved'].includes(t.status) && t.total_cents > t.paid_cents,
+    can_pay: ['awaiting_approval', 'approved', 'in_progress', 'ready'].includes(t.status) && t.total_cents > t.paid_cents,
     deposit: t.deposit_cents ? { state: depositState(t), cents: t.deposit_cents, paid_at: t.deposit_paid_at || null, due_by: t.deposit_due_by || null, requested_at: t.deposit_requested_at || null } : null,
     lines: lines.map((l) => {
       const o = l.order_id && orders[l.order_id];

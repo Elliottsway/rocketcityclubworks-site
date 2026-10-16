@@ -4,7 +4,7 @@ import { json, err, now, newId, clip, cleanEmail, okEmail, cleanPhone, fmtPhone,
   addEvent, events, publicTicket, fillCosts, ordersFor, trackingUrl, isPaid, notifyCustomer, sendEmail, siteUrl, ticketNo, money, STATUSES, LABEL, TRACK,
   DEPOSIT, depositState, statusLabel } from './lib.js';
 
-const custOut = (c) => c && { id: c.id, name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone), created_at: c.created_at, last_login_at: c.last_login_at, created_by: c.created_by, shop_notes: c.shop_notes, credit_cents: c.credit_cents || 0 };
+const custOut = (c) => c && { id: c.id, name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone), created_at: c.created_at, last_login_at: c.last_login_at, created_by: c.created_by, shop_notes: c.shop_notes, credit_cents: c.credit_cents || 0, source: c.source || null, ref: c.ref || null };
 
 async function fullTicket(env, t) {
   const c = await getCustomer(env, t.customer_id);
@@ -34,6 +34,31 @@ export async function listTickets(request, env) {
     counts: Object.fromEntries((counts.results || []).map((x) => [x.status, x.n])),
   });
 }
+
+// ---------- today ----------
+// What needs Jackson's attention now. Used by the dashboard's Today panel and the 7am digest email.
+export async function todayData(env) {
+  const r = await env.DB.prepare(`SELECT t.id, t.number, t.title, t.status, t.created_at, t.status_at, t.updated_at, t.eta, t.pickup_at, t.dropoff_at, t.clubs_in_at,
+      t.deposit_cents, t.deposit_paid_at, t.deposit_due_by, t.total_cents, t.paid_cents, c.name
+      FROM tickets t LEFT JOIN customers c ON c.id = t.customer_id WHERE t.status NOT IN ('completed','cancelled') ORDER BY t.created_at`).all();
+  const when = (iso) => new Date(iso).toLocaleString('en-US', { timeZone: 'America/Chicago', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  const day = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
+  const nowMs = Date.now(), hrs = (iso) => Math.floor((nowMs - Date.parse(iso)) / 3600_000), today = new Date().toISOString().slice(0, 10);
+  const out = { reply: [], sourcing: [], waiting: [], dropoff: [], bench: [], pickup: [] };
+  for (const t of r.results || []) {
+    const row = { id: t.id, number: ticketNo(t.number), name: t.name || '?', title: t.title };
+    const dep = depositState(t), since = t.status_at || t.updated_at;
+    if (t.status === 'submitted' && dep === 'paid') out.sourcing.push({ ...row, note: 'report back by ' + when(t.deposit_due_by), late: Date.parse(t.deposit_due_by) < nowMs });
+    else if (t.status === 'submitted' && dep !== 'requested') out.reply.push({ ...row, note: `waiting ${hrs(t.created_at)}h for a price`, late: hrs(t.created_at) >= 12 });
+    else if (['awaiting_approval', 'approved'].includes(t.status) && hrs(since) >= 72) out.waiting.push({ ...row, note: `price sent ${Math.floor(hrs(since) / 24)} days ago, not paid` });
+    if (['paid', 'parts_ordered'].includes(t.status) && !t.clubs_in_at && t.paid_cents > 0) out.dropoff.push({ ...row, note: t.dropoff_at ? 'drop-off ' + t.dropoff_at : 'no drop-off planned yet', late: !t.dropoff_at && hrs(since) >= 48 });
+    if (['paid', 'parts_ordered', 'in_progress'].includes(t.status) && t.eta && t.eta <= today) out.bench.push({ ...row, note: 'ready date ' + day(t.eta) + (t.eta < today ? ' (past)' : ' (today)'), late: t.eta < today });
+    if (t.status === 'ready') out.pickup.push({ ...row, note: (t.pickup_at ? 'pickup ' + t.pickup_at : 'no pickup time yet') + ` · ready ${Math.floor(hrs(since) / 24)}d`, late: hrs(since) >= 72 });
+  }
+  return out;
+}
+// GET /api/admin/today
+export async function today(request, env) { return json(await todayData(env)); }
 
 // GET /api/admin/tickets/:id
 export async function getTicketAdmin(request, env, id) {
@@ -65,6 +90,18 @@ export async function updateTicket(request, env, id, ctx) {
     // parts that changed tracking by hand
     const before = Object.fromEntries(oldLines.map((l) => [l.id, l.track]));
     lines.forEach((l) => { if (l.kind === 'part' && before[l.id] && before[l.id] !== l.track) changes.push(`${l.desc}: ${l.track.replace('_', ' ')}.`); });
+  }
+  // Sending a price uses up any thank-you credit the customer has (one credit line per ticket).
+  let creditUsed = 0;
+  if (b.send_for_approval && !lines.some((l) => l.desc === 'Thank-you credit')) {
+    const cust = await getCustomer(env, t.customer_id);
+    const due = totals(lines, taxRate).total_cents - t.paid_cents;
+    creditUsed = Math.min((cust && cust.credit_cents) || 0, Math.max(0, due));
+    if (creditUsed > 0) {
+      lines = [...lines, { id: newId(6), desc: 'Thank-you credit', qty: 1, unit_cents: -creditUsed, kind: 'discount', taxable: false, part_no: null, track: null, order_id: null, cost_cents: null }];
+      total_cents = totals(lines, taxRate).total_cents; version += 1;
+      changes.push(`Thank-you credit applied: ${money(-creditUsed)}.`);
+    }
   }
   const shopNote = b.shop_note != null ? clip(b.shop_note, 3000) : t.shop_note;
   if (b.shop_note != null && shopNote !== t.shop_note) changes.push('Note from Jackson updated.');
@@ -98,6 +135,7 @@ export async function updateTicket(request, env, id, ctx) {
 
   await env.DB.prepare('UPDATE tickets SET status = ?, version = ?, lines = ?, tax_rate = ?, total_cents = ?, shop_note = ?, eta = ?, title = ?, pickup_at = ?, dropoff_at = ?, clubs_in_at = ?, updated_at = ? WHERE id = ?')
     .bind(status, version, JSON.stringify(lines), taxRate, total_cents, shopNote, eta, title, pickup, dropoff, clubsIn, now(), t.id).run();
+  if (creditUsed > 0) await env.DB.prepare('UPDATE customers SET credit_cents = MAX(0, credit_cents - ?) WHERE id = ?').bind(creditUsed, t.customer_id).run();
   if (changes.length) await addEvent(env, t.id, 'shop', 'priced', changes.join(' '));
   if (status !== t.status) await addEvent(env, t.id, 'shop', 'status', LABEL[status] || status);
   const msg = clip((b.message || '').trim(), 1500);

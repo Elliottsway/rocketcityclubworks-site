@@ -87,10 +87,11 @@ section[id],[id].anchor{scroll-margin-top:calc(var(--top-h) + 12px)}
 /* ---------- sections ---------- */
 .sec{padding:44px 0}
 @media (min-width:760px){.sec{padding:68px 0}}
-.eyebrow{font-family:var(--mono);font-weight:600;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.eyebrow{font-family:var(--mono);font-weight:600;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 h1,h2,h3{font-family:var(--display);font-weight:900;text-transform:uppercase;line-height:.95;margin:0}
 h2{font-size:clamp(2.1rem,7vw,3rem);margin-top:4px}
-h3{font-size:1.35rem;font-weight:800;letter-spacing:.01em}
+/* Card titles read as sentences, so the big uppercase type is saved for headings */
+h3{font-family:var(--body);text-transform:none;font-size:1.12rem;font-weight:700;letter-spacing:-.005em;line-height:1.25}
 .lede{color:var(--muted);font-size:1.02rem;max-width:58ch;margin:10px 0 0}
 .head{margin-bottom:22px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
@@ -157,3 +158,7 @@ footer.foot .small{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
 .bar .alt{border:2px solid var(--dots);color:var(--ink)}
 .bar svg{width:20px;height:20px;flex:none}
 @media (min-width:900px){.bar{display:none}}
+
+/* Skip link for keyboard users */
+.skip{position:absolute;left:-9999px;top:8px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:10px 14px;border-radius:8px;font-weight:700}
+.skip:focus{left:16px}

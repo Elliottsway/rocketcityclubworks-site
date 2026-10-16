@@ -46,6 +46,7 @@ async function api(request, env, ctx) {
       if (!p[2] && m === 'GET') return A.getCustomerAdmin(request, env, p[1]);
       if (!p[2] && m === 'PUT') return A.updateCustomer(request, env, p[1]);
     }
+    if (p[0] === 'today' && m === 'GET') return A.today(request, env);
     if (p[0] === 'costs' && m === 'GET') return X.partCosts(request, env);
     if (p[0] === 'reports' && m === 'GET') return X.reports(request, env);
     if (p[0] === 'photos' && p[1] && m === 'GET') { const ph = await X.getPhoto(env, p[1]); return ph ? X.servePhoto(env, ph) : err('Not found.', 404); }
@@ -91,7 +92,7 @@ export default {
   },
   // Hourly: reminders, thank-you emails, FedEx tracking.
   async scheduled(event, env, ctx) {
-    try { await X.reminders(env); } catch (e) { console.log('reminders failed', e && e.stack); }
+    try { await X.reminders(env, A.todayData); } catch (e) { console.log('reminders failed', e && e.stack); }
     try { await X.fedexTrack(env, ctx, A.applyOrderStatus); } catch (e) { console.log('fedex failed', e && e.stack); }
   },
 };

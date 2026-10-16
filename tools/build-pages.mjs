@@ -205,6 +205,7 @@ const head = ({ title, desc, url, ld }) => `<!doctype html>
 ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap">
     <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
@@ -261,7 +262,7 @@ function servicePage(p) {
     faqLd(p.faq),
   ];
   return head({ title: `${p.title} | Rocket City ClubWorks`, desc: p.desc, url, ld }) + `
-<main>
+<main id="main">
 <section class="title svc">
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>${p.nav}</span></nav>
@@ -289,7 +290,7 @@ function faqPage(homeFaq) {
   return head({ title: 'Golf Club Repair FAQ | Rocket City ClubWorks', url,
     desc: 'Answers about regripping, reshafting, loft and lie, repairs, custom builds, turnaround, drop-off and payment at Rocket City ClubWorks in Huntsville, AL.',
     ld: [crumbs([['Home', SITE + '/'], ['FAQ', url]]), faqLd(all)] }) + `
-<main>
+<main id="main">
 <section class="title svc"><div class="wrap"><nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>FAQ</span></nav><h1>Questions &amp; answers</h1>
   <p>Everything about prices, turnaround, drop-off and payment. Don't see yours? Send a request and Jackson replies every day, 8am–5pm.</p>
   <div class="ctas"><a class="btn light" href="/menu/#quote">Instant price</a><a class="btn line" href="/request/">Request service</a></div></div></section>

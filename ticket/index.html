@@ -23,6 +23,7 @@
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap">
     <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
@@ -30,7 +31,7 @@
     <div class="cta"><a class="ghost" href="/account/">My tickets</a></div>
   </div>
 </header>
-<main class="wrap app">
+<main id="main" class="wrap app">
   <p id="loading" class="empty">Loading your ticket…</p>
   <div id="missing" hidden><h1>Ticket not found</h1><p class="lede">It may belong to a different account. <a href="/account/" style="color:var(--accent)">See your tickets</a>.</p></div>
   <div id="tk" hidden>
@@ -39,6 +40,7 @@
     <h1 id="t-title"></h1>
     <span class="pill" id="t-status"></span>
     <div class="steps" id="t-steps" aria-hidden="true"></div>
+    <div class="stepn" id="t-stepn" aria-hidden="true"></div>
     <div class="stepl" id="t-stepl"></div>
     <div class="eta" id="t-eta" hidden><span>Estimated ready</span><b id="t-etad"></b></div>
     <div class="card box depbox" id="depbox" hidden style="margin-top:12px;border-color:var(--accent)">
@@ -86,7 +88,7 @@
           <form id="f-msg" class="form" style="margin-top:14px" novalidate>
             <label for="m-text">Message Jackson</label>
             <textarea id="m-text" placeholder="Questions, changes, pickup times…"></textarea>
-            <label class="filebtn" for="m-photos">📷 Add photos<input id="m-photos" type="file" accept="image/*" multiple></label>
+            <label class="filebtn" for="m-photos"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>Add photos<input id="m-photos" type="file" accept="image/*" multiple></label>
             <p class="hint" id="m-pcount" style="margin:0"></p>
             <button class="btn out" type="submit">Send message</button>
             <p id="m-out" role="status"></p>
@@ -132,6 +134,7 @@
     $('t-status').textContent = t.status_label; $('t-status').className = 'pill ' + (A.STATUS_CLASS[t.status] || '');
     var at = FLOW.indexOf(t.status === 'approved' ? 'awaiting_approval' : t.status), st = $('t-steps'); st.textContent = '';
     FLOW.forEach(function(s, i){ st.appendChild(el('span', null, i <= at ? 'on' : '')); });
+    var sn = $('t-stepn'); sn.textContent = ''; ['Review', 'Approve', 'Paid', 'Parts', 'Bench', 'Ready', 'Done'].forEach(function(n, i){ sn.appendChild(el('span', n, i === at ? 'on' : '')); });
     var dep = t.deposit && t.status === 'submitted' ? t.deposit.state : null;
     $('t-stepl').textContent = dep === 'requested' ? 'Jackson is ready to search for your head once the sourcing deposit is in.'
       : dep === 'paid' ? 'Jackson is searching for your head. You will hear back by ' + A.when(t.deposit.due_by) + '.' : STEPL[t.status] || '';
@@ -188,7 +191,7 @@
     $('p-paidl').hidden = !t.paid_cents; $('p-paidl').firstChild.textContent = dep === 'paid' ? 'Sourcing deposit paid' : 'Paid'; $('p-paid').textContent = '−' + money(t.paid_cents);
     $('p-refl').hidden = !t.refunded_cents; $('p-ref').textContent = money(t.refunded_cents || 0);
     $('p-duel').hidden = !(t.due_cents > 0 && (t.paid_cents || ['in_progress', 'ready', 'completed'].indexOf(t.status) >= 0)) || !!dep; $('p-due').textContent = money(t.due_cents);
-    $('p-pay').hidden = !t.can_pay; $('p-pay').textContent = 'Approve & pay · ' + money(t.due_cents);
+    $('p-pay').hidden = !t.can_pay; $('p-pay').textContent = (['in_progress', 'ready'].indexOf(t.status) >= 0 ? 'Pay balance · ' : 'Approve & pay · ') + money(t.due_cents);
     $('p-fine').textContent = t.can_pay ? 'Secure card payment by Square. Your parts are ordered as soon as the payment clears.'
       : dep === 'paid' ? 'Your deposit already comes off your final price. Jackson sends that price for you to approve once your head is lined up.'
       : t.status === 'submitted' && !t.total_cents ? 'Jackson usually replies the same day (8am–5pm) with your price. Nothing is charged until you approve it.'
