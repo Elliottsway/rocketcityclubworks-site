@@ -168,8 +168,8 @@ const PAGES = [
     extra: '',
     turnaround: [['Next day', 'Your own grips, loft &amp; lie, most repairs'], [D.rules.partsDays, 'Parts we order']],
     faq: [
-      ['Do you meet up in Madison?', 'Yes, by appointment. Pick meet-up on your ticket and we set a time and place that works, or drop off on our porch in northwest Huntsville.'],
-      ['How do I get a price?', 'Use the instant price for regrips, reshafts, loft and lie and builds, or send a request with photos for repairs. Jackson replies every day, 8am–5pm.'],
+      ['Do you meet up in Madison?', `Yes, by appointment, ${D.hours.short}. Pick meet-up on your ticket and we set a time and place that works, or drop off on our porch in northwest Huntsville.`],
+      ['How do I get a price?', `Use the instant price for regrips, reshafts, loft and lie and builds, or send a request with photos for repairs. Jackson replies ${D.hours.short}.`],
       ['How do I pay?', 'By card, Apple Pay or Google Pay on your service ticket, through Square. Nothing is charged until you approve the final price.'],
     ],
     related: ['golf-club-regripping', 'golf-club-repair'],
@@ -292,7 +292,7 @@ function faqPage(homeFaq) {
     ld: [crumbs([['Home', SITE + '/'], ['FAQ', url]]), faqLd(all)] }) + `
 <main id="main">
 <section class="title svc"><div class="wrap"><nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>FAQ</span></nav><h1>Questions &amp; answers</h1>
-  <p>Everything about prices, turnaround, drop-off and payment. Don't see yours? Send a request and Jackson replies every day, 8am–5pm.</p>
+  <p>Everything about prices, turnaround, drop-off and payment. Don't see yours? Send a request and Jackson replies ${D.hours.short}.</p>
   <div class="ctas"><a class="btn light" href="/menu/#quote">Instant price</a><a class="btn line" href="/request/">Request service</a></div></div></section>
 <div class="wrap svcgrid">
 ${groups.map(([t, f]) => `  <section class="card blk wide"><h2>${t}</h2>${faqHtml(f)}</section>`).join('\n')}
@@ -329,7 +329,8 @@ const business = {
   founder: { '@type': 'Person', name: 'Jackson Stewart' },
   address: { '@type': 'PostalAddress', addressLocality: 'Huntsville', addressRegion: 'AL', postalCode: '35806', addressCountry: 'US' },
   areaServed: ['Huntsville', 'Madison', 'Harvest', 'Meridianville', 'Hazel Green', 'Owens Cross Roads', 'Athens', 'Decatur'].map((n) => ({ '@type': 'City', name: n + ', AL' })),
-  openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '08:00', closes: '17:00' }],
+  openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: D.hours.weekday[0], closes: D.hours.weekday[1] },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Saturday', 'Sunday'], opens: D.hours.weekend[0], closes: D.hours.weekend[1] }],
   hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Golf club services', itemListElement: offers },
   sameAs: [],
 };
@@ -359,6 +360,7 @@ Key facts (prices as of ${D.asOf}; labor only, parts at regular retail, Alabama 
 - Loft and lie: check ${money(R.loftCheck)} (up to 14 clubs); adjust ${money(R.loftPer)} per club or ${money(R.loftSet)} for a set up to ${R.loftSetMax}.
 - Reshaft: steel ${money(R.reshaftSteel)}, graphite ${money(R.reshaftGraphite)}, driver/wood ${money(R.reshaftWood)} per club; iron sets of ${R.ironSetMin}+ ${money(R.ironSetSteel)} steel / ${money(R.ironSetGraphite)} graphite per club.
 - Custom builds: component heads priced instantly; genuine new or like-new brand heads sourced to beat buying new (refundable sourcing deposit, 10% of estimate, $25–$75).
+- Drop-off, pickup and replies: ${D.hours.short} (Central), by appointment. Requests and instant prices online any time.
 - No fitting studio. Payment by card, Apple Pay or Google Pay through Square.
 
 ## Pages

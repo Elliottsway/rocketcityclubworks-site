@@ -7,6 +7,9 @@
    Nothing is stocked: grips and parts are ordered from GolfWorks per job and arrive in ~2 business days. */
 window.RCCW = {
   asOf: "October 2026",
+  // When Jackson replies and does drop-offs/pickups (also the Google Business hours). Requests come in any time.
+  hours: { label: "Weekdays 4:30–8pm · Weekends 8am–6pm", short: "weekdays 4:30–8pm and weekends 8am–6pm",
+    weekday: ["16:30", "20:00"], weekend: ["08:00", "18:00"] },
   phone: "+12055889164",
   phoneLabel: "(205) 588-9164",
   email: "jackson@rocketcityclubworks.com",
