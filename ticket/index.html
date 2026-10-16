@@ -59,10 +59,10 @@
     <div class="card box pickupbox" id="dropbox" hidden style="margin-top:12px;border-color:var(--accent)">
       <h2 style="margin:0 0 6px">Schedule drop-off</h2>
       <p id="drop-now" class="ok" hidden style="margin:0 0 8px"></p>
-      <p class="fine" style="margin:0 0 10px">Porch drop-off in northwest Huntsville or a meet-up around Huntsville and Madison. Jackson confirms the spot. Put your name or ticket number on the bag.</p>
+      <p class="fine" style="margin:0 0 10px">Weekdays 4:30–8pm or weekends 8am–6pm. Porch drop-off in northwest Huntsville or a meet-up around Huntsville and Madison. Jackson confirms the spot. Put your name or ticket number on the bag.</p>
       <form id="f-drop" class="form pickup" novalidate>
         <div class="row2"><div><label for="dr-day">Day</label><input id="dr-day" type="date"></div>
-          <div><label for="dr-time">Time</label><select id="dr-time"><option>Morning (8–11am)</option><option>Midday (11am–2pm)</option><option>Afternoon (2–5pm)</option></select></div></div>
+          <div><label for="dr-time">Time</label><select id="dr-time"></select></div></div>
         <button class="btn" type="submit" id="dr-go">Request this drop-off time</button>
         <p id="dr-out" role="status"></p>
       </form>
@@ -72,7 +72,7 @@
       <p id="pick-now" class="ok" hidden style="margin:0 0 8px"></p>
       <form id="f-pick" class="form pickup" novalidate>
         <div class="row2"><div><label for="pk-day">Day</label><input id="pk-day" type="date"></div>
-          <div><label for="pk-time">Time</label><select id="pk-time"><option>Morning (8–11am)</option><option>Midday (11am–2pm)</option><option>Afternoon (2–5pm)</option></select></div></div>
+          <div><label for="pk-time">Time</label><select id="pk-time"></select></div></div>
         <button class="btn" type="submit" id="pk-go">Request this pickup time</button>
         <p id="pk-out" role="status"></p>
       </form>
@@ -194,7 +194,7 @@
     $('p-pay').hidden = !t.can_pay; $('p-pay').textContent = (['in_progress', 'ready'].indexOf(t.status) >= 0 ? 'Pay balance · ' : 'Approve & pay · ') + money(t.due_cents);
     $('p-fine').textContent = t.can_pay ? 'Secure card payment by Square. Your parts are ordered as soon as the payment clears.'
       : dep === 'paid' ? 'Your deposit already comes off your final price. Jackson sends that price for you to approve once your head is lined up.'
-      : t.status === 'submitted' && !t.total_cents ? 'Jackson usually replies the same day (8am–5pm) with your price. Nothing is charged until you approve it.'
+      : t.status === 'submitted' && !t.total_cents ? 'Jackson usually replies the same day (weekdays 4:30–8pm, weekends 8am–6pm) with your price. Nothing is charged until you approve it.'
       : t.status === 'submitted' ? 'This is an estimate. Jackson confirms parts, fit and the final price, then you approve it here. Nothing is charged until then.'
       : t.paid_cents >= t.total_cents && t.total_cents > 0 ? 'Paid in full. Thank you!' : '';
 
@@ -245,7 +245,15 @@
       .catch(function(x){ $('m-out').className = 'err'; $('m-out').textContent = x.message; load(); })
       .then(function(){ btn.disabled = false; });
   });
-  (function(){ var d = new Date(); d.setDate(d.getDate() + 1); ['pk-day', 'dr-day'].forEach(function(k){ $(k).min = ymd(new Date()); $(k).value = ymd(d); }); })();
+  // Hand-off windows: weekdays 4:30–8pm, weekends 8am–6pm (same as the Google Business hours).
+  var SLOTS = { weekday: ['Early evening (4:30–6pm)', 'Evening (6–8pm)'], weekend: ['Morning (8–11am)', 'Midday (11am–2pm)', 'Afternoon (2–6pm)'] };
+  function fillSlots(dayId, timeId){
+    var v = $(dayId).value, keep = $(timeId).value, sel = $(timeId);
+    var dow = v ? new Date(+v.slice(0, 4), +v.slice(5, 7) - 1, +v.slice(8, 10)).getDay() : 1;
+    sel.textContent = ''; SLOTS[dow === 0 || dow === 6 ? 'weekend' : 'weekday'].forEach(function(o){ sel.appendChild(new Option(o, o)); });
+    if ([].some.call(sel.options, function(o){ return o.value === keep; })) sel.value = keep;
+  }
+  (function(){ var d = new Date(); d.setDate(d.getDate() + 1); [['pk-day', 'pk-time'], ['dr-day', 'dr-time']].forEach(function(k){ $(k[0]).min = ymd(new Date()); $(k[0]).value = ymd(d); fillSlots(k[0], k[1]); $(k[0]).addEventListener('change', function(){ fillSlots(k[0], k[1]); }); }); })();
   $('f-drop').addEventListener('submit', function(e){
     e.preventDefault(); if (!$('dr-day').value) return;
     var when = A.day($('dr-day').value) + ', ' + $('dr-time').value;

@@ -25,6 +25,7 @@
     if (v != null) el.textContent = money(v);
   });
   document.querySelectorAll("[data-asof]").forEach(function(el){ el.textContent = D.asOf; });
+  document.querySelectorAll("[data-hours]").forEach(function(el){ el.textContent = el.getAttribute("data-hours") === "short" ? D.hours.short : D.hours.label; });
 
   // Launch bundle: shown until its end date, then those elements remove themselves.
   var launchLive = new Date() < new Date(D.bundles.launchBag.endsISO + "T00:00:00");
