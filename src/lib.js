@@ -111,6 +111,16 @@ export function trackingUrl(carrier, no) {
 }
 export const isPaid = (t) => t.total_cents > 0 && t.paid_cents >= t.total_cents;
 
+// After a ticket is paid in full: how the clubs get to the shop and what happens with parts.
+export function nextSteps(env, t) {
+  const parts = JSON.parse(t.lines || '[]').some((l) => l.kind === 'part' && l.track === 'to_order');
+  const out = [];
+  if (!t.clubs_in_at) out.push(`Next: get your clubs to the shop. Open your ticket and tap "Schedule drop-off" to pick a time. ${env.DROPOFF_NOTE ? 'Drop-off: ' + env.DROPOFF_NOTE : 'Jackson will send the drop-off address, or reply to set up a meet-up around Huntsville or Madison.'} Please put your name or ticket number (${ticketNo(t.number)}) on the bag.`);
+  if (parts) out.push('Jackson orders your parts today. They usually arrive in about 2 business days, and you can follow them on your ticket.');
+  if (t.eta) out.push(`Estimated ready: ${t.eta}.`);
+  return out.join('\n\n');
+}
+
 // ---------- head sourcing deposit (custom builds) ----------
 export const DEPOSIT = { rate: 0.10, min: 2500, max: 7500, hours: 48 };
 export const depositFor = (estimateCents) => Math.min(DEPOSIT.max, Math.max(DEPOSIT.min, Math.round((estimateCents * DEPOSIT.rate) / 100) * 100));
@@ -134,7 +144,8 @@ export async function publicTicket(env, t) {
   return {
     id: t.id, number: ticketNo(t.number), kind: t.kind, title: t.title, status: t.status, status_label: statusLabel(t),
     created_at: t.created_at, updated_at: t.updated_at, spec: JSON.parse(t.spec || '{}'), customer_note: t.customer_note,
-    shop_note: t.shop_note, eta: t.eta, pickup_at: t.pickup_at || null, status_at: t.status_at || t.updated_at, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents, refunded_cents: t.refunded_cents || 0,
+    shop_note: t.shop_note, eta: t.eta, pickup_at: t.pickup_at || null, dropoff_at: t.dropoff_at || null, clubs_in_at: t.clubs_in_at || null,
+    can_dropoff: !t.clubs_in_at && t.paid_cents > 0 && ['approved', 'paid', 'parts_ordered'].includes(t.status), status_at: t.status_at || t.updated_at, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents, refunded_cents: t.refunded_cents || 0,
     due_cents: Math.max(0, t.total_cents - t.paid_cents), version: t.version, approved_version: t.approved_version,
     can_pay: ['awaiting_approval', 'approved'].includes(t.status) && t.total_cents > t.paid_cents,
     deposit: t.deposit_cents ? { state: depositState(t), cents: t.deposit_cents, paid_at: t.deposit_paid_at || null, due_by: t.deposit_due_by || null, requested_at: t.deposit_requested_at || null } : null,

@@ -203,6 +203,8 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
               <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:.85rem"><input type="checkbox" id="d-int" style="width:20px;min-height:0"> Private note for me only (not emailed)</label></div>
             <div class="row2"><div><label for="d-status">Status</label><select id="d-status"></select></div>
               <div><label for="d-pick">Pickup scheduled</label><input id="d-pick" placeholder="e.g. Sat, Oct 18, morning"></div></div>
+            <div class="row2"><div><label for="d-drop">Drop-off planned</label><input id="d-drop" placeholder="e.g. Fri, Oct 17, morning"></div>
+              <div><label style="display:flex;gap:8px;align-items:center;margin-top:26px"><input type="checkbox" id="d-in" style="width:20px;min-height:0"> Clubs received (emails them)</label></div></div>
             <div class="acts">
               <button class="btn" id="d-send" type="button">Save &amp; send price to customer</button>
               <button class="btn out" id="d-save" type="button">Save</button>
@@ -340,7 +342,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
   function row(t){
     var a = el('a', null, 'card row'); a.href = '/admin/?t=' + encodeURIComponent(t.id);
     a.appendChild(el('b', t.number));
-    var m = el('div'); m.appendChild(el('span', (t.name || '?') + ' · ' + (t.title || ''))); m.appendChild(el('small', (t.deposit_state === 'paid' ? '🔎 Sourcing · report by ' + A.when(t.deposit_due_by) : t.deposit_state === 'requested' ? 'Deposit requested' : LABEL[t.status] || t.status) + ' · ' + A.date(t.updated_at) + (t.eta ? ' · ready ' + A.day(t.eta) : ''))); a.appendChild(m);
+    var m = el('div'); m.appendChild(el('span', (t.name || '?') + ' · ' + (t.title || ''))); m.appendChild(el('small', (t.deposit_state === 'paid' ? '🔎 Sourcing · report by ' + A.when(t.deposit_due_by) : t.deposit_state === 'requested' ? 'Deposit requested' : LABEL[t.status] || t.status) + (t.paid_cents > 0 && !t.clubs_in_at && ['approved', 'paid', 'parts_ordered'].indexOf(t.status) >= 0 ? ' · 📦 ' + (t.dropoff_at ? 'drop-off ' + t.dropoff_at : 'no drop-off yet') : '') + ' · ' + A.date(t.updated_at) + (t.eta ? ' · ready ' + A.day(t.eta) : ''))); a.appendChild(m);
     var r = el('div', null, 'money'); r.appendChild(el('div', money(t.total_cents))); r.appendChild(el('small', t.paid ? 'PAID' : t.paid_cents ? money(t.paid_cents) + ' paid' : '')); a.appendChild(r);
     return a;
   }
@@ -414,7 +416,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     var cr = t.customer && t.customer.credit_cents; $('d-credit').hidden = !cr; $('d-credit').textContent = '';
     if (cr) { $('d-credit').appendChild(document.createTextNode(t.customer.name.split(' ')[0] + ' has ' + money(cr) + ' thank-you credit. ')); var ab = el('button', 'Apply to this ticket', 'small'); ab.type = 'button';
       ab.onclick = function(){ api('/tickets/' + encodeURIComponent(t.id) + '/apply-credit', { method: 'POST', body: {} }).then(function(){ return api('/tickets/' + encodeURIComponent(t.id)); }).then(showTicket).catch(function(x){ alert(x.message); }); }; $('d-credit').appendChild(ab); }
-    $('d-print').href = '/admin/print/?t=' + encodeURIComponent(t.id); $('d-pick').value = t.pickup_at || '';
+    $('d-print').href = '/admin/print/?t=' + encodeURIComponent(t.id); $('d-pick').value = t.pickup_at || ''; $('d-drop').value = t.dropoff_at || ''; $('d-in').checked = !!t.clubs_in_at;
     $('d-ttl').value = t.title || '';
     var L = $('d-lines'); L.textContent = ''; t.lines.forEach(function(l){ L.appendChild(lineRow(l)); });
     $('d-tax').value = +(t.tax_rate * 100).toFixed(3); $('d-eta').value = t.eta || ''; $('d-note').value = t.shop_note || ''; $('d-msg').value = ''; $('d-int').checked = false;
@@ -666,7 +668,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
   };
 
   function save(send){
-    var body = { version: cur.version, lines: readLines(), tax_rate: (Number($('d-tax').value) || 0) / 100, shop_note: $('d-note').value, eta: $('d-eta').value || null, title: $('d-ttl').value, message: $('d-msg').value, internal: $('d-int').checked, pickup_at: $('d-pick').value };
+    var body = { version: cur.version, lines: readLines(), tax_rate: (Number($('d-tax').value) || 0) / 100, shop_note: $('d-note').value, eta: $('d-eta').value || null, title: $('d-ttl').value, message: $('d-msg').value, internal: $('d-int').checked, pickup_at: $('d-pick').value , dropoff_at: $('d-drop').value, clubs_in: $('d-in').checked};
     if (send) body.send_for_approval = true; else if ($('d-status').value !== cur.status) body.status = $('d-status').value;
     $('d-out').className = ''; $('d-out').textContent = 'Saving…';
     api('/tickets/' + encodeURIComponent(cur.id), { method: 'PUT', body: body }).then(function(t){

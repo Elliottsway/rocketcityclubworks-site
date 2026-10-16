@@ -26,7 +26,7 @@ export async function listTickets(request, env) {
     where += ' AND (LOWER(c.name) LIKE ? OR c.email LIKE ? OR c.phone LIKE ?' + (n ? ' OR t.number = ?' : '') + ')';
     args.push('%' + q + '%', '%' + q + '%', '%' + q.replace(/\D/g, '') + '%'); if (n) args.push(n);
   }
-  const r = await env.DB.prepare(`SELECT t.id, t.number, t.kind, t.title, t.status, t.created_at, t.updated_at, t.total_cents, t.paid_cents, t.eta, t.deposit_cents, t.deposit_paid_at, t.deposit_due_by, c.name, c.phone
+  const r = await env.DB.prepare(`SELECT t.id, t.number, t.kind, t.title, t.status, t.created_at, t.updated_at, t.total_cents, t.paid_cents, t.eta, t.deposit_cents, t.deposit_paid_at, t.deposit_due_by, t.dropoff_at, t.clubs_in_at, c.name, c.phone
       FROM tickets t LEFT JOIN customers c ON c.id = t.customer_id WHERE ${where} ORDER BY t.updated_at DESC LIMIT 300`).bind(...args).all();
   const counts = await env.DB.prepare('SELECT status, COUNT(*) AS n FROM tickets GROUP BY status').all();
   return json({
@@ -69,25 +69,35 @@ export async function updateTicket(request, env, id, ctx) {
   const shopNote = b.shop_note != null ? clip(b.shop_note, 3000) : t.shop_note;
   if (b.shop_note != null && shopNote !== t.shop_note) changes.push('Note from Jackson updated.');
   const eta = b.eta !== undefined ? (b.eta && /^\d{4}-\d{2}-\d{2}$/.test(b.eta) ? b.eta : null) : t.eta;
-  if (eta !== t.eta) changes.push(eta ? `Estimated ready: ${eta}.` : 'Ready date cleared.');
+  const fmtDay = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
+  if (eta !== t.eta) changes.push(eta ? `Estimated ready: ${fmtDay(eta)}.` : 'Ready date cleared.');
   const title = b.title != null ? clip(b.title, 120) : t.title;
   const pickup = b.pickup_at !== undefined ? clip((b.pickup_at || '').trim(), 80) || null : t.pickup_at;
   if (pickup !== t.pickup_at) changes.push(pickup ? `Pickup scheduled: ${pickup}.` : 'Pickup time cleared.');
+  const dropoff = b.dropoff_at !== undefined ? clip((b.dropoff_at || '').trim(), 80) || null : t.dropoff_at;
+  if (dropoff !== t.dropoff_at) changes.push(dropoff ? `Drop-off scheduled: ${dropoff}.` : 'Drop-off time cleared.');
+  const clubsIn = b.clubs_in === undefined ? t.clubs_in_at : b.clubs_in ? (t.clubs_in_at || now()) : null;
 
   if (b.send_for_approval) {
     if (total_cents - t.paid_cents <= 0) return err('Nothing is due, so there is nothing to approve.');
     status = 'awaiting_approval';
     const dep = t.deposit_paid_at && t.paid_cents > 0 ? ` Your ${money(t.paid_cents)} already paid (sourcing deposit) is taken off.` : '';
-    mail.push(['your price is ready to approve', `Jackson reviewed your ticket. Total due: ${money(total_cents - t.paid_cents)}.${dep}\n\nOpen your ticket to see every part and service, then tap "Approve & pay" to pay securely with Square. Parts are ordered as soon as your payment clears.`]);
+    const tax = totals(lines, taxRate).tax_cents;
+    const list = lines.map((l) => `- ${l.qty > 1 ? l.qty + ' × ' : ''}${l.desc}: ${money(l.qty * l.unit_cents)}`).concat(tax ? [`- Sales tax on parts: ${money(tax)}`] : []).join('\n');
+    mail.push([`your price is ready (${money(total_cents - t.paid_cents)})`, `Jackson reviewed your ticket. Here's your price:\n\n${list}\n\nTotal due: ${money(total_cents - t.paid_cents)}.${dep}${eta ? ` Estimated ready: ${fmtDay(eta)}.` : ''}\n\nOpen your ticket and tap "Approve & pay" to pay securely by card, Apple Pay or Google Pay. Parts are ordered as soon as your payment clears. Want a different grip or shaft? Reply and Jackson will re-price it.`]);
   } else if (b.status && b.status !== status) {
     if (!STATUSES.includes(b.status)) return err('Unknown status.');
     status = b.status;
     if (status === 'ready') mail.push(['ready for pickup', 'Your clubs are ready! Open your ticket and tap "Schedule pickup" to pick a time, or reply to this email.']);
-    if (status === 'in_progress') mail.push(['on the bench', 'Your parts are in and Jackson is working on your clubs now.']);
+    if (status === 'in_progress') mail.push(['on the bench', 'Your clubs are on the bench and Jackson is working on them now.']);
+  }
+  if (clubsIn && !t.clubs_in_at) {
+    changes.push('Clubs received at the shop.');
+    mail.push(['we have your clubs', `Your clubs are checked in at the shop.${eta ? ` Estimated ready: ${fmtDay(eta)}.` : ''} We'll email you the moment they're done.`]);
   }
 
-  await env.DB.prepare('UPDATE tickets SET status = ?, version = ?, lines = ?, tax_rate = ?, total_cents = ?, shop_note = ?, eta = ?, title = ?, pickup_at = ?, updated_at = ? WHERE id = ?')
-    .bind(status, version, JSON.stringify(lines), taxRate, total_cents, shopNote, eta, title, pickup, now(), t.id).run();
+  await env.DB.prepare('UPDATE tickets SET status = ?, version = ?, lines = ?, tax_rate = ?, total_cents = ?, shop_note = ?, eta = ?, title = ?, pickup_at = ?, dropoff_at = ?, clubs_in_at = ?, updated_at = ? WHERE id = ?')
+    .bind(status, version, JSON.stringify(lines), taxRate, total_cents, shopNote, eta, title, pickup, dropoff, clubsIn, now(), t.id).run();
   if (changes.length) await addEvent(env, t.id, 'shop', 'priced', changes.join(' '));
   if (status !== t.status) await addEvent(env, t.id, 'shop', 'status', LABEL[status] || status);
   const msg = clip((b.message || '').trim(), 1500);

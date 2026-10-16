@@ -41,7 +41,7 @@ export async function createTicket(request, env, c, ctx) {
     lines = await fillCosts(env, cleanLines(b.lines));
     if (!lines.length) return err('Your quote is empty.');
     spec = { summary: (Array.isArray(b.summary) ? b.summary : []).slice(0, 40).map((s) => clip(s, 400)) };
-    title = 'Instant price quote';
+    title = clip(String(spec.summary[0] || 'Instant price quote').split(':')[0], 60);
   }
   const taxRate = Number(env.TAX_RATE || 0), sum = totals(lines, taxRate);
   const id = newId(), t = now();
@@ -56,7 +56,7 @@ export async function createTicket(request, env, c, ctx) {
     notifyShop(env, `New ${kind === 'request' ? 'request' : 'quote'} ${ticketNo(number)} from ${c.name}`,
       `${c.name} · ${fmtPhone(c.phone)} · ${c.email}\n${kind === 'quote' ? 'Estimate: ' + money(sum.total_cents) + '\n' : ''}\n${spec.summary.join('\n')}\n\nNote: ${b.note || '-'}\n\nReview and price it: ${siteUrl(env, '/admin/?t=' + id)}`),
     notifyCustomer(env, tk, 'we got your ' + (kind === 'request' ? 'request' : 'quote'),
-      'Thanks! Jackson will review it, confirm parts and fit, and send you a final price to approve. Nothing is charged until you approve it.'),
+      'Thanks! Jackson will review it, confirm parts and fit, and send you a final price to approve, usually the same day (replies 8am–5pm). Nothing is charged until you approve it.\n\nIf it\'s a repair, or you\'re not sure of your grip size or shaft, a photo on your ticket helps.'),
   ]));
   return json({ id, number: ticketNo(number) }, 201);
 }

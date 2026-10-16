@@ -166,7 +166,7 @@
       }
       if (h && h.hands) { [].forEach.call(hs.options, function(o){ o.disabled = h.hands.indexOf(o.value) < 0; }); if (h.hands.indexOf(hs.value) < 0) { hs.value = h.hands[0]; row.hand = hs.value; } }
       lead.textContent = !h || h.request ? '' : h.basis === 'oem'
-        ? 'Jackson finds a genuine new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. To start the search he asks for a refundable sourcing deposit (10% of the estimate, $25–$75) that counts toward your build, and reports back within 48 hours. Usually about 1–2 weeks in all.'
+        ? 'Jackson finds a genuine new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. To start the search he asks for a refundable sourcing deposit (10% of the estimate, $25–$75) that counts toward your build, and reports back within 48 hours.'
         : leadText(h.lead) + (h.note ? ' · ' + h.note : '');
       calc();
     }
@@ -273,6 +273,7 @@
     if (putter) {
       add('Putter grip install', 1, R.putterGrip, 'labor');
       if (putterPk.sel && !putterPk.sel.own) { var pp = putterPk.price(); add(putterPk.desc(), 1, pp, 'part', true, false, putterPk.isRequest(), putterPk.sel.id); parts += pp; if (putterPk.isRequest()) tbd = true; }
+      if (!putterPk.sel) { add('Putter grip (pick one above)', 1, 0, 'part', true, false, true); tbd = true; }
       msg.push('Putter regrip: ' + (putterPk.sel ? putterPk.desc() : 'grip not picked yet'));
     }
     // Loft & lie
@@ -297,11 +298,12 @@
     });
     var rs = g('n-rs'), need6 = R.ironSetMin - irons;
     rs.hidden = !(irons > 0 && need6 > 0 && need6 <= 3); rs.textContent = rs.hidden ? '' : 'Add ' + need6 + ' more iron' + (need6 > 1 ? 's' : '') + ' for set pricing: ' + $(R.ironSetSteel) + ' steel, ' + $(R.ironSetGraphite) + ' graphite per club.';
+    if (shaftCount > q.rg) { rs.hidden = false; rs.textContent = (rs.textContent ? rs.textContent + ' ' : '') + 'Reshafted clubs need grips: add ' + (shaftCount - q.rg) + ' more to the regrip count above (your grips or ours).'; }
     // Custom builds
     var buildLead = 0, buildClubs = 0, buildIrons = 0;
-    buildRows.forEach(function(r){ if (r.type === 'irons' || r.type === 'wedge') buildIrons += r.type === 'irons' ? r.clubs.length || 1 : 1; });
+    buildRows.forEach(function(r){ if (r.type === 'irons' || r.type === 'wedge') buildIrons += r.type === 'irons' ? r.clubs.length || 7 : 1; });
     buildRows.forEach(function(r){
-      var h = r.head.sel, n = r.type === 'irons' ? (h && !h.request && h.clubs ? r.clubs.length : 7) : 1;
+      var h = r.head.sel, n = r.type === 'irons' ? (h && !h.request && h.clubs ? r.clubs.length : (r.clubs.length || 7)) : 1;
       if (!n) return;
       var label = BTYPES.filter(function(t){ return t[0] === r.type; })[0][1], hand = r.hand === 'LH' ? ', left-handed' : '';
       var clubs = r.type === 'irons' && r.clubs.length ? ' (' + r.clubs.join(', ') + ')' : '';
@@ -340,7 +342,7 @@
       else add('Parts fee', 1, R.partsFee, 'fee');
     }
     var anyWork = lines.length > 0;
-    var ready = !anyWork ? '—' : buildClubs ? (buildLead > 4 ? 'About ' + (buildLead + 2) + ' business days (head lead time)' : '4–6 business days') : !partsOrdered ? 'Next day' : rush ? 'About ' + R.rushDays : irons >= R.ironSetMin ? '4–5 business days' : shaftCount ? '3–5 business days' : R.partsDays;
+    var ready = !anyWork ? '—' : buildClubs ? (buildLead > 4 ? 'About ' + (buildLead + 2) + ' business days (head lead time)' : '4–6 business days') : !partsOrdered ? (shaftCount ? '2 business days (epoxy cures overnight)' : 'Next day') : rush ? 'About ' + R.rushDays : irons >= R.ironSetMin ? '4–5 business days' : shaftCount ? '3–5 business days' : R.partsDays;
     var total = r2(lines.reduce(function(s, l){ return s + l.qty * l.unit_cents; }, 0) / 100);
 
     var box = g('q-lines'); box.textContent = '';
@@ -353,6 +355,7 @@
       box.appendChild(d);
     });
     g('q-total').textContent = $(total) + (tbd ? ' + TBD' : '');
+    var bt = document.getElementById('bar-total'); if (bt) bt.textContent = anyWork ? 'Your price: ' + $(total) + (tbd ? ' + TBD' : '') + ' ↓' : 'Instant price';
     g('q-ready').textContent = ready;
     g('q-submit').disabled = !anyWork;
 

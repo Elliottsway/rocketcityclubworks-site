@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Your Account · Rocket City ClubWorks</title>
 <meta name="description" content="Sign in to request service, approve prices, pay and track your clubs at Rocket City ClubWorks.">
@@ -32,7 +33,7 @@
     <div class="cta"><a class="ghost" href="/">Home</a><a class="solid" href="/menu/#quote">Instant price</a></div>
   </div>
 </header>
-<main class="wrap app">
+<main class="wrap app narrow">
   <p id="loading" class="empty">Loading…</p>
 
   <!-- signed out -->
@@ -56,10 +57,10 @@
     </form>
     <form id="f-code" class="card box form" hidden novalidate>
       <p style="margin:0">We sent a 6-digit code to <b id="c-email"></b>. It works for 15 minutes.</p>
-      <div><label for="c-code">Code</label><input id="c-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"></div>
+      <div><label for="c-code">Code</label><input id="c-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="••••••"></div>
       <button class="btn" type="submit">Sign in</button>
       <p class="err" id="c-err" role="alert"></p>
-      <p class="hint">Not there? Check spam, or <button type="button" class="linkbtn" id="c-back">use a different email</button>.</p>
+      <p class="hint">Not there? Check spam, <button type="button" class="linkbtn" id="c-resend">send a new code</button>, or <button type="button" class="linkbtn" id="c-back">use a different email</button>.</p>
     </form>
   </section>
 
@@ -112,6 +113,13 @@
     </div>
   </section>
 </main>
+<footer class="foot">
+  <div class="wrap">
+    <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
+    <div class="links"><a href="/menu/#quote">Instant price</a><a href="/request/">Request service</a><a href="/account/">My account</a><a href="/faq/">FAQ</a></div>
+    <div class="small">© 2026 Rocket City ClubWorks · Huntsville, Alabama · Payments secured by Square</div>
+  </div>
+</footer>
 <script src="/assets/app.js"></script>
 <script>
 (function(){
@@ -139,11 +147,18 @@
       })
       .catch(function(x){
         $('a-err').textContent = x.message;
-        if (x.status === 404) setMode('signup'), $('a-err').textContent = x.message;
+        if (x.status === 404) { setMode('signup'); $('a-err').textContent = 'New here? Add your name and mobile number below and we\u2019ll email your code.'; }
       })
       .then(function(){ btn.disabled = false; btn.textContent = 'Email me a code'; });
   });
   $('c-back').onclick = function(){ $('f-code').hidden = true; $('f-start').hidden = false; };
+  $('c-resend').onclick = function(){
+    var b = this; b.disabled = true; $('c-err').textContent = '';
+    A.api('/api/auth/start', { method: 'POST', noRedirect: true, body: { mode: mode, email: email, name: $('a-name').value, phone: $('a-phone').value, website: $('a-web').value } })
+      .then(function(j){ $('c-err').className = 'ok'; $('c-err').textContent = 'New code sent.'; if (j.dev_code) $('c-code').value = j.dev_code; })
+      .catch(function(x){ $('c-err').className = 'err'; $('c-err').textContent = x.message; })
+      .then(function(){ b.disabled = false; });
+  };
   $('f-code').addEventListener('submit', function(e){
     e.preventDefault(); $('c-err').textContent = '';
     A.api('/api/auth/verify', { method: 'POST', noRedirect: true, body: { email: email, code: $('c-code').value } })
@@ -183,7 +198,7 @@
     }).catch(function(x){
       $('loading').hidden = true; $('v-auth').hidden = false;
       if (pending()) { $('a-title').textContent = 'Sign in to submit'; $('a-lede').textContent = 'Your quote is saved. Sign in or create an account (it takes a minute) and it will be ready to submit.'; setMode('signup'); }
-      else if (qs.get('new') === '1') setMode('signup');
+      else if (qs.get('new') === '1' || next) setMode('signup');
     });
   }
   $('f-prof').addEventListener('submit', function(e){
