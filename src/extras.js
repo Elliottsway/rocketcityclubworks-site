@@ -1,7 +1,7 @@
 // Photos, hand-recorded payments, customer credit, part costs, reports and the hourly automatic jobs
 // (approval/payment and pickup reminders, thank-you + review emails, FedEx tracking).
 import { json, err, now, newId, clip, readJson, getTicket, getCustomer, addEvent, totals, limited, notifyShop, notifyCustomer,
-  siteUrl, ticketNo, money, LABEL } from './lib.js';
+  siteUrl, ticketNo, money, LABEL, DEPOSIT, depositState } from './lib.js';
 
 const HOUR = 3600_000;
 const MAX_PHOTO = 1_600_000; // bytes, after the browser shrinks it
@@ -66,6 +66,13 @@ export async function manualPayment(request, env, id, ctx) {
   await env.DB.prepare('INSERT INTO payments (square_payment_id, ticket_id, amount_cents, at, method, note) VALUES (?, ?, ?, ?, ?, ?)')
     .bind(pid, t.id, amount, now(), method, clip(b.note, 200)).run();
   const paid = t.paid_cents + amount, full = paid >= t.total_cents && t.total_cents > 0;
+  if (depositState(t) === 'requested') { // a sourcing deposit paid in person starts the 48-hour clock, like one paid online
+    await env.DB.prepare('UPDATE tickets SET paid_cents = ?, deposit_paid_at = ?, deposit_due_by = ?, updated_at = ? WHERE id = ?')
+      .bind(paid, now(), new Date(Date.now() + DEPOSIT.hours * HOUR).toISOString(), now(), t.id).run();
+    await addEvent(env, t.id, 'shop', 'paid', `Sourcing deposit received: ${money(amount)} (${method}). It counts toward the build.`);
+    ctx.waitUntil(notifyCustomer(env, t, 'sourcing deposit received', `Thanks! Jackson recorded your ${method} sourcing deposit of ${money(amount)} and is now searching for your head. You'll hear back within ${DEPOSIT.hours} hours. It counts toward your build, and it's refunded in full if no genuine head is found at the quoted price.`));
+    return json({ ok: true });
+  }
   const status = full && ['submitted', 'awaiting_approval', 'approved'].includes(t.status) ? 'paid' : t.status;
   await env.DB.prepare('UPDATE tickets SET paid_cents = ?, status = ?, updated_at = ? WHERE id = ?').bind(paid, status, now(), t.id).run();
   await addEvent(env, t.id, 'shop', 'paid', `Payment received: ${money(amount)} (${method}).`);
@@ -178,9 +185,25 @@ async function sentSince(env, ticketId, kind, since) {
 const logSent = (env, id, kind) => env.DB.prepare('INSERT INTO reminders (ticket_id, kind, sent_at) VALUES (?, ?, ?)').bind(id, kind, now()).run();
 
 export async function reminders(env) {
+  const nowMs = Date.now();
+  // 0) Head sourcing: warn Jackson 12 hours before the 48-hour report-back is due, and again if it passes (any hour).
+  for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status = 'submitted' AND deposit_paid_at IS NOT NULL AND deposit_due_by IS NOT NULL").all()).results || []) {
+    const left = Date.parse(t.deposit_due_by) - nowMs, kind = left <= 0 ? 'sourcing-late' : left <= 12 * HOUR ? 'sourcing-soon' : null;
+    if (!kind || (await sentSince(env, t.id, kind, '2000')).n) continue;
+    await logSent(env, t.id, kind);
+    const by = new Date(t.deposit_due_by).toLocaleString('en-US', { timeZone: 'America/Chicago', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+    await notifyShop(env, `${ticketNo(t.number)}: head search ${kind === 'sourcing-late' ? 'is PAST its 48 hours' : 'due by ' + by}`,
+      `${kind === 'sourcing-late' ? 'The 48 hours you promised are up.' : `You promised an update by ${by} Central.`} Send the price, message the customer with where the search stands, or refund the deposit and close the ticket.\n\n${siteUrl(env, '/admin/?t=' + t.id)}`);
+  }
   const h = centralHour();
   if (!env.DEV_ANY_HOUR && (h < 8 || h >= 20)) return; // only email customers 8am–8pm Central
-  const nowMs = Date.now();
+  // 0b) Sourcing deposit asked for but not paid: every 24 hours, up to 3 times.
+  for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status = 'submitted' AND deposit_cents > 0 AND deposit_paid_at IS NULL AND deposit_requested_at IS NOT NULL").all()).results || []) {
+    const base = t.deposit_requested_at, s = await sentSince(env, t.id, 'deposit', base);
+    if (s.n >= 3 || nowMs - Date.parse(s.last || base) < 24 * HOUR) continue;
+    await logSent(env, t.id, 'deposit');
+    await notifyCustomer(env, t, 'reminder: start your head search', `Jackson is ready to search for your head as soon as the ${money(t.deposit_cents)} sourcing deposit is in. It counts toward your build and is refunded in full if no genuine head is found at the quoted price.\n\nOpen your ticket and tap "Pay deposit & start search". Changed your mind? Just reply and let him know.`);
+  }
   // 1) Price sent but not approved/paid: every 24 hours, up to 5 times.
   for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status IN ('awaiting_approval','approved') AND total_cents > paid_cents").all()).results || []) {
     const base = t.status_at || t.updated_at, s = await sentSince(env, t.id, 'approve', base);

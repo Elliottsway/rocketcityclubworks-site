@@ -136,6 +136,10 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
         <div class="stack">
           <div id="d-pay" class="banner"></div>
           <div class="banner good" id="d-credit" hidden></div>
+          <details class="card box" id="d-dep" hidden><summary class="linkbtn" style="display:inline;font-weight:700">Head sourcing deposit</summary>
+            <div id="dep-body" style="margin-top:8px"></div>
+            <p class="hint" style="margin:8px 0 0">10% of the build estimate, $25 min, $75 max. It counts toward the build. Refund it in full if you can't find a genuine head at the quoted price or they pass on the one you find. You report back within 48 hours of payment.</p>
+          </details>
           <div class="card box" id="d-paybox"><h2>Payments</h2><div class="pays" id="d-pays"></div>
             <details style="margin-top:10px"><summary class="linkbtn" style="display:inline">Record cash / Venmo / other payment</summary>
               <div class="refund" style="margin-top:8px"><input id="mp-amt" type="number" step="0.01" aria-label="Amount received" placeholder="Amount">
@@ -336,7 +340,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
   function row(t){
     var a = el('a', null, 'card row'); a.href = '/admin/?t=' + encodeURIComponent(t.id);
     a.appendChild(el('b', t.number));
-    var m = el('div'); m.appendChild(el('span', (t.name || '?') + ' · ' + (t.title || ''))); m.appendChild(el('small', (LABEL[t.status] || t.status) + ' · ' + A.date(t.updated_at) + (t.eta ? ' · ready ' + A.day(t.eta) : ''))); a.appendChild(m);
+    var m = el('div'); m.appendChild(el('span', (t.name || '?') + ' · ' + (t.title || ''))); m.appendChild(el('small', (t.deposit_state === 'paid' ? '🔎 Sourcing · report by ' + A.when(t.deposit_due_by) : t.deposit_state === 'requested' ? 'Deposit requested' : LABEL[t.status] || t.status) + ' · ' + A.date(t.updated_at) + (t.eta ? ' · ready ' + A.day(t.eta) : ''))); a.appendChild(m);
     var r = el('div', null, 'money'); r.appendChild(el('div', money(t.total_cents))); r.appendChild(el('small', t.paid ? 'PAID' : t.paid_cents ? money(t.paid_cents) + ' paid' : '')); a.appendChild(r);
     return a;
   }
@@ -398,6 +402,8 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     $('d-pay').textContent = (t.refunded_cents ? 'Refunded ' + money(t.refunded_cents) + '. ' : '') + (paid ? '✓ Paid in full: ' + money(t.paid_cents) + '. OK to order parts.'
       : t.paid_cents ? 'Partly paid: ' + money(t.paid_cents) + ' of ' + money(t.total_cents) + '. Don\'t order the new parts yet.'
       : t.status === 'submitted' ? 'Not priced yet. Set the price, then "Save & send price to customer".' : 'Not paid yet: don\'t order parts.');
+    if (t.deposit && t.deposit.state === 'paid') { $('d-pay').className = 'banner warn'; $('d-pay').textContent = 'Sourcing deposit paid: ' + money(t.deposit.cents) + '. Report back by ' + A.when(t.deposit.due_by) + '. Price the build when the head is lined up (the deposit comes off), or refund it below.'; }
+    renderDeposit(t);
     var c = t.customer || {}, K = $('d-cust'); K.textContent = '';
     function kv(k, v, href){ K.appendChild(el('span', k)); var x = href ? el('a', v) : el('b', v); if (href) x.href = href; K.appendChild(x); }
     kv('Name', c.name || '?'); if (c.phone) { kv('Call', c.phone_fmt, 'tel:' + c.phone); kv('Text', c.phone_fmt, 'sms:' + c.phone); } kv('Email', c.email || '', 'mailto:' + c.email);
@@ -415,6 +421,44 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     var sel = $('d-status'); sel.textContent = ''; Object.keys(LABEL).forEach(function(s){ sel.appendChild(new Option(LABEL[s], s)); }); sel.value = t.status;
     totals(); loadPays(t); if ($('bp').open) bpFill(); $('pk-cfg').hidden = true; $('pk-q').value = ''; $('pk-res').hidden = true;
   }
+  // ---------- head sourcing deposit ----------
+  // Build estimate = priced lines + the new-retail reference on any brand head still "Jackson to price".
+  function depEstimate(t){
+    return t.lines.reduce(function(s, l){
+      var m = /new retail \$([\d,]+(?:\.\d+)?)/.exec(l.desc), amt = l.qty * l.unit_cents;
+      return s + (amt === 0 && m ? Math.round(Number(m[1].replace(/,/g, '')) * 100) * l.qty : amt);
+    }, 0);
+  }
+  function depFor(est){ return Math.min(7500, Math.max(2500, Math.round(est * 0.10 / 100) * 100)); }
+  function depPost(path, body){ return api('/tickets/' + encodeURIComponent(cur.id) + path, { method: 'POST', body: body }).then(showTicket).catch(function(x){ alert(x.message); }); }
+  function renderDeposit(t){
+    var d = t.deposit, st = d && t.status === 'submitted' ? d.state : null, sourced = t.lines.some(function(l){ return /head sourced|Jackson to price/.test(l.desc); });
+    var box = $('d-dep'), B = $('dep-body'); B.textContent = '';
+    box.hidden = !(t.status === 'submitted' || (d && d.paid_at));
+    if (box.hidden) return;
+    box.open = sourced || !!st;
+    if (st === 'paid') {
+      var left = Math.round((Date.parse(d.due_by) - Date.now()) / 3600000);
+      B.appendChild(el('p', '✓ ' + money(d.cents) + ' paid ' + A.when(d.paid_at) + '. Report back by ' + A.when(d.due_by) + (left > 0 ? ' (' + left + 'h left).' : ' (past due).'), left > 0 ? 'ok' : 'err'));
+      B.appendChild(el('p', 'Found it? Send photos, serial and source in a message, then price the build and "Save & send price". No luck? Refund and close:', 'hint'));
+      var rr = el('div', null, 'refund'), why = el('input'); rr.style.gridTemplateColumns = '1fr auto'; why.placeholder = 'Reason (shown to the customer, optional)';
+      var go = el('button', 'Refund deposit & close ticket', 'small'); go.type = 'button';
+      go.onclick = function(){ if (confirm('Refund ' + money(d.cents) + ' in full through Square and cancel this ticket?')) { go.disabled = true; depPost('/deposit-refund', { reason: why.value }); } };
+      rr.appendChild(why); rr.appendChild(go); B.appendChild(rr);
+      return;
+    }
+    if (d && d.paid_at) { B.appendChild(el('p', money(d.cents) + ' sourcing deposit paid ' + A.when(d.paid_at) + '. It is counted in "Paid" on this ticket.', 'hint')); return; }
+    var est = depEstimate(t), sug = depFor(est);
+    if (st === 'requested') B.appendChild(el('p', 'Requested ' + money(d.cents) + ' on ' + A.when(d.requested_at) + '. Waiting on the customer (they get a reminder every 24 hours, up to 3).', 'ok'));
+    B.appendChild(el('p', 'Build estimate ' + money(est) + ' (brand heads at new retail) → suggested deposit ' + money(sug) + '.', 'hint'));
+    var r = el('div', null, 'refund'), amt = el('input'); amt.type = 'number'; amt.step = '1'; amt.value = ((st ? d.cents : sug) / 100).toFixed(0); amt.setAttribute('aria-label', 'Deposit $');
+    var ask = el('button', st ? 'Change amount & re-send' : 'Request deposit & email customer', 'small'); ask.type = 'button';
+    ask.onclick = function(){ var c = Math.round((Number(amt.value) || 0) * 100); if (c < 500) { alert('Enter the deposit amount.'); return; } ask.disabled = true; depPost('/deposit', { amount_cents: c }); };
+    r.appendChild(amt); r.appendChild(ask);
+    if (st) { var wd = el('button', 'Withdraw', 'small'); wd.type = 'button'; wd.onclick = function(){ depPost('/deposit', { amount_cents: 0 }); }; r.appendChild(wd); }
+    B.appendChild(r);
+  }
+
   // ---------- add from price list / catalog ----------
   var D = window.RCCW, R = D.rules, PARTS = window.RCCWparts, CAT = null, pkCat = 'all';
   function svc(name){ var f = null; D.services.forEach(function(g){ g.items.forEach(function(i){ if (i.name === name && typeof i.price === 'number') f = i.price; }); }); return f == null ? 0 : f; }

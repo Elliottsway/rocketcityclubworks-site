@@ -111,16 +111,33 @@ export function trackingUrl(carrier, no) {
 }
 export const isPaid = (t) => t.total_cents > 0 && t.paid_cents >= t.total_cents;
 
+// ---------- head sourcing deposit (custom builds) ----------
+export const DEPOSIT = { rate: 0.10, min: 2500, max: 7500, hours: 48 };
+export const depositFor = (estimateCents) => Math.min(DEPOSIT.max, Math.max(DEPOSIT.min, Math.round((estimateCents * DEPOSIT.rate) / 100) * 100));
+// 'requested' (waiting on the customer) | 'paid' (Jackson is sourcing) | 'closed' (priced, refunded or cancelled) | null
+export function depositState(t) {
+  if (!t.deposit_cents) return null;
+  if (t.status !== 'submitted') return t.deposit_paid_at ? 'closed' : null;
+  return t.deposit_paid_at ? 'paid' : 'requested';
+}
+export function statusLabel(t) {
+  const d = depositState(t);
+  if (d === 'requested') return 'Sourcing deposit needed';
+  if (d === 'paid') return 'Sourcing your head';
+  return LABEL[t.status] || t.status;
+}
+
 // What the customer is allowed to see.
 export async function publicTicket(env, t) {
   const lines = JSON.parse(t.lines || '[]'), sum = totals(lines, t.tax_rate), orders = await ordersFor(env, lines);
   const evs = await events(env, t.id);
   return {
-    id: t.id, number: ticketNo(t.number), kind: t.kind, title: t.title, status: t.status, status_label: LABEL[t.status] || t.status,
+    id: t.id, number: ticketNo(t.number), kind: t.kind, title: t.title, status: t.status, status_label: statusLabel(t),
     created_at: t.created_at, updated_at: t.updated_at, spec: JSON.parse(t.spec || '{}'), customer_note: t.customer_note,
     shop_note: t.shop_note, eta: t.eta, pickup_at: t.pickup_at || null, status_at: t.status_at || t.updated_at, tax_rate: t.tax_rate, ...sum, total_cents: t.total_cents, paid_cents: t.paid_cents, refunded_cents: t.refunded_cents || 0,
     due_cents: Math.max(0, t.total_cents - t.paid_cents), version: t.version, approved_version: t.approved_version,
     can_pay: ['awaiting_approval', 'approved'].includes(t.status) && t.total_cents > t.paid_cents,
+    deposit: t.deposit_cents ? { state: depositState(t), cents: t.deposit_cents, paid_at: t.deposit_paid_at || null, due_by: t.deposit_due_by || null, requested_at: t.deposit_requested_at || null } : null,
     lines: lines.map((l) => {
       const o = l.order_id && orders[l.order_id];
       return { id: l.id, desc: l.desc, qty: l.qty, unit_cents: l.unit_cents, kind: l.kind, taxable: l.taxable, track: l.track,

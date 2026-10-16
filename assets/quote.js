@@ -166,7 +166,7 @@
       }
       if (h && h.hands) { [].forEach.call(hs.options, function(o){ o.disabled = h.hands.indexOf(o.value) < 0; }); if (h.hands.indexOf(hs.value) < 0) { hs.value = h.hands[0]; row.hand = hs.value; } }
       lead.textContent = !h || h.request ? '' : h.basis === 'oem'
-        ? 'Jackson finds a new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. Usually about 1–2 weeks.'
+        ? 'Jackson finds a genuine new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. To start the search he asks for a refundable sourcing deposit (10% of the estimate, $25–$75) that counts toward your build, and reports back within 48 hours. Usually about 1–2 weeks in all.'
         : leadText(h.lead) + (h.note ? ' · ' + h.note : '');
       calc();
     }

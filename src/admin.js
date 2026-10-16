@@ -1,7 +1,8 @@
 // Jackson's dashboard API: tickets, parts orders, customers.
 import { ticketPayments, refundPayment } from './square.js';
 import { json, err, now, newId, clip, cleanEmail, okEmail, cleanPhone, fmtPhone, readJson, cleanLines, priceKey, totals, getTicket, getCustomer,
-  addEvent, events, publicTicket, fillCosts, ordersFor, trackingUrl, isPaid, notifyCustomer, sendEmail, siteUrl, ticketNo, money, STATUSES, LABEL, TRACK } from './lib.js';
+  addEvent, events, publicTicket, fillCosts, ordersFor, trackingUrl, isPaid, notifyCustomer, sendEmail, siteUrl, ticketNo, money, STATUSES, LABEL, TRACK,
+  DEPOSIT, depositState, statusLabel } from './lib.js';
 
 const custOut = (c) => c && { id: c.id, name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone), created_at: c.created_at, last_login_at: c.last_login_at, created_by: c.created_by, shop_notes: c.shop_notes, credit_cents: c.credit_cents || 0 };
 
@@ -25,11 +26,11 @@ export async function listTickets(request, env) {
     where += ' AND (LOWER(c.name) LIKE ? OR c.email LIKE ? OR c.phone LIKE ?' + (n ? ' OR t.number = ?' : '') + ')';
     args.push('%' + q + '%', '%' + q + '%', '%' + q.replace(/\D/g, '') + '%'); if (n) args.push(n);
   }
-  const r = await env.DB.prepare(`SELECT t.id, t.number, t.kind, t.title, t.status, t.created_at, t.updated_at, t.total_cents, t.paid_cents, t.eta, c.name, c.phone
+  const r = await env.DB.prepare(`SELECT t.id, t.number, t.kind, t.title, t.status, t.created_at, t.updated_at, t.total_cents, t.paid_cents, t.eta, t.deposit_cents, t.deposit_paid_at, t.deposit_due_by, c.name, c.phone
       FROM tickets t LEFT JOIN customers c ON c.id = t.customer_id WHERE ${where} ORDER BY t.updated_at DESC LIMIT 300`).bind(...args).all();
   const counts = await env.DB.prepare('SELECT status, COUNT(*) AS n FROM tickets GROUP BY status').all();
   return json({
-    tickets: (r.results || []).map((t) => ({ ...t, number: ticketNo(t.number), status_label: LABEL[t.status], paid: t.total_cents > 0 && t.paid_cents >= t.total_cents })),
+    tickets: (r.results || []).map((t) => ({ ...t, number: ticketNo(t.number), status_label: statusLabel(t), deposit_state: depositState(t), paid: t.total_cents > 0 && t.paid_cents >= t.total_cents })),
     counts: Object.fromEntries((counts.results || []).map((x) => [x.status, x.n])),
   });
 }
@@ -76,7 +77,8 @@ export async function updateTicket(request, env, id, ctx) {
   if (b.send_for_approval) {
     if (total_cents - t.paid_cents <= 0) return err('Nothing is due, so there is nothing to approve.');
     status = 'awaiting_approval';
-    mail.push(['your price is ready to approve', `Jackson reviewed your ticket. Total due: ${money(total_cents - t.paid_cents)}.\n\nOpen your ticket to see every part and service, then tap "Approve & pay" to pay securely with Square. Parts are ordered as soon as your payment clears.`]);
+    const dep = t.deposit_paid_at && t.paid_cents > 0 ? ` Your ${money(t.paid_cents)} already paid (sourcing deposit) is taken off.` : '';
+    mail.push(['your price is ready to approve', `Jackson reviewed your ticket. Total due: ${money(total_cents - t.paid_cents)}.${dep}\n\nOpen your ticket to see every part and service, then tap "Approve & pay" to pay securely with Square. Parts are ordered as soon as your payment clears.`]);
   } else if (b.status && b.status !== status) {
     if (!STATUSES.includes(b.status)) return err('Unknown status.');
     status = b.status;
@@ -97,6 +99,60 @@ export async function updateTicket(request, env, id, ctx) {
     const fresh = { ...t, status };
     ctx.waitUntil(Promise.all(mail.map((m) => notifyCustomer(env, fresh, m[0], m[1]))));
   }
+  return json(await fullTicket(env, await getTicket(env, t.id)));
+}
+
+// ---------- head sourcing deposit ----------
+// POST /api/admin/tickets/:id/deposit {amount_cents}  → ask the customer for a sourcing deposit (0 withdraws an unpaid request)
+export async function requestDeposit(request, env, id, ctx) {
+  const t = await getTicket(env, id);
+  if (!t) return err('Ticket not found.', 404);
+  let b; try { b = await readJson(request); } catch { return err('Bad request'); }
+  if (t.deposit_paid_at) return err('The deposit on this ticket is already paid.', 409);
+  if (t.status !== 'submitted') return err('Ask for the deposit before you send the price.', 409);
+  const amount = Math.round(Number(b.amount_cents) || 0);
+  if (amount === 0) {
+    await env.DB.prepare('UPDATE tickets SET deposit_cents = NULL, deposit_requested_at = NULL, deposit_order_id = NULL, deposit_link_url = NULL, updated_at = ? WHERE id = ?').bind(now(), t.id).run();
+    await addEvent(env, t.id, 'shop', 'priced', 'Sourcing deposit request withdrawn.');
+    return json(await fullTicket(env, await getTicket(env, t.id)));
+  }
+  if (amount < 500 || amount > 50000) return err('Enter a deposit between $5 and $500.');
+  await env.DB.prepare('UPDATE tickets SET deposit_cents = ?, deposit_requested_at = ?, deposit_order_id = NULL, deposit_link_url = NULL, updated_at = ? WHERE id = ?')
+    .bind(amount, now(), now(), t.id).run();
+  await addEvent(env, t.id, 'shop', 'priced', `Head sourcing deposit requested: ${money(amount)}. It counts toward the build and is refunded in full if no approved head is found.`);
+  if (!b.quiet) ctx.waitUntil(notifyCustomer(env, t, 'start your head search', `Thanks for your custom build request! To start searching for your head, Jackson asks for a ${money(amount)} sourcing deposit (10% of your build estimate).\n\n`
+    + `- It counts toward your build. It is not an extra charge.\n`
+    + `- Jackson reports back within ${DEPOSIT.hours} hours with the head he found (photos, serial and where it came from) and your final price.\n`
+    + `- If he can't find a genuine head at the quoted price, or you don't want the one he finds, you get the full deposit back.\n`
+    + `- Once you approve a head and it's bought for your build, the deposit can't be refunded.\n\n`
+    + `Open your ticket and tap "Pay deposit & start search".`));
+  return json(await fullTicket(env, await getTicket(env, t.id)));
+}
+// POST /api/admin/tickets/:id/deposit-refund {reason}  → no approved head: refund the deposit in full through Square and close the ticket
+export async function refundDeposit(request, env, id, ctx) {
+  const t = await getTicket(env, id);
+  if (!t) return err('Ticket not found.', 404);
+  let b; try { b = await readJson(request); } catch { b = {}; }
+  if (depositState(t) !== 'paid') return err('Only a paid deposit on a ticket that has not been priced yet can be refunded here. Use Refund on the payment instead.', 409);
+  const pays = (await env.DB.prepare("SELECT * FROM payments WHERE ticket_id = ? AND method = 'square' ORDER BY at").bind(t.id).all()).results || [];
+  const pay = pays.find((x) => x.amount_cents - (x.refunded_cents || 0) > 0);
+  const reason = clip(b.reason, 190) || 'No approved head found';
+  let refunded = 0, card = null;
+  if (pay) {
+    const amount = pay.amount_cents - (pay.refunded_cents || 0);
+    let r;
+    try { r = await refundPayment(env, { paymentId: pay.square_payment_id, amount, reason: `Sourcing deposit refund for ${ticketNo(t.number)}`, idempotencyKey: `${pay.square_payment_id}-dep-refund` }); }
+    catch (e) { return err('Square: ' + e.message, 502); }
+    await env.DB.prepare('INSERT OR IGNORE INTO refunds (square_refund_id, ticket_id, square_payment_id, amount_cents, reason, status, at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(r.id, t.id, pay.square_payment_id, amount, reason, r.status, now()).run();
+    await env.DB.prepare('UPDATE payments SET refunded_cents = refunded_cents + ? WHERE square_payment_id = ?').bind(amount, pay.square_payment_id).run();
+    await env.DB.prepare('UPDATE tickets SET refunded_cents = refunded_cents + ? WHERE id = ?').bind(amount, t.id).run();
+    refunded = amount; card = pay.card;
+  }
+  await env.DB.prepare("UPDATE tickets SET status = 'cancelled', updated_at = ? WHERE id = ?").bind(now(), t.id).run();
+  await addEvent(env, t.id, 'shop', 'paid', refunded ? `Sourcing deposit refunded in full: ${money(refunded)}. ${reason}.` : `Ticket closed: ${reason}. (Deposit was not paid through Square; return it by hand.)`);
+  await addEvent(env, t.id, 'shop', 'status', LABEL.cancelled);
+  ctx.waitUntil(notifyCustomer(env, t, 'sourcing deposit refunded', `Jackson wasn't able to line up a genuine head for your build that he'd stand behind at the quoted price${b.reason ? ` (${clip(b.reason, 190)})` : ''}, so your ${money(refunded || t.deposit_cents)} sourcing deposit ${refunded ? `has been refunded in full to ${card || 'your card'}. It usually shows up in 2 to 7 business days` : 'will be returned to you in full'}.\n\nThanks for giving us a shot. If you'd like to try a different head or a component head instead, just reply.`));
   return json(await fullTicket(env, await getTicket(env, t.id)));
 }
 

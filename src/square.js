@@ -1,7 +1,7 @@
 // Square: hosted checkout for approved tickets, and payment confirmation straight from Square's API.
 // A ticket's paid amount only goes up after Square's API itself says the payment COMPLETED for this
 // ticket's order at our location, whether we heard about it from the webhook or the customer returning.
-import { json, now, addEvent, notifyShop, notifyCustomer, siteUrl, ticketNo, money } from './lib.js';
+import { json, now, addEvent, notifyShop, notifyCustomer, siteUrl, ticketNo, money, DEPOSIT } from './lib.js';
 
 const VERSION = '2024-10-17';
 const base = (env) => env.SQUARE_API_BASE || (env.SQUARE_ENV === 'sandbox' ? 'https://connect.squareupsandbox.com' : 'https://connect.squareup.com');
@@ -47,13 +47,15 @@ async function getPayment(env, id) {
 export async function confirmPayment(env, paymentId, ctx) {
   const p = await getPayment(env, paymentId);
   if (!p || p.status !== 'COMPLETED' || p.location_id !== env.SQUARE_LOCATION_ID || !p.order_id) return false;
-  const t = await env.DB.prepare('SELECT * FROM tickets WHERE square_order_id = ?').bind(p.order_id).first();
+  const t = await env.DB.prepare('SELECT * FROM tickets WHERE square_order_id = ? OR deposit_order_id = ?').bind(p.order_id, p.order_id).first();
   if (!t) return false;
+  const isDeposit = p.order_id === t.deposit_order_id;
   const amount = (p.amount_money && p.amount_money.currency === 'USD' && p.amount_money.amount) || 0;
   const ins = await env.DB.prepare("INSERT OR IGNORE INTO payments (square_payment_id, ticket_id, amount_cents, at, card, receipt_url, receipt_number, fee_cents, method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'square')")
     .bind(p.id, t.id, amount, now(), cardLabel(p), p.receipt_url || null, p.receipt_number || null, feeOf(p)).run();
   if (!ins.meta || !ins.meta.changes) return true; // already recorded
   const paid = t.paid_cents + amount;
+  if (isDeposit) return depositPaid(env, t, amount, paid, ctx);
   const full = paid >= t.total_cents;
   const status = full && ['approved', 'awaiting_approval'].includes(t.status) ? 'paid' : t.status;
   await env.DB.prepare('UPDATE tickets SET paid_cents = ?, status = ?, updated_at = ? WHERE id = ?').bind(paid, status, now(), t.id).run();
@@ -67,13 +69,32 @@ export async function confirmPayment(env, paymentId, ctx) {
   return true;
 }
 
+// A head sourcing deposit cleared: start the 48-hour clock. The ticket stays "submitted" until Jackson prices the build.
+async function depositPaid(env, t, amount, paid, ctx) {
+  const at = now(), due = new Date(Date.now() + DEPOSIT.hours * 3600_000).toISOString();
+  await env.DB.prepare('UPDATE tickets SET paid_cents = ?, deposit_paid_at = COALESCE(deposit_paid_at, ?), deposit_due_by = COALESCE(deposit_due_by, ?), updated_at = ? WHERE id = ?')
+    .bind(paid, at, due, at, t.id).run();
+  await addEvent(env, t.id, 'system', 'paid', `Sourcing deposit received: ${money(amount)} (confirmed with Square). It counts toward the build.`);
+  const by = new Date(due).toLocaleString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const tasks = [
+    notifyShop(env, `${ticketNo(t.number)} sourcing deposit PAID ${money(amount)}: report back by ${by}`,
+      `Square confirmed the ${money(amount)} sourcing deposit on ${ticketNo(t.number)}. Find the head and send the price (or refund the deposit) by ${by} Central.\n\n${siteUrl(env, '/admin/?t=' + t.id)}`),
+    notifyCustomer(env, t, 'sourcing deposit received', `Thanks! We received your ${money(amount)} sourcing deposit and Jackson is now searching for your head. You'll hear back by ${by} with the head he found (photos, serial and where it came from) and your final build price, which already counts your deposit.\n\nIf he can't find a genuine head at the quoted price, or you don't like the one he finds, your deposit is refunded in full.`),
+  ];
+  if (ctx) ctx.waitUntil(Promise.all(tasks)); else await Promise.all(tasks);
+  return true;
+}
+
 // The customer came back from checkout: look up their order's payments with Square directly.
 export async function syncOrder(env, t, ctx) {
-  if (!t.square_order_id || !squareReady(env)) return;
-  const r = await fetch(base(env) + '/v2/orders/' + encodeURIComponent(t.square_order_id), { headers: headers(env) });
-  if (!r.ok) return;
-  const o = (await r.json()).order;
-  for (const tender of (o && o.tenders) || []) if (tender.payment_id) await confirmPayment(env, tender.payment_id, ctx);
+  if (!squareReady(env)) return;
+  for (const id of [t.square_order_id, t.deposit_order_id]) {
+    if (!id) continue;
+    const r = await fetch(base(env) + '/v2/orders/' + encodeURIComponent(id), { headers: headers(env) });
+    if (!r.ok) continue;
+    const o = (await r.json()).order;
+    for (const tender of (o && o.tenders) || []) if (tender.payment_id) await confirmPayment(env, tender.payment_id, ctx);
+  }
 }
 
 // Square signs webhooks with base64(HMAC-SHA256(signatureKey, notificationUrl + rawBody)).
