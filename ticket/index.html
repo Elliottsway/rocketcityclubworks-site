@@ -21,6 +21,7 @@
 .eta b{font-family:var(--mono)}
 .depbox ul{margin:8px 0 12px;padding-left:20px}.depbox li{margin:4px 0}
 </style>
+<script src="/assets/analytics.js"></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -125,10 +126,13 @@
   var FLOW = ['submitted', 'awaiting_approval', 'paid', 'parts_ordered', 'in_progress', 'ready', 'completed'];
   var STEPL = { submitted: 'Jackson is reviewing your ticket and confirming parts.', awaiting_approval: 'Your price is ready. Review it and tap Approve & pay.', approved: 'Waiting for your payment to finish.',
     paid: 'Paid. Next, schedule your drop-off below.', parts_ordered: 'Parts are ordered. Follow them below.', in_progress: 'Your clubs are on the bench.', ready: 'Ready for pickup! Pick a time below.', completed: 'Picked up. Thanks for your business!', cancelled: 'This ticket was cancelled.' };
+  var isNew = qs.get('new') === '1', tracked = false;
   if (qs.get('new') === '1') { $('newmsg').hidden = false; try { history.replaceState(null, '', location.pathname + '?t=' + encodeURIComponent(id)); } catch (e) {} }
   function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
   function render(t){
+    // A request or quote just sent: tell Google Ads once (the ?new=1 flag is removed from the address, so reloads don't count again).
+    if (isNew && !tracked && window.RCCWtrack) { tracked = true; window.RCCWtrack('begin_checkout', { value: (t.total_cents || 0) / 100, currency: 'USD', transaction_id: t.number }); }
     T = t; $('loading').hidden = true; $('tk').hidden = false;
     $('t-num').textContent = t.number + ' · opened ' + A.date(t.created_at); $('t-title').textContent = t.title || 'Service ticket';
     $('t-status').textContent = t.status_label; $('t-status').className = 'pill ' + (A.STATUS_CLASS[t.status] || '');
@@ -220,7 +224,7 @@
       }
       if (t.paid_cents < t.total_cents && ++polls < 8) setTimeout(sync, 3000);
       else if (t.paid_cents < t.total_cents) { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b>Still confirming your payment with Square.</b> This can take a minute. Refresh this page shortly.'; }
-      else if (t.paid_cents >= t.total_cents) { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b class="ok">Payment received.</b> Thanks! ' + (t.can_dropoff ? 'Next, pick a drop-off time below.' : 'Jackson will keep this ticket updated.'); }
+      else if (t.paid_cents >= t.total_cents) { if (window.RCCWtrack) window.RCCWtrack('purchase', { value: t.total_cents / 100, currency: 'USD', transaction_id: t.number + '-' + t.paid_cents }); $('newmsg').hidden = false; $('newmsg').innerHTML = '<b class="ok">Payment received.</b> Thanks! ' + (t.can_dropoff ? 'Next, pick a drop-off time below.' : 'Jackson will keep this ticket updated.'); }
     }).catch(function(){});
   }
   $('p-pay').onclick = function(){
