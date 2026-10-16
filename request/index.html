@@ -51,7 +51,7 @@
     $('who').textContent = 'Signed in as ' + j.customer.name + ' · ' + j.customer.email;
     j.categories.forEach(function(c){ $('r-cat').appendChild(new Option(c, c)); });
     if (pre && j.categories.indexOf(pre) >= 0) $('r-cat').value = pre;
-  }).catch(function(x){ if (x.message !== 'auth') { $('loading').textContent = x.status === 503 ? 'Online requests are almost ready. Please text (205) 588-9164 for now.' : x.message; } });
+  }).catch(function(x){ if (x.message !== 'auth') { $('loading').textContent = x.status === 503 ? 'Online requests are down for a moment. Please try again shortly.' : x.message; } });
   $('r-photos').onchange = function(){ var n = this.files.length; $('r-pcount').textContent = n ? n + ' photo' + (n > 1 ? 's' : '') + ' will be attached' : ''; };
   $('f').addEventListener('submit', function(e){
     e.preventDefault(); $('r-err').textContent = '';

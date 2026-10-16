@@ -360,7 +360,6 @@
     if (saves.length) text.push('Deals: ' + saves.join(', '));
     text.push('Estimate: ' + $(total) + (tbd ? ' + requested parts to price' : ''), 'Ready in: ' + ready, '(' + S.ref + ')');
     last = { lines: lines.map(function(l){ return { desc: l.desc, qty: l.qty, unit_cents: l.unit_cents, kind: l.kind, taxable: l.taxable, part_no: l.part_no && l.part_no !== 'REQ' ? l.part_no : null }; }), total_label: $(total) + (tbd ? ' + TBD' : ''), summary: msg.concat(saves.length ? ['Deals: ' + saves.join(', ')] : []).concat(['Ready in: ' + ready]), text: anyWork ? text.join('\n') : "Hi Jackson! I'd like a quote. (" + S.ref + ')' };
-    g('q-send').href = S.smsHref(last.text);
   }
 
   // ---------- submit as a service ticket (needs a customer account) ----------
@@ -386,7 +385,7 @@
         if (!x.ok) { out.className = 'err'; out.textContent = x.j.error || 'Something went wrong.'; btn.disabled = false; return; }
         location.href = '/ticket/?t=' + encodeURIComponent(x.j.id) + '&new=1';
       })
-      .catch(function(){ out.className = 'err'; out.textContent = 'Could not reach the shop. Use "Text this quote" instead.'; btn.disabled = false; });
+      .catch(function(){ out.className = 'err'; out.textContent = 'Could not reach the shop. Check your connection and try again.'; btn.disabled = false; });
   }
 
   // ---------- start ----------
@@ -410,19 +409,13 @@
     g('q-submit').onclick = openSubmit;
     g('q-form').addEventListener('submit', submit);
     g('q-copy').onclick = function(){ var b = this; try { navigator.clipboard.writeText(last.text).then(function(){ b.textContent = 'Copied'; }); } catch (e) {} };
-    // Online work tickets switch on by themselves once the ticket database is connected.
-    fetch('/api/health').then(function(r){ return r.ok ? r.json() : {}; }).then(function(h){
-      if (!h.tickets || !h.accounts) return;
-      g('q-submit').hidden = false;
-      fetch('/api/me', { credentials: 'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
-        me = j && j.customer; g('q-acct').hidden = !!me;
-        if (me) g('f-who').textContent = 'Sending as ' + me.name + ' · ' + me.email;
-      }).catch(function(){ g('q-acct').hidden = false; });
-      var send = g('q-send'); send.className = 'copy'; send.textContent = 'Or text this quote';
-    }).catch(function(){});
+    fetch('/api/me', { credentials: 'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      me = j && j.customer; g('q-acct').hidden = !!me;
+      if (me) g('f-who').textContent = 'Sending as ' + me.name + ' · ' + me.email;
+    }).catch(function(){ g('q-acct').hidden = false; });
     g('q-loading').hidden = true; g('q-body').hidden = false;
     calc();
   }
   fetch('/assets/catalog.json').then(function(r){ return r.json(); }).then(start)
-    .catch(function(){ g('q-loading').textContent = 'The parts catalog did not load. Refresh the page or text us your quote.'; });
+    .catch(function(){ g('q-loading').textContent = 'The parts catalog did not load. Refresh the page to try again.'; });
 })();
