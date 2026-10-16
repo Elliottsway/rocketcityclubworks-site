@@ -114,8 +114,10 @@ export const isPaid = (t) => t.total_cents > 0 && t.paid_cents >= t.total_cents;
 // After a ticket is paid in full: how the clubs get to the shop and what happens with parts.
 export function nextSteps(env, t) {
   const parts = JSON.parse(t.lines || '[]').some((l) => l.kind === 'part' && l.track === 'to_order');
+  let where = String(env.DROPOFF_NOTE || env.DROPOFF_LOCATION || '').trim(); // secret: the porch address and instructions
+  if (where && !/[.!?]$/.test(where)) where += '.';
   const out = [];
-  if (!t.clubs_in_at) out.push(`Next: get your clubs to the shop. Open your ticket and tap "Schedule drop-off" to pick a time. ${env.DROPOFF_NOTE ? 'Drop-off: ' + env.DROPOFF_NOTE : 'Jackson will send the drop-off address, or reply to set up a meet-up around Huntsville or Madison.'} Please put your name or ticket number (${ticketNo(t.number)}) on the bag.`);
+  if (!t.clubs_in_at) out.push(`Next: get your clubs to the shop. Open your ticket and tap "Schedule drop-off" to pick a time. ${where ? 'Drop-off: ' + where : 'Jackson will send the drop-off address, or reply to set up a meet-up around Huntsville or Madison.'} Please put your name or ticket number (${ticketNo(t.number)}) on the bag.`);
   if (parts) out.push('Jackson orders your parts today. They usually arrive in about 2 business days, and you can follow them on your ticket.');
   if (t.eta) out.push(`Estimated ready: ${t.eta}.`);
   return out.join('\n\n');

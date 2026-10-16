@@ -324,7 +324,7 @@ const offers = D.services.flatMap((s) => s.items.filter((i) => typeof i.price ==
   priceSpecification: { '@type': 'UnitPriceSpecification', price: i.price, priceCurrency: 'USD' } })));
 const business = {
   '@context': 'https://schema.org', '@type': ['LocalBusiness', 'SportingGoodsStore'], '@id': `${SITE}/#business`,
-  name: 'Rocket City ClubWorks', url: SITE + '/', logo: `${SITE}/apple-touch-icon.png`, image: `${SITE}/og-image.png`,
+  name: 'Rocket City ClubWorks', url: SITE + '/', logo: `${SITE}/logo.png`, image: `${SITE}/og-image.png`,
   description: 'Local golf club repair and build shop in Huntsville, AL: regripping, reshafting, loft and lie, club repair, hard-to-find parts and custom builds, with instant online pricing and online booking.',
   telephone: '+1-205-588-9164', email: D.email, priceRange: '$', currenciesAccepted: 'USD', paymentAccepted: 'Credit card, Apple Pay, Google Pay',
   founder: { '@type': 'Person', name: 'Jackson Stewart' },

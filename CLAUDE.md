@@ -16,7 +16,7 @@ Jackson Stewart's golf club repair shop in Huntsville, AL. Static pages plus a s
 
 ## Never
 - Never put trade costs, margins or the GolfWorks booklet in this repo or on the site. Private costs live only in the D1 `part_costs` table.
-- Never commit secrets. Secrets are Worker secrets: `ADMIN_PASSWORD`, `RESEND_API_KEY`, `SQUARE_*`, `FEDEX_*`, `DROPOFF_NOTE`.
+- Never commit secrets. Secrets are Worker secrets: `ADMIN_PASSWORD`, `RESEND_API_KEY`, `SQUARE_*`, `FEDEX_*`, `DROPOFF_NOTE` / `DROPOFF_LOCATION`.
 - Never set `DEV_SHOW_CODE`, `DEV_ANY_HOUR` or `DEV_ADMIN` in Cloudflare. They are for local `.dev.vars` only.
 - Don't put the phone number or email back as a call to action. Customers are sent to the instant price (`/menu/#quote`) and Request service (`/request/`).
 - New lines of business (new services, products, pricing, policies) need Jackson's approval. Improvements to what exists don't.
