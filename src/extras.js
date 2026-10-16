@@ -4,6 +4,7 @@ import { json, err, now, newId, clip, readJson, getTicket, getCustomer, addEvent
   siteUrl, ticketNo, money, LABEL, DEPOSIT, depositState, nextSteps } from './lib.js';
 
 const HOUR = 3600_000;
+const STEPS = [24, 72, 168]; // reminder schedule in hours: days 1, 3 and 7
 const MAX_PHOTO = 1_600_000; // bytes, after the browser shrinks it
 
 // ---------- photos ----------
@@ -177,7 +178,23 @@ export async function reports(request, env) {
   const ship = (await env.DB.prepare('SELECT COALESCE(SUM(shipping_cents),0) AS s FROM orders WHERE placed_at >= ? AND placed_at <= ?').bind(from, toEnd).first()).s;
   const custs = (await env.DB.prepare('SELECT COUNT(*) AS n FROM customers WHERE created_at >= ? AND created_at <= ?').bind(from, toEnd).first()).n;
   const net = revenue - refunds;
+  // Where paying customers came from: their sign-up answer, and the link/QR/ad tag on the ticket or account.
+  const cust = {};
+  if (ids.length) for (const c of (await env.DB.prepare(`SELECT id, source, ref FROM customers WHERE id IN (SELECT customer_id FROM tickets WHERE id IN (${ph}))`).bind(...ids).all()).results || []) cust[c.id] = c;
+  const group = (keyOf) => {
+    const g = {};
+    for (const t of inRange) {
+      const k = keyOf(t), lines = JSON.parse(t.lines || '[]');
+      const row = g[k] = g[k] || { label: k, tickets: 0, customers: new Set(), sales_cents: 0 };
+      row.tickets += 1; row.customers.add(t.customer_id);
+      row.sales_cents += t.paid_cents - Math.min(t.paid_cents, totals(lines, t.tax_rate).tax_cents) - (t.refunded_cents || 0);
+    }
+    return Object.values(g).map((r) => ({ ...r, customers: r.customers.size })).sort((a, b) => b.sales_cents - a.sales_cents);
+  };
+  const sources = group((t) => ((cust[t.customer_id] || {}).source || 'Not asked').split(':')[0]);
+  const refs = group((t) => t.ref && t.ref !== 'WEB' ? t.ref : (cust[t.customer_id] || {}).ref || 'Direct / unknown');
   return json({
+    sources, refs,
     from, to,
     summary: { revenue_cents: revenue, refunds_cents: refunds, net_cents: net, discounts_cents: discounts, parts_cost_cents: partsCost, square_fees_cents: fees, shipping_cents: ship,
       gross_profit_cents: net - partsCost - fees - ship, tickets: inRange.length, avg_ticket_cents: inRange.length ? Math.round(net / inRange.length) : 0,
@@ -198,8 +215,16 @@ async function sentSince(env, ticketId, kind, since) {
 }
 const logSent = (env, id, kind) => env.DB.prepare('INSERT INTO reminders (ticket_id, kind, sent_at) VALUES (?, ?, ?)').bind(id, kind, now()).run();
 
-export async function reminders(env) {
+export async function reminders(env, todayData) {
   const nowMs = Date.now();
+  // 7am Central: one digest email to Jackson with everything that needs attention today.
+  if (todayData && (env.DEV_ANY_HOUR || centralHour() === 7) && !(await sentSince(env, '_digest', 'digest', new Date(nowMs - 20 * HOUR).toISOString())).n) {
+    const d = await todayData(env);
+    const groups = [['Needs a price', d.reply], ['Head searches', d.sourcing], ['Price sent, not paid (3+ days)', d.waiting], ['Clubs to get in', d.dropoff], ['Due on the bench', d.bench], ['Ready for pickup', d.pickup]].filter((g) => g[1].length);
+    await logSent(env, '_digest', 'digest');
+    if (groups.length) await notifyShop(env, `Today at ClubWorks: ${groups.map((g) => g[1].length + ' ' + g[0].toLowerCase()).join(', ')}`,
+      groups.map((g) => `${g[0].toUpperCase()}\n` + g[1].map((x) => `${x.late ? '! ' : '- '}${x.number} ${x.name}: ${x.note}\n  ${siteUrl(env, '/admin/?t=' + x.id)}`).join('\n')).join('\n\n') + `\n\nDashboard: ${siteUrl(env, '/admin/')}`);
+  }
   // 0) Head sourcing: warn Jackson 12 hours before the 48-hour report-back is due, and again if it passes (any hour).
   for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status = 'submitted' AND deposit_paid_at IS NOT NULL AND deposit_due_by IS NOT NULL").all()).results || []) {
     const left = Date.parse(t.deposit_due_by) - nowMs, kind = left <= 0 ? 'sourcing-late' : left <= 12 * HOUR ? 'sourcing-soon' : null;
@@ -218,12 +243,14 @@ export async function reminders(env) {
     await logSent(env, t.id, 'deposit');
     await notifyCustomer(env, t, 'reminder: start your head search', `Jackson is ready to search for your head as soon as the ${money(t.deposit_cents)} sourcing deposit is in. It counts toward your build and is refunded in full if no genuine head is found at the quoted price.\n\nOpen your ticket and tap "Pay deposit & start search". Changed your mind? Just reply and let him know.`);
   }
-  // 1) Price sent but not approved/paid: every 24 hours, up to 5 times.
+  // 1) Price sent but not approved/paid: days 1, 3 and 7.
   for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status IN ('awaiting_approval','approved') AND total_cents > paid_cents").all()).results || []) {
+    // Days 1, 3 and 7 after the price was sent.
     const base = t.status_at || t.updated_at, s = await sentSince(env, t.id, 'approve', base);
-    if (s.n >= 5 || nowMs - Date.parse(s.last || base) < 24 * HOUR) continue;
+    if (s.n >= STEPS.length || nowMs - Date.parse(base) < STEPS[s.n] * HOUR) continue;
     await logSent(env, t.id, 'approve');
-    await notifyCustomer(env, t, 'reminder: approve your price', `Your price is ready: ${money(t.total_cents - t.paid_cents)} due. Open your ticket to review it and tap "Approve & pay". Jackson orders your parts as soon as payment clears.\n\nQuestions or changes? Reply here or message Jackson on your ticket.`);
+    const lastOne = s.n === STEPS.length - 1;
+    await notifyCustomer(env, t, lastOne ? 'last reminder about your price' : 'reminder: your price is ready', `Your price is ready: ${money(t.total_cents - t.paid_cents)} due. Open your ticket to review it and tap "Approve & pay". Jackson orders your parts as soon as payment clears.\n\n${lastOne ? 'This is the last reminder. If your plans changed, no problem: reply and Jackson will close the ticket, or adjust the price if you want something different.' : 'Questions or changes? Reply here or message Jackson on your ticket.'}`);
   }
   // 1b) Paid but no drop-off planned and clubs not in yet: once a day, up to 2 times.
   for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status IN ('paid','parts_ordered') AND clubs_in_at IS NULL AND (dropoff_at IS NULL OR dropoff_at = '') AND paid_cents > 0").all()).results || []) {
@@ -232,12 +259,13 @@ export async function reminders(env) {
     await logSent(env, t.id, 'dropoff');
     await notifyCustomer(env, t, 'when can you drop off your clubs?', `You're all paid up. The only thing left is getting your clubs to the shop.\n\n${nextSteps(env, t)}`);
   }
-  // 2) Ready but no pickup scheduled: every 12 hours, up to 10 times.
+  // 2) Ready but no pickup scheduled: days 1, 3 and 7.
   for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status = 'ready' AND (pickup_at IS NULL OR pickup_at = '')").all()).results || []) {
+    // Days 1, 3 and 7 after the clubs were ready.
     const base = t.status_at || t.updated_at, s = await sentSince(env, t.id, 'pickup', base);
-    if (s.n >= 10 || nowMs - Date.parse(s.last || base) < 12 * HOUR) continue;
+    if (s.n >= STEPS.length || nowMs - Date.parse(base) < STEPS[s.n] * HOUR) continue;
     await logSent(env, t.id, 'pickup');
-    await notifyCustomer(env, t, 'your clubs are ready for pickup', 'Your clubs are done and waiting for you. Open your ticket and tap "Schedule pickup" to pick a time, or reply to this email.');
+    await notifyCustomer(env, t, 'your clubs are ready for pickup', 'Your clubs are done and waiting for you. Open your ticket and tap "Schedule pickup" to pick a time, or reply to this email.' + (s.n === STEPS.length - 1 ? ' If this week is busy, just reply with a day that works and Jackson will hold them for you.' : ''));
   }
   // 3) Picked up a day ago: thank you, credit toward next time, and a review link.
   const credit = Number(env.THANKS_CREDIT_CENTS || 0);

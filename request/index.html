@@ -22,6 +22,7 @@
 <style>.rq{max-width:620px}</style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap">
     <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
@@ -29,7 +30,7 @@
     <div class="cta"><a class="ghost" href="/account/">My account</a><a class="solid" href="/menu/#quote">Instant price</a></div>
   </div>
 </header>
-<main class="wrap app rq narrow">
+<main id="main" class="wrap app rq narrow">
   <div class="eyebrow">Service request</div>
   <h1>What do your clubs need?</h1>
   <p class="lede">Tell Jackson what's going on. He'll reply on your ticket with questions or a price to approve. Know exactly what you want? The <a href="/menu/#quote" style="color:var(--accent)">instant price</a> is faster.</p>
@@ -40,7 +41,7 @@
     <div><label for="r-clubs">Which clubs?</label><input id="r-clubs" placeholder="e.g. 4–PW irons, TaylorMade P790; driver"></div>
     <div><label for="r-desc">What do you need?</label><textarea id="r-desc" placeholder="What's wrong or what you want done. Grip or shaft you like, sizes, anything you know."></textarea></div>
     <div><label for="r-time">Timing</label><input id="r-time" placeholder="e.g. Before my tournament on the 25th"></div>
-    <div><label class="filebtn" for="r-photos">📷 Add photos (optional)<input id="r-photos" type="file" accept="image/*" multiple></label><p class="hint" id="r-pcount"></p></div>
+    <div><label class="filebtn" for="r-photos"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>Add photos (optional)<input id="r-photos" type="file" accept="image/*" multiple></label><p class="hint" id="r-pcount"></p><p class="hint" id="r-phint" hidden>You can add photos right after you create your account.</p></div>
     <button class="btn" type="submit" id="r-send">Send request</button>
     <p class="err" id="r-err" role="alert"></p>
     <p class="hint">Photos help a lot for repairs. Nothing is charged until you approve a price.</p>
@@ -57,20 +58,37 @@
 <script>
 (function(){
   var A = window.RCCWapp, $ = A.$;
+  var CATS = ['Regrip', 'Reshaft', 'Loft & lie', 'Broken club repair', 'Find a part', 'Something else'];
+  var KEY = 'rccw_pending_request', me = null;
   var pre = new URLSearchParams(location.search).get('service');
-  A.api('/api/me').then(function(j){
+  function ref(){ try { return sessionStorage.getItem('rccw-ref') || (JSON.parse(localStorage.getItem('rccw-ref') || 'null') || {}).ref || ''; } catch (e) { return ''; } }
+  function draft(){ try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+  function fields(){ return { category: $('r-cat').value, clubs: $('r-clubs').value, description: $('r-desc').value, timing: $('r-time').value }; }
+  function show(cats){
     $('loading').hidden = true; $('f').hidden = false;
-    $('who').textContent = 'Signed in as ' + j.customer.name + ' · ' + j.customer.email;
-    j.categories.forEach(function(c){ $('r-cat').appendChild(new Option(c, c)); });
-    if (pre && j.categories.indexOf(pre) >= 0) $('r-cat').value = pre;
-  }).catch(function(x){ if (x.message !== 'auth') { $('loading').textContent = x.status === 503 ? 'Online requests are down for a moment. Please try again shortly.' : x.message; } });
+    cats.forEach(function(c){ $('r-cat').appendChild(new Option(c, c)); });
+    var d = draft();
+    if (d) { $('r-cat').value = d.category; $('r-clubs').value = d.clubs || ''; $('r-desc').value = d.description || ''; $('r-time').value = d.timing || ''; }
+    else if (pre && cats.indexOf(pre) >= 0) $('r-cat').value = pre;
+    if (me && d) { $('who').innerHTML = ''; $('who').appendChild(A.el('b', 'Welcome, ' + me.name.split(' ')[0] + '! ')); $('who').appendChild(document.createTextNode('Your request is filled in. Add photos if you like, then tap Send request.')); }
+  }
+  A.api('/api/me', { noRedirect: true }).then(function(j){
+    me = j.customer; $('who').textContent = 'Signed in as ' + j.customer.name + ' · ' + j.customer.email;
+    show(j.categories || CATS);
+  }).catch(function(x){
+    if (x.status === 401) { $('who').textContent = 'New here? You\u2019ll create a free account when you send this (no password, we email you a code).'; $('r-send').textContent = 'Continue'; $('r-phint').hidden = false; $('r-photos').parentNode.hidden = true; return show(CATS); }
+    $('loading').textContent = x.status === 503 ? 'Online requests are down for a moment. Please try again shortly.' : x.message;
+  });
+  ['r-cat', 'r-clubs', 'r-desc', 'r-time'].forEach(function(k){ $(k).addEventListener('input', function(){ if (!me) try { localStorage.setItem(KEY, JSON.stringify(fields())); } catch (e) {} }); });
   $('r-photos').onchange = function(){ var n = this.files.length; $('r-pcount').textContent = n ? n + ' photo' + (n > 1 ? 's' : '') + ' will be attached' : ''; };
   $('f').addEventListener('submit', function(e){
     e.preventDefault(); $('r-err').textContent = '';
     if (!$('r-desc').value.trim()) { $('r-err').textContent = 'Please describe what you need.'; return; }
+    if (!me) { try { localStorage.setItem(KEY, JSON.stringify(fields())); } catch (e2) {} location.href = '/account/?next=' + encodeURIComponent('/request/'); return; }
     var b = $('r-send'); b.disabled = true; b.textContent = 'Sending…';
-    A.api('/api/tickets', { method: 'POST', body: { kind: 'request', category: $('r-cat').value, clubs: $('r-clubs').value, description: $('r-desc').value, timing: $('r-time').value } })
+    A.api('/api/tickets', { method: 'POST', body: { kind: 'request', ref: ref(), category: $('r-cat').value, clubs: $('r-clubs').value, description: $('r-desc').value, timing: $('r-time').value } })
       .then(function(j){
+        try { localStorage.removeItem(KEY); } catch (e3) {}
         var files = $('r-photos').files, go = function(){ location.href = '/ticket/?t=' + encodeURIComponent(j.id) + '&new=1'; };
         if (!files.length) return go();
         return A.uploadPhotos('/api/tickets/' + encodeURIComponent(j.id) + '/photos', files, function(m){ b.textContent = m; })

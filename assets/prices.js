@@ -30,6 +30,10 @@ window.RCCW = {
     ironSetMin: 6,      // reshaft this many irons/wedges or more for set pricing
     ironSetSteel: 17,   // 6 x $17 = $102, never less than 5 x $20
     ironSetGraphite: 22,
+    shorten: 10,        // per club (keep in step with the Repairs list below)
+    extend: 15,         // per club, + extension piece
+    looseHead: 20,      // re-epoxy + new ferrule
+    stampFrom: 20,
     paintPer: 8,
     paintSet: 60,       // up to 10 clubs
     partsFee: 10,       // per order of special-order parts (covers GolfWorks ground shipping)

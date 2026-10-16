@@ -6,8 +6,13 @@
   function grip(name){ for (var i = 0; i < D.grips.length; i++) if (D.grips[i].name === name) return D.grips[i]; }
 
   // ?ref=card / course / flyer is added to the pre-filled text so you can tell which piece brought someone in.
-  var ref = (new URLSearchParams(location.search).get("ref") || "web").replace(/[^a-z0-9-]/gi, "").toUpperCase().slice(0, 12) || "WEB";
-  try { if (ref !== "WEB") sessionStorage.setItem("rccw-ref", ref); else ref = sessionStorage.getItem("rccw-ref") || ref; } catch (e) {}
+  // Also picks up ad and QR links: ?utm_source=facebook&utm_campaign=launch → FACEBOOK-LAUNCH. Kept for the visit and 30 days after.
+  var qp = new URLSearchParams(location.search);
+  var ref = (qp.get("ref") || [qp.get("utm_source"), qp.get("utm_campaign")].filter(Boolean).join("-") || "web").replace(/[^a-z0-9_-]/gi, "").toUpperCase().slice(0, 24) || "WEB";
+  try {
+    if (ref !== "WEB") { sessionStorage.setItem("rccw-ref", ref); localStorage.setItem("rccw-ref", JSON.stringify({ ref: ref, at: Date.now() })); }
+    else { var keep = JSON.parse(localStorage.getItem("rccw-ref") || "null"); ref = sessionStorage.getItem("rccw-ref") || (keep && Date.now() - keep.at < 30 * 864e5 ? keep.ref : "") || ref; }
+  } catch (e) {}
 
   function smsHref(body){ return "sms:" + D.phone + "?&body=" + encodeURIComponent(body); }
 

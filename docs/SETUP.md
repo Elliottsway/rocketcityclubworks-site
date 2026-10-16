@@ -52,8 +52,9 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
 **Cash & other payments:** "Record cash / Venmo / other payment" on a ticket counts toward paid, so parts go on the order list. Entries made by mistake can be removed.
 
 **Hourly jobs** (cron in `wrangler.jsonc`, code in `src/extras.js`), emails only 8am–8pm Central:
-- **Approve / pay reminder:** every 24 hours while a price waits, up to 5.
-- **Pickup reminder:** every 12 hours while a ticket is Ready with no pickup scheduled, up to 10. Customers schedule pickup on their ticket.
+- **Approve / pay reminder:** 1, 3 and 7 days after the price is sent. The last one offers to close or change the ticket.
+- **Pickup reminder:** 1, 3 and 7 days after a ticket is Ready with no pickup scheduled. Customers schedule pickup on their ticket.
+- **7am digest:** one email to Jackson listing everything that needs attention today, the same list as the dashboard's **Today** panel. Covers tickets waiting for a price (12h+ is flagged), head searches, prices sent but unpaid 3+ days, clubs not yet in, ready dates due, and pickups.
 - **Thank-you email:** sent a day after "Picked up". It adds `THANKS_CREDIT_CENTS` credit to the customer for their next service (not tied to leaving a review) and includes the `GOOGLE_REVIEW_URL` link when it's set. Jackson applies the credit from the ticket.
 - **FedEx auto-tracking:** for shipped orders, once the `FEDEX_API_KEY` and `FEDEX_SECRET_KEY` secrets exist. It updates the expected date and marks orders delivered.
 
@@ -77,6 +78,10 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
 **Search pages:** `tools/build-pages.mjs` builds the service pages (`/golf-club-regripping/`, `/reshafting/`, `/loft-and-lie/`, `/golf-club-repair/`, `/custom-golf-clubs/`, `/madison-al/`), `/faq/`, `sitemap.xml`, `llms.txt` and the home page's structured data, all from `assets/prices.js`.
 - It also stamps current prices into every `data-p` price in the HTML, so search engines see the same prices as visitors.
 - Run `node tools/build-pages.mjs` after changing prices or page copy, and commit the result.
+
+**Where customers come from:** sign-up asks "How did you hear about us?" (optional), and the site remembers the link someone arrived on for 30 days. That covers `?ref=…`, or `utm_source` plus `utm_campaign`, on ads and QR codes. **Reports** show sales by answer and by link. The customer's page in the dashboard shows both.
+
+**Thank-you credit** is applied automatically when you tap **Save & send price**, and customers see their credit on their account page.
 
 **Bench ticket:** `/admin/print/?t=…` is a 4×6 label (Jadens 668BT) with a QR code back to the ticket.
 

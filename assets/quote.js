@@ -84,6 +84,10 @@
     }
     this.run = run;
     inp.addEventListener('input', run); inp.addEventListener('focus', run);
+    list.setAttribute('aria-label', (opts.label || 'Options') + ' results');
+    // Escape or a tap elsewhere closes the results list.
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Escape') { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); } });
+    document.addEventListener('click', function(e){ if (!list.hidden && !wrap.contains(e.target)) { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); } });
     cancel.onclick = function(){ self.closeSearch(); };
   }
   Picker.prototype.closeSearch = function(){
@@ -129,7 +133,7 @@
   };
 
   // ---------- state ----------
-  var q = { rg: 0, ll: 8, pf: 0 };
+  var q = { rg: 0, ll: 8, pf: 0, sh: 0, ex: 0, lh: 0 };
   var gripMode = 'order', gripPk, putterPk, shaftRows = [];
   function stepper(k, max){
     var st = document.querySelector('.step[data-k="' + k + '"]'); if (!st) return;
@@ -330,6 +334,13 @@
       add('Paint fill, ' + q.pf + ' clubs' + (q.pf >= atCap(R.paintPer, R.paintSet) ? ' (set)' : ''), 1, bundle(q.pf, R.paintPer, R.paintSet, 10), 'labor');
       msg.push('Paint fill ' + q.pf + ' clubs: numbers ' + colors[0] + ', logo ' + colors[1] + ', stamping ' + colors[2]);
     }
+    // Repairs
+    var askLabor = false;
+    if (q.sh > 0) { add('Shorten', q.sh, R.shorten, 'labor'); msg.push('Shorten ' + q.sh + ' club' + (q.sh > 1 ? 's' : '')); }
+    if (q.ex > 0) { add('Extend', q.ex, R.extend, 'labor'); add('Shaft extension', q.ex, 0, 'part', true, false, true); tbd = true; msg.push('Extend ' + q.ex + ' club' + (q.ex > 1 ? 's' : '') + ' (new grips needed)'); }
+    if (q.lh > 0) { add('Loose head repair (re-epoxy, new ferrule)', q.lh, R.looseHead, 'labor'); msg.push('Loose head repair, ' + q.lh + ' club' + (q.lh > 1 ? 's' : '')); }
+    var stamp = g('q-stamp').checked; g('q-stampbox').hidden = !stamp;
+    if (stamp) { var st = g('q-stamptxt').value.trim(); add('Custom stamping' + (st ? ': ' + st : ''), 1, 0, 'labor', false, false, true); askLabor = true; msg.push('Custom stamping: ' + (st || 'details to follow')); }
     // Season tune-up
     if (q.rg >= 10 && loft === 'adjust' && q.ll >= 6) { add('Season tune-up bundle', 1, -B.tuneUpOff, 'discount', false, true); saves.push('Season tune-up'); }
     // Parts fee / rush and timing
@@ -354,6 +365,7 @@
       d.appendChild(el('span', null, l.tbd ? 'Price TBD' : amt === 0 ? 'Free' : (amt < 0 ? '−' : '') + $(Math.abs(r2(amt)))));
       box.appendChild(d);
     });
+    if (askLabor) tbd = tbd || askLabor;
     g('q-total').textContent = $(total) + (tbd ? ' + TBD' : '');
     var bt = document.getElementById('bar-total'); if (bt) bt.textContent = anyWork ? 'Your price: ' + $(total) + (tbd ? ' + TBD' : '') + ' ↓' : 'Instant price';
     g('q-ready').textContent = ready;
@@ -403,11 +415,12 @@
       extra: { label: 'Use my own putter grip', item: { id: 'OWN', name: 'My own putter grip', brand: '', price: 0, own: true, opts: {} } } });
     var tv = grips().filter(function(x){ return x.id === 'VT'; })[0] || grips()[0];
     if (tv) gripPk.pick(tv);
-    stepper('rg', 14); stepper('ll', 14); stepper('pf', 14);
+    stepper('rg', 14); stepper('ll', 14); stepper('pf', 14); stepper('sh', 14); stepper('ex', 14); stepper('lh', 14);
     document.querySelectorAll('input[name=gmode]').forEach(function(r){ r.onchange = function(){ gripMode = r.value; calc(); }; });
-    ['q-loft', 'q-putter', 'q-paint', 'q-rush', 'pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id){ g(id).addEventListener('change', calc); });
+    ['q-loft', 'q-putter', 'q-paint', 'q-stamp', 'q-rush', 'pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id){ g(id).addEventListener('change', calc); });
     ['pf-num', 'pf-logo', 'pf-stamp'].forEach(function(id, i){ var s = g(id); PAINT.forEach(function(c){ s.appendChild(new Option(c, c)); }); s.value = i === 2 ? 'None' : 'White'; });
     g('q-addshaft').onclick = addShaftRow;
+    g('q-stamptxt').addEventListener('input', calc);
     fetch('/assets/heads.json').then(function(r){ return r.json(); }).then(function(j){ HEADS = j.heads.map(function(h){ h.name = h.brand + ' ' + h.model; if (h.basis === 'oem') { h.ref = h.price; h.priceLabel = 'New ' + $(h.price) + (h.type === 'irons' ? '/club' : '') + ' · we quote'; } return h; }); g('q-buildgrp').hidden = false; g('q-addbuild').onclick = addBuildRow; }).catch(function(){});
     g('q-submit').onclick = openSubmit;
     g('q-form').addEventListener('submit', submit);

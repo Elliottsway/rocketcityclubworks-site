@@ -9,7 +9,7 @@ const CATEGORIES = ['Regrip', 'Reshaft', 'Loft & lie', 'Broken club repair', 'Fi
 export async function me(request, env, c) {
   const r = await env.DB.prepare('SELECT id, number, kind, title, status, created_at, updated_at, total_cents, paid_cents, eta, deposit_cents, deposit_paid_at FROM tickets WHERE customer_id = ? ORDER BY created_at DESC LIMIT 100').bind(c.id).all();
   return json({
-    customer: { name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone) },
+    customer: { name: c.name, email: c.email, phone: c.phone, phone_fmt: fmtPhone(c.phone), credit_cents: c.credit_cents || 0 },
     tickets: (r.results || []).map(({ deposit_cents, deposit_paid_at, ...t }) => ({ ...t, number: ticketNo(t.number), status_label: statusLabel({ ...t, deposit_cents, deposit_paid_at }),
       due_cents: depositState({ ...t, deposit_cents, deposit_paid_at }) === 'requested' ? deposit_cents : Math.max(0, t.total_cents - t.paid_cents) })),
     categories: CATEGORIES,
@@ -49,7 +49,7 @@ export async function createTicket(request, env, c, ctx) {
   const number = (last && last.n ? last.n : 1000) + 1;
   await env.DB.prepare(`INSERT INTO tickets (id, number, customer_id, kind, title, status, created_at, updated_at, customer_note, spec, lines, tax_rate, total_cents, ref)
       VALUES (?, ?, ?, ?, ?, 'submitted', ?, ?, ?, ?, ?, ?, ?, ?)`)
-    .bind(id, number, c.id, kind, title, t, t, clip(b.note, 2000), JSON.stringify(spec).slice(0, 20000), JSON.stringify(lines), taxRate, sum.total_cents, clip(b.ref, 12)).run();
+    .bind(id, number, c.id, kind, title, t, t, clip(b.note, 2000), JSON.stringify(spec).slice(0, 20000), JSON.stringify(lines), taxRate, sum.total_cents, clip(b.ref, 24)).run();
   await addEvent(env, id, 'customer', 'submitted', kind === 'request' ? `Service request: ${title}.` : 'Submitted from the instant price.');
   const tk = { id, number, customer_id: c.id };
   ctx.waitUntil(Promise.all([
@@ -93,10 +93,12 @@ export async function approve(request, env, c, id, ctx) {
   if (!t) return err('Ticket not found.', 404);
   let b; try { b = await readJson(request); } catch { b = {}; }
   if (Number(b.version) !== t.version) return err('The price was just updated. Refresh to see the latest version before approving.', 409);
-  if (!['awaiting_approval', 'approved'].includes(t.status)) return err('This ticket is not waiting for approval.', 409);
+  // A balance can also be paid once work has started (e.g. Jackson set it ready before the payment came in).
+  const working = ['in_progress', 'ready'].includes(t.status);
+  if (!['awaiting_approval', 'approved'].includes(t.status) && !working) return err('This ticket is not waiting for approval.', 409);
   const due = t.total_cents - t.paid_cents;
   if (due <= 0) return err('Nothing is due on this ticket.', 409);
-  if (t.status === 'approved' && t.approved_version === t.version && t.square_link_url) return json({ url: t.square_link_url });
+  if ((t.status === 'approved' || working) && t.approved_version === t.version && t.square_link_url && t.square_order_id) return json({ url: t.square_link_url });
   if (!squareReady(env)) return err('Online payment is not switched on yet. Jackson will send you a payment link.', 503);
 
   const lines = JSON.parse(t.lines || '[]'), sum = totals(lines, t.tax_rate);
@@ -117,8 +119,8 @@ export async function approve(request, env, c, id, ctx) {
     console.log(e.message);
     return err('Square could not start the payment. Please try again in a minute.', 502);
   }
-  await env.DB.prepare("UPDATE tickets SET status = 'approved', approved_version = ?, square_order_id = ?, square_link_url = ?, updated_at = ? WHERE id = ?")
-    .bind(t.version, link.orderId, link.url, now(), t.id).run();
+  await env.DB.prepare('UPDATE tickets SET status = ?, approved_version = ?, square_order_id = ?, square_link_url = ?, updated_at = ? WHERE id = ?')
+    .bind(working ? t.status : 'approved', t.version, link.orderId, link.url, now(), t.id).run();
   await addEvent(env, t.id, 'customer', 'approved', `Approved ${money(due)} and went to payment.`);
   ctx.waitUntil(notifyShop(env, `${ticketNo(t.number)} approved by ${c.name}`, `${money(due)} approved; waiting on Square to confirm payment.\n${siteUrl(env, '/admin/?t=' + t.id)}`));
   return json({ url: link.url });

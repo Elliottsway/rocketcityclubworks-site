@@ -58,7 +58,10 @@
 @media (min-width:640px){.jobs{grid-template-columns:repeat(2,1fr)}}
 @media (min-width:980px){.jobs{grid-template-columns:repeat(3,1fr)}}
 .job{padding:18px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
-.job::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--dimples);opacity:.7}
+.job .ic{width:30px;height:30px;color:var(--accent)}
+.job{transition:border-color .2s,transform .2s}
+.job:hover{border-color:var(--accent);transform:translateY(-2px)}
+@media (prefers-reduced-motion: reduce){.job:hover{transform:none}}
 .job h3 a{color:inherit;text-decoration:none}.job h3 a::after{content:"";position:absolute;inset:0}
 .job p{margin:0;color:var(--muted);font-size:.94rem}
 .job .price{margin-top:auto;padding-top:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -94,6 +97,7 @@ form.req{padding:18px;display:grid;gap:14px}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 
 <header class="top">
   <div class="wrap">
@@ -108,11 +112,11 @@ form.req{padding:18px;display:grid;gap:14px}
   </div>
 </header>
 
-<main>
+<main id="main">
 <section class="hero">
   <div class="wrap">
     <div>
-      <span class="pill">Now open · Huntsville &amp; Madison</span>
+      <span class="pill">Instant prices · Huntsville &amp; Madison</span>
       <div class="script">Huntsville's club shop</div>
       <h1>Your clubs, <em>rebuilt</em> in Huntsville.</h1>
       <p>Regrips, reshafts, loft and lie, and repairs, done by hand by a local club builder. Bring your own grips and they're back in your bag tomorrow.</p>
@@ -151,32 +155,32 @@ form.req{padding:18px;display:grid;gap:14px}
     </div>
     <div class="jobs">
       <article class="card job rv">
-        <h3><a href="/golf-club-regripping/">Regrip, your own grips</a></h3>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 18h-4z"/><path d="M9.4 8h5.2M9.7 13h4.6M10 18h4"/></svg><h3><a href="/golf-club-regripping/">Regrip, your own grips</a></h3>
         <p>Bring the grips, we install them. Ready next day.</p>
         <div class="price"><b data-p="regripOwn">$5</b><span>per club · full bag <span data-p="regripOwnBag">$50</span></span></div>
       </article>
       <article class="card job rv">
-        <h3><a href="/golf-club-regripping/">Regrip, Golf Pride Tour Velvet</a></h3>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 18h-4z"/><path d="M9.4 8h5.2M9.7 13h4.6M10 18h4"/></svg><h3><a href="/golf-club-regripping/">Regrip, Golf Pride Tour Velvet</a></h3>
         <p>The most popular grip, standard or midsize, ordered for your clubs. Grip and install included.</p>
         <div class="price"><b data-p="installed:Golf Pride Tour Velvet">$12.19</b><span>per club, installed</span></div>
       </article>
       <article class="card job rv">
-        <h3><a href="/loft-and-lie/">Loft &amp; lie</a></h3>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M6 20 15 5"/><path d="M11 20a5 5 0 0 0-1.6-3.7"/></svg><h3><a href="/loft-and-lie/">Loft &amp; lie</a></h3>
         <p>Measure your irons and wedges against spec, then bend them back where they belong.</p>
         <div class="price"><b data-p="loftCheck">$15</b><span>check · adjust a set <span data-p="loftSet">$50</span></span></div>
       </article>
       <article class="card job rv">
-        <h3><a href="/reshafting/">Reshafting</a></h3>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 19 5"/><path d="M4 20l3-1-2-2z"/><path d="M17 4l3 3"/></svg><h3><a href="/reshafting/">Reshafting</a></h3>
         <p>Steel and graphite, irons to driver. We help you pick the shaft and order it.</p>
         <div class="price"><b>from <span data-p="reshaftSteel">$20</span></b><span>per club + shaft · <span data-p="ironSetSteel">$17</span> in a set of 6+</span></div>
       </article>
       <article class="card job rv">
-        <h3><a href="/golf-club-repair/">Paint fill &amp; stamping</a></h3>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s5 6 5 10a5 5 0 0 1-10 0c0-4 5-10 5-10z"/></svg><h3><a href="/golf-club-repair/">Paint fill &amp; stamping</a></h3>
         <p>Fresh paint in the numbers and logos, or your initials stamped on wedges and putters.</p>
         <div class="price"><b>from <span data-p="paintPer">$8</span></b><span>per club · set of 10 <span data-p="paintSet">$60</span></span></div>
       </article>
       <article class="card job rv">
-        <h3><a href="/custom-golf-clubs/">Custom builds &amp; repairs</a></h3>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L4 16.8 7.2 20l5.3-5.3a4 4 0 0 0 5.2-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><h3><a href="/custom-golf-clubs/">Custom builds &amp; repairs</a></h3>
         <p>Builds to your length and spec, plus broken clubs, loose heads, cut-downs, extensions and adapters.</p>
         <div class="price"><b>Quote</b><span>send a photo for a price</span></div>
       </article>
@@ -225,7 +229,7 @@ form.req{padding:18px;display:grid;gap:14px}
     <div class="about rv">
       <div class="eyebrow">About the shop</div>
       <h2>Local, hands-on, fairly priced</h2>
-      <p>Rocket City ClubWorks is a home club shop in Huntsville run by Jackson Stewart, a local golfer who got tired of waiting a week for a simple regrip.</p>
+      <p>Rocket City ClubWorks is Jackson Stewart's club shop in northwest Huntsville. Every club is done by hand by the same person who answers your ticket: no counter staff, no back room, no week-long wait.</p>
       <p>Clear labor prices, parts at regular retail, and clubs back in your bag fast. Not sure what grip or shaft fits your game? Ask. Advice is free.</p>
     </div>
     <div class="faq rv">

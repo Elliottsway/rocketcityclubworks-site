@@ -26,6 +26,13 @@
 .chips b{font-family:var(--mono);margin-left:4px}
 .srch{margin-bottom:10px}
 .list{display:grid;gap:8px}
+.today{padding:14px 16px;margin-bottom:12px}
+.today h2{font-size:1.4rem;margin:0 0 6px}
+.today .tg{margin-top:8px}
+.today .tg>b{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.today a{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:.92rem}
+.today a small{color:var(--muted);text-align:right}
+.today a.late small{color:#FFB36B;font-weight:700}
 .row{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:12px 14px;text-decoration:none;color:var(--ink)}
 .row b{font-family:var(--mono)}
 .row small{display:block;color:var(--muted)}
@@ -123,6 +130,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
 
     <!-- tickets list -->
     <section id="v-list" hidden>
+      <div class="card today" id="today" hidden></div>
       <div class="chips" id="chips"></div>
       <input class="srch" id="q" type="search" placeholder="Search name, phone, email or RC-number">
       <div class="list" id="list"></div>
@@ -153,7 +161,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
           </div>
           <div class="card box"><h2>What they asked for</h2><ul class="spec" id="d-spec"></ul><p class="note" id="d-cnote" hidden style="margin-top:10px"></p></div>
           <div class="card box"><h2>History</h2>
-            <label class="filebtn" for="d-photos" style="margin-bottom:10px">📷 Add photos to this ticket<input id="d-photos" type="file" accept="image/*" multiple></label><p id="d-phout" role="status"></p>
+            <label class="filebtn" for="d-photos" style="margin-bottom:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>Add photos to this ticket<input id="d-photos" type="file" accept="image/*" multiple></label><p id="d-phout" role="status"></p>
             <ul class="hist" id="d-hist"></ul></div>
         </div>
         <div class="stack">
@@ -199,7 +207,16 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
           </details>
           <div class="card box form">
             <div><label for="d-note">Note to the customer (stays on their ticket)</label><textarea id="d-note"></textarea></div>
-            <div><label for="d-msg">Send a message (emails them)</label><textarea id="d-msg" placeholder="Optional"></textarea>
+            <div><label for="d-msg">Send a message (emails them)</label>
+              <select id="d-canned" aria-label="Insert a saved message" style="margin-bottom:6px"><option value="">Insert a saved message…</option>
+                <option>Thanks! Could you add a photo of the club (and the shaft band or grip) to your ticket? It helps me get the parts exactly right.</option>
+                <option>Your clubs are ready whenever you are. Pick a pickup time on your ticket, or reply here with a time that works.</option>
+                <option>Quick update: your parts are running a day or two behind. I'll update your ready date as soon as they ship.</option>
+                <option>Drop-off works any time between 8am and 5pm. Please put your name or ticket number on the bag.</option>
+                <option>Got your clubs, thanks! I'll email you as soon as they're done.</option>
+                <option>Before I order, can you confirm your grip size (standard, midsize or jumbo) and whether you want extra wraps?</option>
+              </select>
+              <textarea id="d-msg" placeholder="Optional"></textarea>
               <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:.85rem"><input type="checkbox" id="d-int" style="width:20px;min-height:0"> Private note for me only (not emailed)</label></div>
             <div class="row2"><div><label for="d-status">Status</label><select id="d-status"></select></div>
               <div><label for="d-pick">Pickup scheduled</label><input id="d-pick" placeholder="e.g. Sat, Oct 18, morning"></div></div>
@@ -265,6 +282,8 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
       <div class="hl" id="r-hl"></div>
       <div id="r-secs"></div>
       <div class="card rsec"><h2>By month <small>all time · by first payment date</small></h2><table class="rtab" id="r-months"></table></div>
+      <div class="card rsec"><h2>Where customers came from <small>"How did you hear about us?" at sign-up</small></h2><table class="rtab" id="r-src"></table></div>
+      <div class="card rsec"><h2>Links, ads &amp; QR codes <small>?ref= or utm_source tags</small></h2><table class="rtab" id="r-ref"></table></div>
     </section>
 
     <!-- customer detail -->
@@ -322,7 +341,21 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
 
   // ---------- tickets ----------
   var qTimer;
+  function loadToday(){
+    api('/today').then(function(d){
+      var T = $('today'); T.textContent = '';
+      var groups = [['Needs a price', d.reply], ['Head searches', d.sourcing], ['Price sent, not paid', d.waiting], ['Clubs to get in', d.dropoff], ['Due on the bench', d.bench], ['Ready for pickup', d.pickup]].filter(function(g){ return g[1].length; });
+      T.hidden = !groups.length; if (!groups.length) return;
+      T.appendChild(el('h2', 'Today'));
+      groups.forEach(function(g){
+        var box = el('div', null, 'tg'); box.appendChild(el('b', g[0] + ' · ' + g[1].length));
+        g[1].forEach(function(x){ var a = el('a', null, x.late ? 'late' : ''); a.href = '/admin/?t=' + encodeURIComponent(x.id); a.appendChild(el('span', x.number + ' · ' + x.name)); a.appendChild(el('small', x.note)); box.appendChild(a); });
+        T.appendChild(box);
+      });
+    }).catch(function(){});
+  }
   function loadList(){
+    if (tab === 'open' && !$('q').value.trim()) loadToday(); else $('today').hidden = true;
     api('/tickets?status=' + tab + '&q=' + encodeURIComponent($('q').value.trim())).then(function(j){
       show('v-list'); nav('nv-t');
       var C = $('chips'); C.textContent = '';
@@ -408,7 +441,7 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     renderDeposit(t);
     var c = t.customer || {}, K = $('d-cust'); K.textContent = '';
     function kv(k, v, href){ K.appendChild(el('span', k)); var x = href ? el('a', v) : el('b', v); if (href) x.href = href; K.appendChild(x); }
-    kv('Name', c.name || '?'); if (c.phone) { kv('Call', c.phone_fmt, 'tel:' + c.phone); kv('Text', c.phone_fmt, 'sms:' + c.phone); } kv('Email', c.email || '', 'mailto:' + c.email);
+    kv('Name', c.name || '?'); if (c.phone) { kv('Call', c.phone_fmt, 'tel:' + c.phone); kv('Text', c.phone_fmt, 'sms:' + c.phone); } kv('Email', c.email || '', 'mailto:' + c.email); if (c.source) kv('Heard via', c.source); if (c.ref) kv('Came from', c.ref);
     $('d-cuslink').href = '/admin/?c=' + encodeURIComponent(c.id);
     var S = $('d-spec'); S.textContent = ''; ((t.spec && t.spec.summary) || []).forEach(function(s){ S.appendChild(el('li', s)); });
     $('d-cnote').hidden = !t.customer_note; $('d-cnote').textContent = 'Their note: ' + (t.customer_note || '');
@@ -868,8 +901,14 @@ pre.copy{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(-
     if (!items.length) W.appendChild(el('p', 'No paid tickets in this period yet.', 'empty'));
     var M = $('r-months'); M.textContent = ''; var mh = el('tr'); ['Month', 'Paid tickets', 'Sales', 'Parts cost', 'Profit before fees'].forEach(function(h){ mh.appendChild(el('th', h)); }); M.appendChild(mh);
     REP.months.slice().reverse().forEach(function(m){ var tr = el('tr'); [m.month, String(m.tickets), money(m.revenue_cents), money(m.cost_cents), money(m.revenue_cents - m.cost_cents)].forEach(function(v){ tr.appendChild(el('td', v)); }); M.appendChild(tr); });
+    [['r-src', REP.sources || [], 'Answer'], ['r-ref', REP.refs || [], 'Tag']].forEach(function(x){
+      var T = $(x[0]); T.textContent = ''; var hr2 = el('tr'); [x[2], 'Customers', 'Paid tickets', 'Sales'].forEach(function(h){ hr2.appendChild(el('th', h)); }); T.appendChild(hr2);
+      if (!x[1].length) { var tr0 = el('tr'), td0 = el('td', 'No paid tickets in this period yet.'); td0.colSpan = 4; tr0.appendChild(td0); T.appendChild(tr0); }
+      x[1].forEach(function(r){ var tr = el('tr'); [r.label, String(r.customers), String(r.tickets), money(r.sales_cents)].forEach(function(v){ tr.appendChild(el('td', v)); }); T.appendChild(tr); });
+    });
     REP.rows = items;
   }
+  $('d-canned').onchange = function(){ if (!this.value) return; var m = $('d-msg'); m.value = (m.value ? m.value + '\n\n' : '') + this.value; this.value = ''; m.focus(); };
   $('r-range').onchange = loadReports; $('r-from').onchange = loadReports; $('r-to').onchange = loadReports;
   $('r-csv').onclick = function(){
     if (!REP) return;

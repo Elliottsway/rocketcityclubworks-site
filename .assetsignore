@@ -10,6 +10,8 @@ docs
 wrangler.jsonc
 .assetsignore
 README.md
+CLAUDE.md
+.claude
 package.json
 package-lock.json
 .gitignore
