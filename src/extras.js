@@ -1,7 +1,7 @@
 // Photos, hand-recorded payments, customer credit, part costs, reports and the hourly automatic jobs
 // (approval/payment and pickup reminders, thank-you + review emails, FedEx tracking).
 import { json, err, now, newId, clip, readJson, getTicket, getCustomer, addEvent, totals, limited, notifyShop, notifyCustomer,
-  siteUrl, ticketNo, money, LABEL, DEPOSIT, depositState } from './lib.js';
+  siteUrl, ticketNo, money, LABEL, DEPOSIT, depositState, nextSteps } from './lib.js';
 
 const HOUR = 3600_000;
 const MAX_PHOTO = 1_600_000; // bytes, after the browser shrinks it
@@ -53,6 +53,20 @@ export async function schedulePickup(request, env, c, t, ctx) {
   return json({ ok: true });
 }
 
+// ---------- drop-off (customer) ----------
+// POST /api/tickets/:id/dropoff {when}
+export async function scheduleDropoff(request, env, c, t, ctx) {
+  let b; try { b = await readJson(request); } catch { return err('Bad request'); }
+  const when = clip((b.when || '').trim(), 80);
+  if (!when) return err('Pick a day and time.');
+  if (t.clubs_in_at) return err('Jackson already has your clubs.', 409);
+  if (!(t.paid_cents > 0) || !['approved', 'paid', 'parts_ordered'].includes(t.status)) return err('Drop-off can be scheduled once your price is approved and paid.', 409);
+  await env.DB.prepare('UPDATE tickets SET dropoff_at = ?, updated_at = ? WHERE id = ?').bind(when, now(), t.id).run();
+  await addEvent(env, t.id, 'customer', 'message', `Drop-off planned: ${when}`);
+  ctx.waitUntil(notifyShop(env, `${ticketNo(t.number)} drop-off: ${when}`, `${c.name} plans to drop off ${when}.\n\n${siteUrl(env, '/admin/?t=' + t.id)}`));
+  return json({ ok: true });
+}
+
 // ---------- payments recorded by hand (cash, Venmo...) ----------
 const METHODS = ['cash', 'venmo', 'cash app', 'apple cash', 'zelle', 'check', 'card in person', 'other'];
 // POST /api/admin/tickets/:id/manual-payment {amount_cents, method, note}
@@ -76,7 +90,7 @@ export async function manualPayment(request, env, id, ctx) {
   const status = full && ['submitted', 'awaiting_approval', 'approved'].includes(t.status) ? 'paid' : t.status;
   await env.DB.prepare('UPDATE tickets SET paid_cents = ?, status = ?, updated_at = ? WHERE id = ?').bind(paid, status, now(), t.id).run();
   await addEvent(env, t.id, 'shop', 'paid', `Payment received: ${money(amount)} (${method}).`);
-  ctx.waitUntil(notifyCustomer(env, t, 'payment received', `Thanks! Jackson recorded your ${method} payment of ${money(amount)}.`));
+  ctx.waitUntil(notifyCustomer(env, t, 'payment received', `Thanks! Jackson recorded your ${method} payment of ${money(amount)}.${full ? '\n\n' + nextSteps(env, t) : ''}`));
   return json({ ok: true });
 }
 // POST /api/admin/tickets/:id/manual-payment/:pid/delete  (undo a mistake)
@@ -210,6 +224,13 @@ export async function reminders(env) {
     if (s.n >= 5 || nowMs - Date.parse(s.last || base) < 24 * HOUR) continue;
     await logSent(env, t.id, 'approve');
     await notifyCustomer(env, t, 'reminder: approve your price', `Your price is ready: ${money(t.total_cents - t.paid_cents)} due. Open your ticket to review it and tap "Approve & pay". Jackson orders your parts as soon as payment clears.\n\nQuestions or changes? Reply here or message Jackson on your ticket.`);
+  }
+  // 1b) Paid but no drop-off planned and clubs not in yet: once a day, up to 2 times.
+  for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status IN ('paid','parts_ordered') AND clubs_in_at IS NULL AND (dropoff_at IS NULL OR dropoff_at = '') AND paid_cents > 0").all()).results || []) {
+    const base = t.status_at || t.updated_at, s = await sentSince(env, t.id, 'dropoff', base);
+    if (s.n >= 2 || nowMs - Date.parse(s.last || base) < 24 * HOUR) continue;
+    await logSent(env, t.id, 'dropoff');
+    await notifyCustomer(env, t, 'when can you drop off your clubs?', `You're all paid up. The only thing left is getting your clubs to the shop.\n\n${nextSteps(env, t)}`);
   }
   // 2) Ready but no pickup scheduled: every 12 hours, up to 10 times.
   for (const t of (await env.DB.prepare("SELECT * FROM tickets WHERE status = 'ready' AND (pickup_at IS NULL OR pickup_at = '')").all()).results || []) {

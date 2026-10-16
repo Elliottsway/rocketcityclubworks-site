@@ -1,7 +1,7 @@
 // Square: hosted checkout for approved tickets, and payment confirmation straight from Square's API.
 // A ticket's paid amount only goes up after Square's API itself says the payment COMPLETED for this
 // ticket's order at our location, whether we heard about it from the webhook or the customer returning.
-import { json, now, addEvent, notifyShop, notifyCustomer, siteUrl, ticketNo, money, DEPOSIT } from './lib.js';
+import { json, now, addEvent, notifyShop, notifyCustomer, siteUrl, ticketNo, money, DEPOSIT, nextSteps } from './lib.js';
 
 const VERSION = '2024-10-17';
 const base = (env) => env.SQUARE_API_BASE || (env.SQUARE_ENV === 'sandbox' ? 'https://connect.squareupsandbox.com' : 'https://connect.squareup.com');
@@ -63,7 +63,7 @@ export async function confirmPayment(env, paymentId, ctx) {
   const tasks = [
     notifyShop(env, `${ticketNo(t.number)} PAID ${money(amount)}${full ? '' : ' (partial)'}`,
       `Square confirmed ${money(amount)} on ${ticketNo(t.number)}.${full ? ' Paid in full: its parts are now on your order list.' : ` Still due: ${money(t.total_cents - paid)}.`}\n\n${siteUrl(env, '/admin/?t=' + t.id)}`),
-    notifyCustomer(env, t, 'payment received', `Thanks! We received your payment of ${money(amount)}.${full ? ' Jackson will order your parts and keep your ticket updated.' : ''}`),
+    notifyCustomer(env, t, full ? 'paid, here\'s what happens next' : 'payment received', `Thanks! We received your payment of ${money(amount)}.${full ? '\n\n' + nextSteps(env, t) : ''}`),
   ];
   if (ctx) ctx.waitUntil(Promise.all(tasks)); else await Promise.all(tasks);
   return true;

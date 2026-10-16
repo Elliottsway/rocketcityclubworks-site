@@ -75,3 +75,8 @@
   .tk{display:block!important}
   .paper{border:1px solid #bbb}
 }
+
+/* Account and request: a centered column on desktop */
+@media (min-width:900px){.app.narrow{max-width:720px}}
+.form label.filebtn{display:inline-flex;align-items:center;margin:0}
+.app + footer.foot{margin-top:0}

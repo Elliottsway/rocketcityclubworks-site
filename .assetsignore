@@ -5,6 +5,7 @@
 node_modules
 src
 db
+tools
 docs
 wrangler.jsonc
 .assetsignore
@@ -12,3 +13,9 @@ README.md
 package.json
 package-lock.json
 .gitignore
+
+# never publish local secrets or junk
+.dev.vars*
+.env*
+*.log
+.DS_Store

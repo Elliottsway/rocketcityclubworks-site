@@ -69,6 +69,15 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
   - Once the customer approves a head and it is bought, the deposit is no longer refundable (the customer sees this before paying).
 - To refresh heads, rerun the research and `build_heads.py` (kept outside the repo; they use the private booklet).
 
+**Drop-off:** once a ticket is paid, the customer sees **Schedule drop-off** on their ticket.
+- The payment email tells them what's next. If the `DROPOFF_NOTE` secret is set (for example the porch address and instructions), it's included. It's a secret so the address never appears in the public repo. Without it, the email says Jackson will send the address.
+- Paid tickets with no drop-off planned get one reminder a day, up to 2.
+- In the dashboard, the ticket list shows "📦 drop-off …" or "no drop-off yet" until the clubs are in. On the ticket, the **Clubs received** box emails the customer that their clubs are checked in.
+
+**Search pages:** `tools/build-pages.mjs` builds the service pages (`/golf-club-regripping/`, `/reshafting/`, `/loft-and-lie/`, `/golf-club-repair/`, `/custom-golf-clubs/`, `/madison-al/`), `/faq/`, `sitemap.xml`, `llms.txt` and the home page's structured data, all from `assets/prices.js`.
+- It also stamps current prices into every `data-p` price in the HTML, so search engines see the same prices as visitors.
+- Run `node tools/build-pages.mjs` after changing prices or page copy, and commit the result.
+
 **Bench ticket:** `/admin/print/?t=…` is a 4×6 label (Jadens 668BT) with a QR code back to the ticket.
 
 If the price goes up after payment, the ticket returns to "waiting on customer". The customer then pays only the balance, and the new parts stay off the order list until that payment clears.
@@ -80,7 +89,7 @@ If the price goes up after payment, the ticket returns to "waiting on customer".
 | Worker | `rocketcityclubworks-site` (custom domain rocketcityclubworks.com) |
 | D1 database | `rccw` (binding `DB`), schema in `db/schema.sql`, changes in `db/migrations/` (apply each new one with `wrangler d1 execute rccw --remote --file=…` before merging the code that needs it) |
 | Plain vars | in `wrangler.jsonc` (`SITE_URL`, `NOTIFY_TO`, `MAIL_FROM`, `TAX_RATE`, `SQUARE_ENV`, `SQUARE_WEBHOOK_URL`) |
-| Secrets | `ADMIN_PASSWORD`, `RESEND_API_KEY`, `SQUARE_ACCESS_TOKEN`, `SQUARE_LOCATION_ID`, `SQUARE_WEBHOOK_SIGNATURE_KEY` (set with `wrangler secret put`, never in the repo) |
+| Secrets | `ADMIN_PASSWORD`, `RESEND_API_KEY`, `DROPOFF_NOTE` (optional), `SQUARE_ACCESS_TOKEN`, `SQUARE_LOCATION_ID`, `SQUARE_WEBHOOK_SIGNATURE_KEY` (set with `wrangler secret put`, never in the repo) |
 
 - **Email** goes through Resend from `shop@rocketcityclubworks.com`. The domain is verified with DNS records in Cloudflare (`resend._domainkey`, `send`, `_dmarc`). Replies go to jackson@rocketcityclubworks.com.
 - **Square webhook:** `https://rocketcityclubworks.com/api/square/webhook`, events `payment.created` and `payment.updated`.

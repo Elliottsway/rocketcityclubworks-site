@@ -166,7 +166,7 @@
       }
       if (h && h.hands) { [].forEach.call(hs.options, function(o){ o.disabled = h.hands.indexOf(o.value) < 0; }); if (h.hands.indexOf(hs.value) < 0) { hs.value = h.hands[0]; row.hand = hs.value; } }
       lead.textContent = !h || h.request ? '' : h.basis === 'oem'
-        ? 'Jackson finds a genuine new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. To start the search he asks for a refundable sourcing deposit (10% of the estimate, $25–$75) that counts toward your build, and reports back within 48 hours. Usually about 1–2 weeks in all.'
+        ? 'Jackson finds a genuine new or like-new ' + h.brand + ' head with these specs and sends you the price to approve. New retail for comparison: ' + $(h.ref) + (h.type === 'irons' ? ' per club' : '') + '. To start the search he asks for a refundable sourcing deposit (10% of the estimate, $25–$75) that counts toward your build, and reports back within 48 hours.'
         : leadText(h.lead) + (h.note ? ' · ' + h.note : '');
       calc();
     }
@@ -273,6 +273,7 @@
     if (putter) {
       add('Putter grip install', 1, R.putterGrip, 'labor');
       if (putterPk.sel && !putterPk.sel.own) { var pp = putterPk.price(); add(putterPk.desc(), 1, pp, 'part', true, false, putterPk.isRequest(), putterPk.sel.id); parts += pp; if (putterPk.isRequest()) tbd = true; }
+      if (!putterPk.sel) { add('Putter grip (pick one above)', 1, 0, 'part', true, false, true); tbd = true; }
       msg.push('Putter regrip: ' + (putterPk.sel ? putterPk.desc() : 'grip not picked yet'));
     }
     // Loft & lie
@@ -297,11 +298,12 @@
     });
     var rs = g('n-rs'), need6 = R.ironSetMin - irons;
     rs.hidden = !(irons > 0 && need6 > 0 && need6 <= 3); rs.textContent = rs.hidden ? '' : 'Add ' + need6 + ' more iron' + (need6 > 1 ? 's' : '') + ' for set pricing: ' + $(R.ironSetSteel) + ' steel, ' + $(R.ironSetGraphite) + ' graphite per club.';
+    if (shaftCount > q.rg) { rs.hidden = false; rs.textContent = (rs.textContent ? rs.textContent + ' ' : '') + 'Reshafted clubs need grips: add ' + (shaftCount - q.rg) + ' more to the regrip count above (your grips or ours).'; }
     // Custom builds
     var buildLead = 0, buildClubs = 0, buildIrons = 0;
-    buildRows.forEach(function(r){ if (r.type === 'irons' || r.type === 'wedge') buildIrons += r.type === 'irons' ? r.clubs.length || 1 : 1; });
+    buildRows.forEach(function(r){ if (r.type === 'irons' || r.type === 'wedge') buildIrons += r.type === 'irons' ? r.clubs.length || 7 : 1; });
     buildRows.forEach(function(r){
-      var h = r.head.sel, n = r.type === 'irons' ? (h && !h.request && h.clubs ? r.clubs.length : 7) : 1;
+      var h = r.head.sel, n = r.type === 'irons' ? (h && !h.request && h.clubs ? r.clubs.length : (r.clubs.length || 7)) : 1;
       if (!n) return;
       var label = BTYPES.filter(function(t){ return t[0] === r.type; })[0][1], hand = r.hand === 'LH' ? ', left-handed' : '';
       var clubs = r.type === 'irons' && r.clubs.length ? ' (' + r.clubs.join(', ') + ')' : '';
@@ -340,7 +342,7 @@
       else add('Parts fee', 1, R.partsFee, 'fee');
     }
     var anyWork = lines.length > 0;
-    var ready = !anyWork ? '—' : buildClubs ? (buildLead > 4 ? 'About ' + (buildLead + 2) + ' business days (head lead time)' : '4–6 business days') : !partsOrdered ? 'Next day' : rush ? 'About ' + R.rushDays : irons >= R.ironSetMin ? '4–5 business days' : shaftCount ? '3–5 business days' : R.partsDays;
+    var ready = !anyWork ? '—' : buildClubs ? (buildLead > 4 ? 'About ' + (buildLead + 2) + ' business days (head lead time)' : '4–6 business days') : !partsOrdered ? (shaftCount ? '2 business days (epoxy cures overnight)' : 'Next day') : rush ? 'About ' + R.rushDays : irons >= R.ironSetMin ? '4–5 business days' : shaftCount ? '3–5 business days' : R.partsDays;
     var total = r2(lines.reduce(function(s, l){ return s + l.qty * l.unit_cents; }, 0) / 100);
 
     var box = g('q-lines'); box.textContent = '';
@@ -353,6 +355,7 @@
       box.appendChild(d);
     });
     g('q-total').textContent = $(total) + (tbd ? ' + TBD' : '');
+    var bt = document.getElementById('bar-total'); if (bt) bt.textContent = anyWork ? 'Your price: ' + $(total) + (tbd ? ' + TBD' : '') + ' ↓' : 'Instant price';
     g('q-ready').textContent = ready;
     g('q-submit').disabled = !anyWork;
 
@@ -360,7 +363,6 @@
     if (saves.length) text.push('Deals: ' + saves.join(', '));
     text.push('Estimate: ' + $(total) + (tbd ? ' + requested parts to price' : ''), 'Ready in: ' + ready, '(' + S.ref + ')');
     last = { lines: lines.map(function(l){ return { desc: l.desc, qty: l.qty, unit_cents: l.unit_cents, kind: l.kind, taxable: l.taxable, part_no: l.part_no && l.part_no !== 'REQ' ? l.part_no : null }; }), total_label: $(total) + (tbd ? ' + TBD' : ''), summary: msg.concat(saves.length ? ['Deals: ' + saves.join(', ')] : []).concat(['Ready in: ' + ready]), text: anyWork ? text.join('\n') : "Hi Jackson! I'd like a quote. (" + S.ref + ')' };
-    g('q-send').href = S.smsHref(last.text);
   }
 
   // ---------- submit as a service ticket (needs a customer account) ----------
@@ -386,7 +388,7 @@
         if (!x.ok) { out.className = 'err'; out.textContent = x.j.error || 'Something went wrong.'; btn.disabled = false; return; }
         location.href = '/ticket/?t=' + encodeURIComponent(x.j.id) + '&new=1';
       })
-      .catch(function(){ out.className = 'err'; out.textContent = 'Could not reach the shop. Use "Text this quote" instead.'; btn.disabled = false; });
+      .catch(function(){ out.className = 'err'; out.textContent = 'Could not reach the shop. Check your connection and try again.'; btn.disabled = false; });
   }
 
   // ---------- start ----------
@@ -410,19 +412,13 @@
     g('q-submit').onclick = openSubmit;
     g('q-form').addEventListener('submit', submit);
     g('q-copy').onclick = function(){ var b = this; try { navigator.clipboard.writeText(last.text).then(function(){ b.textContent = 'Copied'; }); } catch (e) {} };
-    // Online work tickets switch on by themselves once the ticket database is connected.
-    fetch('/api/health').then(function(r){ return r.ok ? r.json() : {}; }).then(function(h){
-      if (!h.tickets || !h.accounts) return;
-      g('q-submit').hidden = false;
-      fetch('/api/me', { credentials: 'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
-        me = j && j.customer; g('q-acct').hidden = !!me;
-        if (me) g('f-who').textContent = 'Sending as ' + me.name + ' · ' + me.email;
-      }).catch(function(){ g('q-acct').hidden = false; });
-      var send = g('q-send'); send.className = 'copy'; send.textContent = 'Or text this quote';
-    }).catch(function(){});
+    fetch('/api/me', { credentials: 'same-origin' }).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      me = j && j.customer; g('q-acct').hidden = !!me;
+      if (me) g('f-who').textContent = 'Sending as ' + me.name + ' · ' + me.email;
+    }).catch(function(){ g('q-acct').hidden = false; });
     g('q-loading').hidden = true; g('q-body').hidden = false;
     calc();
   }
   fetch('/assets/catalog.json').then(function(r){ return r.json(); }).then(start)
-    .catch(function(){ g('q-loading').textContent = 'The parts catalog did not load. Refresh the page or text us your quote.'; });
+    .catch(function(){ g('q-loading').textContent = 'The parts catalog did not load. Refresh the page to try again.'; });
 })();

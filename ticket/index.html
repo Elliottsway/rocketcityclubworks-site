@@ -54,12 +54,23 @@
       <p class="fine" id="dep-fine" style="margin:8px 0 0"></p>
       <p class="err" id="dep-err" role="alert"></p>
     </div>
+    <div class="card box pickupbox" id="dropbox" hidden style="margin-top:12px;border-color:var(--accent)">
+      <h2 style="margin:0 0 6px">Schedule drop-off</h2>
+      <p id="drop-now" class="ok" hidden style="margin:0 0 8px"></p>
+      <p class="fine" style="margin:0 0 10px">Porch drop-off in northwest Huntsville or a meet-up around Huntsville and Madison. Jackson confirms the spot. Put your name or ticket number on the bag.</p>
+      <form id="f-drop" class="form pickup" novalidate>
+        <div class="row2"><div><label for="dr-day">Day</label><input id="dr-day" type="date"></div>
+          <div><label for="dr-time">Time</label><select id="dr-time"><option>Morning (8–11am)</option><option>Midday (11am–2pm)</option><option>Afternoon (2–5pm)</option></select></div></div>
+        <button class="btn" type="submit" id="dr-go">Request this drop-off time</button>
+        <p id="dr-out" role="status"></p>
+      </form>
+    </div>
     <div class="card box pickupbox" id="pickbox" hidden style="margin-top:12px;border-color:var(--accent)">
       <h2 style="margin:0 0 6px">Schedule pickup</h2>
       <p id="pick-now" class="ok" hidden style="margin:0 0 8px"></p>
       <form id="f-pick" class="form pickup" novalidate>
         <div class="row2"><div><label for="pk-day">Day</label><input id="pk-day" type="date"></div>
-          <div><label for="pk-time">Time</label><select id="pk-time"><option>Morning (8–11am)</option><option>Midday (11am–2pm)</option><option>Afternoon (2–5pm)</option><option>Evening (5–7pm)</option></select></div></div>
+          <div><label for="pk-time">Time</label><select id="pk-time"><option>Morning (8–11am)</option><option>Midday (11am–2pm)</option><option>Afternoon (2–5pm)</option></select></div></div>
         <button class="btn" type="submit" id="pk-go">Request this pickup time</button>
         <p id="pk-out" role="status"></p>
       </form>
@@ -97,6 +108,13 @@
     </div>
   </div>
 </main>
+<footer class="foot">
+  <div class="wrap">
+    <a class="mark" href="/" aria-label="Rocket City ClubWorks home"><span class="s">Rocket City</span><span class="c">ClubWorks</span></a>
+    <div class="links"><a href="/menu/#quote">Instant price</a><a href="/request/">Request service</a><a href="/account/">My account</a><a href="/faq/">FAQ</a></div>
+    <div class="small">© 2026 Rocket City ClubWorks · Huntsville, Alabama · Payments secured by Square</div>
+  </div>
+</footer>
 <script src="/assets/app.js"></script>
 <script>
 (function(){
@@ -104,8 +122,9 @@
   var qs = new URLSearchParams(location.search), id = qs.get('t'), T = null, polls = 0;
   var FLOW = ['submitted', 'awaiting_approval', 'paid', 'parts_ordered', 'in_progress', 'ready', 'completed'];
   var STEPL = { submitted: 'Jackson is reviewing your ticket and confirming parts.', awaiting_approval: 'Your price is ready. Review it and tap Approve & pay.', approved: 'Waiting for your payment to finish.',
-    paid: 'Paid. Jackson is ordering your parts.', parts_ordered: 'Parts are ordered. Follow them below.', in_progress: 'Your clubs are on the bench.', ready: 'Ready for pickup! Message Jackson to pick a time.', completed: 'Picked up. Thanks for your business!', cancelled: 'This ticket was cancelled.' };
-  if (qs.get('new') === '1') $('newmsg').hidden = false;
+    paid: 'Paid. Next, schedule your drop-off below.', parts_ordered: 'Parts are ordered. Follow them below.', in_progress: 'Your clubs are on the bench.', ready: 'Ready for pickup! Pick a time below.', completed: 'Picked up. Thanks for your business!', cancelled: 'This ticket was cancelled.' };
+  if (qs.get('new') === '1') { $('newmsg').hidden = false; try { history.replaceState(null, '', location.pathname + '?t=' + encodeURIComponent(id)); } catch (e) {} }
+  function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
   function render(t){
     T = t; $('loading').hidden = true; $('tk').hidden = false;
@@ -121,10 +140,13 @@
       $('dep-h').textContent = dep === 'paid' ? 'Deposit paid: your head search is on' : 'Start your head search';
       $('dep-lede').textContent = dep === 'paid'
         ? 'Thanks! Your ' + money(t.deposit.cents) + ' sourcing deposit is in. You will hear back by ' + A.when(t.deposit.due_by) + '.'
-        : 'Brand heads aren\u2019t sold to the public, so Jackson tracks down a new or like-new head and checks that it\u2019s genuine before you pay for anything else. To start the search, he asks for a ' + money(t.deposit.cents) + ' sourcing deposit (10% of your build estimate).';
+        : 'Brand-name heads aren\u2019t sold as parts, so Jackson finds a genuine new or like-new one and checks it before you pay for the build. To start the search, he asks for a ' + money(t.deposit.cents) + ' sourcing deposit (10% of your build estimate).';
       $('dep-pay').hidden = dep !== 'requested'; $('dep-pay').textContent = 'Pay deposit & start search · ' + money(t.deposit.cents);
       $('dep-fine').textContent = dep === 'requested' ? 'Secure payment by Square. Questions first? Message Jackson below.' : '';
     }
+    $('dropbox').hidden = !t.can_dropoff; $('drop-now').hidden = !t.dropoff_at; $('drop-now').textContent = t.dropoff_at ? 'Drop-off requested: ' + t.dropoff_at + '. Jackson will confirm.' : '';
+    $('dr-go').textContent = t.dropoff_at ? 'Change drop-off time' : 'Request this drop-off time';
+    if (t.paid_cents > 0 && t.status === 'paid' && t.dropoff_at) $('t-stepl').textContent = 'Paid. Drop-off planned for ' + t.dropoff_at + '.';
     var canPick = ['ready', 'in_progress'].indexOf(t.status) >= 0;
     $('pickbox').hidden = !canPick && !(t.pickup_at && t.status === 'ready');
     $('pick-now').hidden = !t.pickup_at; $('pick-now').textContent = t.pickup_at ? 'Pickup requested: ' + t.pickup_at + '. Jackson will confirm.' : '';
@@ -161,14 +183,15 @@
       L.appendChild(d);
     });
     $('p-taxl').hidden = !t.tax_cents; $('p-tax').textContent = money(t.tax_cents);
-    $('p-totl').textContent = priced ? 'Total' : 'Estimate'; $('p-total').textContent = money(t.total_cents);
+    $('p-totl').textContent = priced ? 'Total' : 'Estimate'; $('p-total').textContent = !priced && !t.total_cents ? 'Price coming' : money(t.total_cents);
     $('p-ver').textContent = priced ? 'Version ' + t.version : 'Not final yet';
     $('p-paidl').hidden = !t.paid_cents; $('p-paidl').firstChild.textContent = dep === 'paid' ? 'Sourcing deposit paid' : 'Paid'; $('p-paid').textContent = '−' + money(t.paid_cents);
     $('p-refl').hidden = !t.refunded_cents; $('p-ref').textContent = money(t.refunded_cents || 0);
-    $('p-duel').hidden = !(t.paid_cents && t.due_cents) || !!dep; $('p-due').textContent = money(t.due_cents);
+    $('p-duel').hidden = !(t.due_cents > 0 && (t.paid_cents || ['in_progress', 'ready', 'completed'].indexOf(t.status) >= 0)) || !!dep; $('p-due').textContent = money(t.due_cents);
     $('p-pay').hidden = !t.can_pay; $('p-pay').textContent = 'Approve & pay · ' + money(t.due_cents);
     $('p-fine').textContent = t.can_pay ? 'Secure card payment by Square. Your parts are ordered as soon as the payment clears.'
       : dep === 'paid' ? 'Your deposit already comes off your final price. Jackson sends that price for you to approve once your head is lined up.'
+      : t.status === 'submitted' && !t.total_cents ? 'Jackson usually replies the same day (8am–5pm) with your price. Nothing is charged until you approve it.'
       : t.status === 'submitted' ? 'This is an estimate. Jackson confirms parts, fit and the final price, then you approve it here. Nothing is charged until then.'
       : t.paid_cents >= t.total_cents && t.total_cents > 0 ? 'Paid in full. Thank you!' : '';
 
@@ -181,7 +204,7 @@
   }
 
   function load(){
-    return A.api('/api/tickets/' + encodeURIComponent(id)).then(render).catch(function(x){ if (x.message !== 'auth') { $('loading').hidden = true; $('missing').hidden = false; } });
+    return A.api('/api/tickets/' + encodeURIComponent(id)).then(render).catch(function(x){ if (x.message === 'auth') return; $('loading').hidden = true; if (x.status === 404) $('missing').hidden = false; else { $('loading').hidden = false; $('loading').textContent = 'Couldn\u2019t load your ticket. Refresh to try again.'; } });
   }
   // back from Square: ask the server to confirm the payment with Square, a few times if needed
   function sync(){
@@ -193,7 +216,8 @@
         return;
       }
       if (t.paid_cents < t.total_cents && ++polls < 8) setTimeout(sync, 3000);
-      else if (t.paid_cents >= t.total_cents) { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b class="ok">Payment received.</b> Thanks! Jackson will order your parts and keep this ticket updated.'; }
+      else if (t.paid_cents < t.total_cents) { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b>Still confirming your payment with Square.</b> This can take a minute. Refresh this page shortly.'; }
+      else if (t.paid_cents >= t.total_cents) { $('newmsg').hidden = false; $('newmsg').innerHTML = '<b class="ok">Payment received.</b> Thanks! ' + (t.can_dropoff ? 'Next, pick a drop-off time below.' : 'Jackson will keep this ticket updated.'); }
     }).catch(function(){});
   }
   $('p-pay').onclick = function(){
@@ -218,7 +242,14 @@
       .catch(function(x){ $('m-out').className = 'err'; $('m-out').textContent = x.message; load(); })
       .then(function(){ btn.disabled = false; });
   });
-  (function(){ var d = new Date(); d.setDate(d.getDate() + 1); $('pk-day').min = new Date().toISOString().slice(0, 10); $('pk-day').value = d.toISOString().slice(0, 10); })();
+  (function(){ var d = new Date(); d.setDate(d.getDate() + 1); ['pk-day', 'dr-day'].forEach(function(k){ $(k).min = ymd(new Date()); $(k).value = ymd(d); }); })();
+  $('f-drop').addEventListener('submit', function(e){
+    e.preventDefault(); if (!$('dr-day').value) return;
+    var when = A.day($('dr-day').value) + ', ' + $('dr-time').value;
+    A.api('/api/tickets/' + encodeURIComponent(id) + '/dropoff', { method: 'POST', body: { when: when } })
+      .then(function(){ $('dr-out').className = 'ok'; $('dr-out').textContent = 'Sent to Jackson.'; load(); })
+      .catch(function(x){ $('dr-out').className = 'err'; $('dr-out').textContent = x.message; });
+  });
   $('f-pick').addEventListener('submit', function(e){
     e.preventDefault(); if (!$('pk-day').value) return;
     var when = A.day($('pk-day').value) + ', ' + $('pk-time').value;

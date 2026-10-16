@@ -62,18 +62,19 @@ async function api(request, env, ctx) {
     const photo = await X.getPhoto(env, ph[1]), pt = photo && await getTicket(env, photo.ticket_id);
     return pt && pt.customer_id === c.id ? X.servePhoto(env, photo) : err('Not found.', 404);
   }
-  const t = path.match(/^\/api\/tickets\/([\w-]{8,40})(?:\/(message|approve|sync|photos|pickup|deposit))?$/);
+  const t = path.match(/^\/api\/tickets\/([\w-]{8,40})(?:\/(message|approve|sync|photos|pickup|dropoff|deposit))?$/);
   if (t) {
     if (!t[2] && m === 'GET') return getOwnTicket(request, env, c, t[1]);
     if (t[2] === 'message' && m === 'POST') return postMessage(request, env, c, t[1], ctx);
     if (t[2] === 'approve' && m === 'POST') return approve(request, env, c, t[1], ctx);
     if (t[2] === 'deposit' && m === 'POST') return payDeposit(request, env, c, t[1], ctx);
     if (t[2] === 'sync' && m === 'POST') return syncPayment(request, env, c, t[1], ctx);
-    if (t[2] === 'photos' || t[2] === 'pickup') {
+    if (t[2] === 'photos' || t[2] === 'pickup' || t[2] === 'dropoff') {
       const tk = await getTicket(env, t[1]);
       if (!tk || tk.customer_id !== c.id) return err('Ticket not found.', 404);
       if (t[2] === 'photos' && m === 'POST') return X.uploadPhoto(request, env, tk, 'customer');
       if (t[2] === 'pickup' && m === 'POST') return X.schedulePickup(request, env, c, tk, ctx);
+      if (t[2] === 'dropoff' && m === 'POST') return X.scheduleDropoff(request, env, c, tk, ctx);
     }
   }
   return err('Not found.', 404);
