@@ -83,6 +83,10 @@ The site is a Cloudflare **Worker** (`rocketcityclubworks-site`). It serves the 
 
 **Thank-you credit** is applied automatically when you tap **Save & send price**, and customers see their credit on their account page.
 
+**Google Ads tag** (`assets/analytics.js`, ID `AW-18517574264`): loaded on customer pages only, never the dashboard, and only on rocketcityclubworks.com.
+- A sent request or quote fires `begin_checkout`, the Google Ads conversion. It fires once, when the ticket opens with `?new=1`.
+- A payment that clears fires `purchase`.
+
 **Bench ticket:** `/admin/print/?t=…` is a 4×6 label (Jadens 668BT) with a QR code back to the ticket.
 
 If the price goes up after payment, the ticket returns to "waiting on customer". The customer then pays only the balance, and the new parts stay off the order list until that payment clears.
